@@ -9,6 +9,7 @@ from shiftmesh.forecast import (
     Forecaster,
     backtest,
     forecast_next_week,
+    learning_curve,
     load_history_csv,
     score,
     seasonal_mean,
@@ -294,3 +295,46 @@ def test_the_learning_curve_is_measured_not_assumed(history):
     assert pts, "no point on the curve could be measured"
     assert all(err > 0 for _, err in pts)
     assert [n for n, _ in pts] == sorted(n for n, _ in pts)
+
+
+def test_fit_can_be_told_where_to_start_not_only_where_to_stop():
+    """``since`` has to actually shrink the training set.
+
+    Without it there is no way to ask how much history matters, because every
+    model sees everything up to ``upto``.
+    """
+    history = synthetic_history(50)
+    upto = 45 * HOURS_PER_WEEK
+    everything = Forecaster().fit(history, upto=upto)
+    recent = Forecaster().fit(history, upto=upto, since=30 * HOURS_PER_WEEK)
+
+    assert everything.fit_["rows"] == upto - 2 * HOURS_PER_WEEK
+    assert recent.fit_["rows"] == upto - 30 * HOURS_PER_WEEK
+    assert recent.fit_["rows"] < everything.fit_["rows"]
+    assert not np.allclose(everything.coef_, recent.coef_), \
+        "different training windows must give different models"
+
+
+def test_the_two_week_floor_survives_an_earlier_since():
+    """The design matrix reads lags two weeks back; nothing before that exists."""
+    history = synthetic_history(30)
+    upto = 25 * HOURS_PER_WEEK
+    model = Forecaster().fit(history, upto=upto, since=0)
+    assert model.fit_["rows"] == upto - 2 * HOURS_PER_WEEK
+
+
+def test_the_learning_curve_actually_varies_the_history_it_learns_from():
+    """The regression that matters.
+
+    The curve computed a training window and then fit on the whole history
+    anyway, so every point trained on identical data and the published chart
+    was six copies of one number — while claiming to answer "would more
+    history help?".
+    """
+    history = synthetic_history(60)
+    curve = learning_curve(history)
+
+    assert len(curve) >= 4
+    errors = [e for _, e in curve]
+    assert len(set(round(e, 6) for e in errors)) > 1, \
+        "every training size returned the same error — history is not being varied"

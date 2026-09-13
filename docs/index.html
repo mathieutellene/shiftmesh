@@ -16,7 +16,7 @@ html{-webkit-text-size-adjust:100%}
    viewport so scrolling moves the content across it rather than dragging it
    along. It costs one painted layer and no script. */
 body{margin:0;color:var(--text);
-  font:15.5px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font:clamp(15.5px,0.34vw + 10.6px,19px)/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-feature-settings:"tnum" 1;
   background:var(--ink)}
 body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
@@ -42,15 +42,15 @@ h1{margin:0 0 12px;font-size:clamp(30px,3.4vw,46px);letter-spacing:-.024em;
 h2{margin:60px 0 6px;font-size:clamp(20px,1.7vw,25px);letter-spacing:-.016em;font-weight:620}
 h2 .num{color:var(--muted);font-weight:500;margin-right:10px;font-variant-numeric:tabular-nums}
 h3{margin:30px 0 8px;font-size:16.5px;font-weight:600;color:var(--text)}
-p{margin:11px 0;max-width:90ch;color:#cdd7e6}
-.lede{font-size:clamp(16px,1.25vw,19px);color:var(--muted);max-width:80ch;margin:0;line-height:1.55}
-.sub{color:var(--muted);margin:2px 0 18px;max-width:88ch}
+p{margin:11px 0;color:#cdd7e6}
+.lede{font-size:clamp(16px,1.25vw,21px);color:var(--muted);max-width:min(100%,86ch);margin:0;line-height:1.55}
+.sub{color:var(--muted);margin:2px 0 18px}
 
 /* Prose that should sit beside something rather than above it. */
 .split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
   gap:26px 40px;align-items:start;margin:18px 0}
 .split > * {min-width:0}
-.split p{max-width:62ch}
+.split p{max-width:none}
 @media (max-width:900px){ .split{grid-template-columns:1fr} }
 
 /* Filling the width without stretching the line.
@@ -63,15 +63,16 @@ p{margin:11px 0;max-width:90ch;color:#cdd7e6}
 .prose{margin:12px 0}
 .prose p{max-width:none;margin:0 0 12px}
 .prose p:last-child{margin-bottom:0}
-@media (min-width:1180px){
-  .prose{columns:2;column-gap:46px}
-  .prose p{break-inside:avoid}
-}
-@media (min-width:1680px){ .prose.wide{columns:3;column-gap:44px} }
+/* column-width, not column-count: the browser picks how many fit at the size the
+   window actually is, and re-picks as it is dragged. A fixed `columns:2` above
+   one breakpoint gave two columns at 1200px and two at 2560px. */
+.prose{column-width:33rem;column-gap:46px}
+.prose p{break-inside:avoid}
+.prose.wide{column-width:27rem;column-gap:44px}
 
 /* A lead paragraph that should stay one column and carry the section. */
 .prose.single{columns:1}
-.prose.single p{max-width:92ch}
+.prose.single p{max-width:none}
 a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.3)}
 a:hover{border-bottom-color:var(--accent)}
 code{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -113,6 +114,15 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 .note b{color:var(--warm)}
 .note.key{border-color:var(--accent);background:rgba(77,163,255,.05)}
 .note.key b{color:var(--accent)}
+.note.warn{border-color:var(--short);background:rgba(255,92,122,.06)}
+.eq{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+  line-height:1.85;background:#0c1220;border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;margin:14px 0;overflow-x:auto;color:var(--text);max-width:none}
+.eq .cm{color:var(--muted);font-style:italic}
+.tb td a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.35)}
+.tb td a:hover{border-bottom-color:var(--accent);color:#8cc4ff}
+.eq sub{font-size:9.5px}
+.note.warn b{color:var(--short)}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
   color:var(--muted);font-size:13px}
 @media print{body{background:#fff;color:#111}figure{break-inside:avoid}}
@@ -127,14 +137,17 @@ footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
 .ctl .box{position:relative;display:flex;align-items:center}
 .ctl .box input[type=number]{width:100%;font:inherit;font-size:19px;font-weight:640;
   font-variant-numeric:tabular-nums;color:var(--text);background:#0c1220;
-  border:1px solid var(--line);border-radius:9px;padding:10px 12px;padding-right:76px;
-  -moz-appearance:textfield}
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;padding-right:54px;
+  -moz-appearance:textfield;appearance:textfield}
+/* No steppers: you change a parameter by typing the number you want, not by
+   clicking twenty times. The padding above and the unit label below were both
+   sized around the arrows, so both come in now that the arrows are gone. */
 .ctl .box input[type=number]::-webkit-outer-spin-button,
-.ctl .box input[type=number]::-webkit-inner-spin-button{opacity:.4;height:30px}
+.ctl .box input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ctl .box input:hover{border-color:#35425c}
 .ctl .box input:focus,.ctl .box select:focus{border-color:var(--accent);outline:none;
   box-shadow:0 0 0 3px rgba(77,163,255,.16)}
-.ctl .box .u{position:absolute;right:32px;font-size:11.5px;color:var(--muted);
+.ctl .box .u{position:absolute;right:13px;font-size:11.5px;color:var(--muted);
   pointer-events:none;letter-spacing:.02em}
 .ctl select{width:100%;background:#0c1220;color:var(--text);border:1px solid var(--line);
   border-radius:9px;padding:12px 11px;font:inherit;font-size:14px}
@@ -912,15 +925,68 @@ wait for an agent to be awake.</p>
 <polyline points="56.0,174.7 61.6,190.5 67.2,204.1 72.7,212.3 78.3,214.3 83.9,207.5 89.5,193.2 95.1,157.0 100.6,114.6 106.2,62.8 111.8,53.1 117.4,46.0 123.0,59.8 128.6,66.1 134.1,74.1 139.7,79.6 145.3,101.3 150.9,119.3 156.5,136.5 162.0,156.5 167.6,165.1 173.2,167.8 178.8,167.4 184.4,165.6 189.9,179.8 195.5,194.9 201.1,209.3 206.7,215.9 212.3,216.0 217.8,207.9 223.4,192.5 229.0,160.6 234.6,115.8 240.2,75.4 245.7,56.0 251.3,59.9 256.9,63.3 262.5,69.1 268.1,81.7 273.7,89.5 279.2,101.7 284.8,120.8 290.4,139.3 296.0,158.4 301.6,162.9 307.1,169.1 312.7,171.5 318.3,166.8 323.9,182.1 329.5,197.7 335.0,208.4 340.6,215.4 346.2,214.1 351.8,209.2 357.4,191.5 362.9,165.5 368.5,118.5 374.1,90.8 379.7,64.2 385.3,65.1 390.9,65.8 396.4,74.9 402.0,79.1 407.6,91.2 413.2,103.7 418.8,118.5 424.3,139.9 429.9,159.3 435.5,168.1 441.1,171.9 446.7,171.6 452.2,165.3 457.8,179.4 463.4,194.8 469.0,207.8 474.6,214.9 480.1,216.1 485.7,211.3 491.3,194.1 496.9,167.4 502.5,120.7 508.0,87.2 513.6,71.8 519.2,66.2 524.8,81.3 530.4,79.0 536.0,90.7 541.5,96.2 547.1,114.5 552.7,125.5 558.3,143.3 563.9,161.4 569.4,170.0 575.0,173.1 580.6,179.0 586.2,162.9 591.8,175.9 597.3,192.1 602.9,206.4 608.5,215.5 614.1,215.9 619.7,211.2 625.2,195.8 630.8,166.1 636.4,125.5 642.0,88.7 647.6,73.0 653.1,72.0 658.7,78.1 664.3,84.5 669.9,94.9 675.5,96.5 681.1,114.8 686.6,135.2 692.2,149.8 697.8,165.3 703.4,172.9 709.0,177.0 714.5,177.2 720.1,170.1 725.7,156.1 731.3,167.6 736.9,182.0 742.4,196.9 748.0,205.7 753.6,208.6 759.2,207.8 764.8,199.2 770.3,184.4 775.9,168.4 781.5,159.7 787.1,158.0 792.7,155.2 798.3,152.7 803.8,158.7 809.4,160.9 815.0,164.5 820.6,169.7 826.2,170.5 831.7,173.6 837.3,178.6 842.9,176.5 848.5,171.5 854.1,157.2 859.6,144.7 865.2,155.1 870.8,177.1 876.4,192.6 882.0,201.6 887.5,206.6 893.1,204.0 898.7,196.1 904.3,183.6 909.9,168.6 915.4,160.2 921.0,157.2 926.6,153.1 932.2,156.3 937.8,160.7 943.4,161.0 948.9,169.8 954.5,169.6 960.1,174.4 965.7,179.3 971.3,183.4 976.8,183.2 982.4,183.4 988.0,167.2" fill="none" stroke="#4da3ff" stroke-width="1.8" stroke-linejoin="round"/>
 </svg>
 <div class="legend"><i style="--c:#22d3a6"></i>what actually arrived <i style="--c:#ffb454"></i>forecast, unbiased <i style="--c:#4da3ff"></i>forecast staffed to, +20%<span class="unit">calls/hour</span></div></figure>
-<div class="stats"><div class="stat key"><span class="k">Trained on</span><span class="v">6,384</span><span class="n">hourly observations, 38 weeks</span></div><div class="stat"><span class="k">Features</span><span class="v">32</span><span class="n">columns in the design matrix</span></div><div class="stat"><span class="k">R² in log space</span><span class="v">0.834</span><span class="n">residual sd 0.273</span></div><div class="stat"><span class="k">Forecast</span><span class="v">11,124</span><span class="n">vs 8,642 actual</span></div><div class="stat"><span class="k">Mean error</span><span class="v">15.2</span><span class="n">calls per hour</span></div><div class="stat warn"><span class="k">Uplift</span><span class="v">+20%</span><span class="n">chosen from the history</span></div></div>
+<div class="stats"><div class="stat key"><span class="k">Trained on</span><span class="v">6,384</span><span class="n">hourly observations, 38 weeks</span></div><div class="stat"><span class="k">Features</span><span class="v">32</span><span class="n">columns in the design matrix</span></div><div class="stat"><span class="k">R² in log space</span><span class="v">0.834</span><span class="n">residual sd 0.273</span></div><div class="stat good"><span class="k">Hourly error</span><span class="v">15.6%</span><span class="n">8.0 calls/hour on a mean of 51</span></div><div class="stat"><span class="k">sMAPE</span><span class="v">30.7%</span><span class="n">symmetric, over hours with traffic</span></div><div class="stat"><span class="k">Week total</span><span class="v">+28.7%</span><span class="n">11,124 staffed vs 8,642 arrived</span></div><div class="stat warn"><span class="k">Uplift</span><span class="v">+20%</span><span class="n">chosen from the history</span></div></div>
+<div class="note key">Three percentages because they answer three questions. <b>15.6%</b> is how far the unbiased forecast sits from a typical hour — that is the model's accuracy, and the number to compare against anyone else's. <b>30.7%</b> is the same thing scored symmetrically over hours that actually had traffic, so a quiet 3am hour cannot flatter or wreck it. <b>+28.7%</b> is the week's total once the uplift is added, and it is deliberately positive: that is the cushion being bought, not an error. Read the first as quality and the third as policy.</div>
+<h3>The model, written out</h3>
+<p>It is one equation. <code>h</code> is the hour of the day, <code>w</code> the
+hour of the week, <code>t</code> the hour index since the history starts:</p>
+<div class="eq">
+log1p(calls<sub>t</sub>) &nbsp;=&nbsp; β<sub>0</sub>
+<br>&nbsp;&nbsp;+ Σ<sub>k=1..4</sub> [ a<sub>k</sub> sin(2πk·h/24) + b<sub>k</sub> cos(2πk·h/24) ]
+&nbsp;&nbsp;<span class="cm">— the shape of a day, four harmonics</span>
+<br>&nbsp;&nbsp;+ weekend<sub>t</sub> · Σ<sub>k=1..4</sub> [ c<sub>k</sub> sin(2πk·h/24) + d<sub>k</sub> cos(2πk·h/24) ]
+&nbsp;&nbsp;<span class="cm">— Saturday is a different shape, not a smaller one</span>
+<br>&nbsp;&nbsp;+ Σ<sub>k=1..3</sub> [ e<sub>k</sub> sin(2πk·w/168) + f<sub>k</sub> cos(2πk·w/168) ]
+&nbsp;&nbsp;<span class="cm">— the slide from Monday to Friday</span>
+<br>&nbsp;&nbsp;+ Σ<sub>d=Tue..Sun</sub> g<sub>d</sub>·1[dow<sub>t</sub>=d]
+&nbsp;&nbsp;<span class="cm">— six day levels, against Monday</span>
+<br>&nbsp;&nbsp;+ τ·(t/168)
+&nbsp;&nbsp;<span class="cm">— trend, read as growth per week</span>
+<br>&nbsp;&nbsp;+ λ<sub>1</sub> log1p(calls<sub>t−168</sub>) + λ<sub>2</sub> log1p(calls<sub>t−336</sub>)
+&nbsp;&nbsp;<span class="cm">— same hour one and two weeks ago</span>
+<br><br>calls<sub>t</sub> &nbsp;=&nbsp; (exp(fit) − 1) &nbsp;×&nbsp; 1.0350
+&nbsp;<span class="cm">smearing</span>&nbsp; ×&nbsp; 1.20
+&nbsp;<span class="cm">uplift</span>
+</div>
+<p>32 coefficients, fitted in closed form by ridge — one
+<code>np.linalg.solve</code>, no iteration, no gradient descent, no random seed.
+Given the same history it returns the same numbers every time.</p>
+
+<h3>Is it "pure ML"?</h3>
+<p>No, and the distinction is worth being honest about. Nothing here
+<em>discovers</em> that call volume has a daily rhythm: the sines and cosines are
+written into the design matrix by hand, and so are the weekend interaction, the
+day dummies and the two lags. What is learned is 32 numbers — the
+weights on features somebody already decided were the right ones.</p>
+<p>A gradient-boosted tree or a neural net would be handed raw timestamps and
+expected to find the structure itself. On 38 weeks of one queue
+that trade is a bad one: there are 6,384 rows, the structure is
+genuinely sinusoidal, and a model that finds seasonality on its own needs far
+more data to match a model that was told. The payoff for the small model is that
+every coefficient is inspectable — the table below is not a feature-importance
+approximation, it is the actual parameters — and that it cannot invent a pattern
+that was never encoded.</p>
+
+<h3>What it does not know</h3>
+<p>There are no external regressors. No public-holiday flag, no weather, no
+marketing calendar, no outage feed. The model sees its own past and the clock,
+nothing else. That is a real limit and it shows up in a specific place: a day
+that is anomalous for a reason outside the data is absorbed into the lag terms
+and then echoes for two weeks, because <code>calls<sub>t−168</sub></code> and
+<code>calls<sub>t−336</sub></code> are inputs. A holiday is forecast as if it
+were an ordinary Tuesday, and the two Tuesdays after it inherit the dent.</p>
+<p>Adding a holiday dummy is the cheapest real improvement available here, and it
+is not done: the calendar is jurisdiction-specific and this report is built from
+one city's data, so a flag fitted on it would not transfer. Worth stating plainly
+rather than leaving a reader to assume the model handles days it has never been
+told about.</p>
 <div class="split">
-<div><h3>What the model is</h3>
-<p>A ridge regression on a seasonal basis, fitted on <code>log1p</code> so the
-seasonality is multiplicative and a prediction can never come out negative.
-32 columns: four harmonics of the daily cycle and the same four
-again interacted with a weekend flag, because Saturday has a different shape and
-not merely a smaller one; three harmonics of the weekly cycle; six day-of-week
-levels; a linear trend in weeks; and the same hour one and two weeks back.</p>
+<div><h3>Why it is this small</h3>
+<p>The fit happens on <code>log1p</code> rather than on calls, which buys two
+things: the seasonality becomes multiplicative — a Monday peak is a
+<em>ratio</em> above the week's level, not a fixed number of calls — and a
+prediction can never come out negative, which an additive fit on a queue that
+idles near zero will happily do.</p>
 <p>It is deliberately small. 6,384 observations against
 32 parameters is about 199 rows per
 column, and anything heavier would be fitting the noise in the shoulders of the
@@ -995,38 +1061,41 @@ clean 1.0350 rather than something that has absorbed a bias.</p></div>
 </svg>
 <div class="legend"><i style="--c:#ffb454"></i>seasonal naive <i style="--c:#22d3a6"></i>4-week mean <i style="--c:#4da3ff"></i>ridge seasonal<span class="unit">calls/hour</span></div></figure>
 <div class="note">A pooled MAE hides whether a model is steadily better or merely better on average. Here the ridge line sits under the naive one in almost every week rather than winning a few by a lot — which is the version worth having, because a forecast that is reliably slightly better is schedulable and one that is wildly better in some weeks is not.</div>
-<figure class="ch"><figcaption><b>Would more history help?</b><span>test error against weeks of training data, scored on the same final weeks</span></figcaption>
-<svg viewBox="0 0 1000 230" role="img" aria-label="Would more history help?">
-<line class="grid" x1="56" y1="30.0" x2="988" y2="30.0"/>
-<text class="ax" x="48" y="34.0" text-anchor="end">13</text>
-<line class="grid" x1="56" y1="69.0" x2="988" y2="69.0"/>
-<text class="ax" x="48" y="73.0" text-anchor="end">10</text>
-<line class="grid" x1="56" y1="108.0" x2="988" y2="108.0"/>
-<text class="ax" x="48" y="112.0" text-anchor="end">7</text>
-<line class="grid" x1="56" y1="147.0" x2="988" y2="147.0"/>
-<text class="ax" x="48" y="151.0" text-anchor="end">3</text>
-<line class="grid" x1="56" y1="186.0" x2="988" y2="186.0"/>
-<text class="ax" x="48" y="190.0" text-anchor="end">0</text>
-<rect x="106.7" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>6w: 13 calls/hour</title></rect>
-<text class="ax" x="133.7" y="203" text-anchor="middle">6w</text>
-<text class="val" x="133.7" y="24.0" text-anchor="middle">13</text>
-<rect x="262.0" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>10w: 13 calls/hour</title></rect>
-<text class="ax" x="289.0" y="203" text-anchor="middle">10w</text>
-<text class="val" x="289.0" y="24.0" text-anchor="middle">13</text>
-<rect x="417.3" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>16w: 13 calls/hour</title></rect>
-<text class="ax" x="444.3" y="203" text-anchor="middle">16w</text>
-<text class="val" x="444.3" y="24.0" text-anchor="middle">13</text>
-<rect x="572.7" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>24w: 13 calls/hour</title></rect>
-<text class="ax" x="599.7" y="203" text-anchor="middle">24w</text>
-<text class="val" x="599.7" y="24.0" text-anchor="middle">13</text>
-<rect x="728.0" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>32w: 13 calls/hour</title></rect>
-<text class="ax" x="755.0" y="203" text-anchor="middle">32w</text>
-<text class="val" x="755.0" y="24.0" text-anchor="middle">13</text>
-<rect x="883.3" y="30.0" width="54.0" height="156.0" rx="4" fill="#22d3a6" opacity="0.85"><title>40w: 13 calls/hour</title></rect>
-<text class="ax" x="910.3" y="203" text-anchor="middle">40w</text>
-<text class="val" x="910.3" y="24.0" text-anchor="middle">13</text>
+<figure class="ch"><figcaption><b>Would more history help?</b><span>test error against weeks of training data, each model refit on only that much history and every one scored on the same final weeks</span></figcaption>
+<svg viewBox="0 0 1000 260" role="img" aria-label="Would more history help?">
+<line class="grid" x1="62" y1="34.0" x2="984" y2="34.0"/>
+<text class="ax" x="54" y="38.0" text-anchor="end">14.34</text>
+<line class="grid" x1="62" y1="79.0" x2="984" y2="79.0"/>
+<text class="ax" x="54" y="83.0" text-anchor="end">13.93</text>
+<line class="grid" x1="62" y1="124.0" x2="984" y2="124.0"/>
+<text class="ax" x="54" y="128.0" text-anchor="end">13.52</text>
+<line class="grid" x1="62" y1="169.0" x2="984" y2="169.0"/>
+<text class="ax" x="54" y="173.0" text-anchor="end">13.11</text>
+<line class="grid" x1="62" y1="214.0" x2="984" y2="214.0"/>
+<text class="ax" x="54" y="218.0" text-anchor="end">12.70</text>
+<line x1="62" y1="167.7" x2="984" y2="167.7" stroke="#22d3a6" stroke-width="1" stroke-dasharray="3 4" opacity=".55"/>
+<path d="M62.0,119.5 L246.4,80.8 L430.8,64.9 L615.2,122.7 L799.6,167.7 L984.0,142.7" fill="none" stroke="#4da3ff" stroke-width="2.2" stroke-linejoin="round"/>
+<circle cx="62.0" cy="119.5" r="4.5" fill="#4da3ff" stroke="var(--bg)" stroke-width="2"><title>6 weeks of history: 13.562 calls/hour</title></circle>
+<text class="val" x="62.0" y="106.5" text-anchor="middle">13.56</text>
+<text class="ax" x="62.0" y="233" text-anchor="middle">6w</text>
+<circle cx="246.4" cy="80.8" r="4.5" fill="#4da3ff" stroke="var(--bg)" stroke-width="2"><title>10 weeks of history: 13.916 calls/hour</title></circle>
+<text class="val" x="246.4" y="67.8" text-anchor="middle">13.92</text>
+<text class="ax" x="246.4" y="233" text-anchor="middle">10w</text>
+<circle cx="430.8" cy="64.9" r="4.5" fill="#4da3ff" stroke="var(--bg)" stroke-width="2"><title>16 weeks of history: 14.062 calls/hour</title></circle>
+<text class="val" x="430.8" y="51.9" text-anchor="middle">14.06</text>
+<text class="ax" x="430.8" y="233" text-anchor="middle">16w</text>
+<circle cx="615.2" cy="122.7" r="4.5" fill="#4da3ff" stroke="var(--bg)" stroke-width="2"><title>24 weeks of history: 13.533 calls/hour</title></circle>
+<text class="val" x="615.2" y="109.7" text-anchor="middle">13.53</text>
+<text class="ax" x="615.2" y="233" text-anchor="middle">24w</text>
+<circle cx="799.6" cy="167.7" r="6.5" fill="#22d3a6" stroke="var(--bg)" stroke-width="2"><title>32 weeks of history: 13.121 calls/hour</title></circle>
+<text class="val" x="799.6" y="154.7" text-anchor="middle">13.12</text>
+<text class="ax" x="799.6" y="233" text-anchor="middle">32w</text>
+<circle cx="984.0" cy="142.7" r="4.5" fill="#4da3ff" stroke="var(--bg)" stroke-width="2"><title>40 weeks of history: 13.350 calls/hour</title></circle>
+<text class="val" x="984.0" y="129.7" text-anchor="middle">13.35</text>
+<text class="ax" x="984.0" y="233" text-anchor="middle">40w</text>
+<text class="ax" x="62" y="250">axis spans 12.70–14.34 calls/hour, not zero — best is 6.7% under the worst</text>
 </svg></figure>
-<div class="note">It stops helping. Error bottoms out around 6 weeks of history and flattens after that: the weekly shape is learned quickly and the extra months mostly add drift the trend term already handles. Worth knowing before anyone is asked to warehouse three years of interval data.</div>
+<div class="note">It stops helping. Error bottoms out around 32 weeks of history and flattens after that: the weekly shape is learned quickly and the extra months mostly add drift the trend term already handles. Worth knowing before anyone is asked to warehouse three years of interval data.</div>
 <p>The uplift is deliberate. An unbiased forecast is wrong in
 the expensive direction half the time, because a missing agent costs a queue and
 a spare one costs an hour of salary. How far above the mean to staff is settled
@@ -1077,7 +1146,7 @@ by backtesting rather than by taste:</p>
 </tr>
 </tbody></table></figure>
 <h2><span class="num">03</span>How many people that needs</h2><p class="sub">Three channels, three models — because they are three different problems.</p>
-<div class="prose"><p><b>Voice</b> goes through Erlang C at
+<div class="prose single"><p><b>Voice</b> goes through Erlang C at
 290s handle time against 80% in 30s.
 The queue is real, the caller is waiting, and the formula answers the only
 question that matters: how many people keep the delay short.</p><p><b>Service requests</b> do not work that way at all: nobody is on the line,
@@ -2153,7 +2222,7 @@ most common mistake in this field and it errs in both directions.</p></div>
 <text class="cell" x="350" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 </svg></figure>
 <h2><span class="num">04</span>The rules the roster has to obey</h2><p class="sub">Every constraint, what it means, and whether it is actually the law.</p>
-<div class="prose"><p>A roster is only interesting if it is legal, and "legal"
+<div class="prose single"><p>A roster is only interesting if it is legal, and "legal"
 turns out to be three different things wearing the same coat. Some of these are
 the Estatuto de los Trabajadores and cannot be bargained away.</p><p>Some are the sector agreement, which means they are real obligations that a
 different agreement could set differently — and several of the numbers people
@@ -2162,6 +2231,8 @@ somebody made, which are the ones worth arguing about precisely because nobody
 has to keep them.</p></div>
 <figure class="tb"><figcaption><b>Every rule the roster obeys</b><span>and whether it is law, bargaining, or a decision somebody made</span></figcaption><table><thead><tr><th>Rule</th><th class="r">spain</th><th class="r">spain callcentre</th><th class="r">eu minimum</th><th>Basis</th><th>Where it comes from</th></tr></thead><tbody><tr><td>Hours an agent may be rostered in a week</td><td class="r">40</td><td class="r">39</td><td class="r">48</td><td><span style="color:#4da3ff">Estatuto de los Trabajadores</span></td><td>ET art. 34.1 — forty hours averaged over the year</td></tr><tr><td>Longest single shift</td><td class="r">9</td><td class="r">10</td><td class="r">12</td><td><span style="color:#4da3ff">Estatuto de los Trabajadores</span></td><td>ET art. 34.3 — nine hours of actual work, unless the agreement says otherwise</td></tr><tr><td>Shortest shift worth rostering</td><td class="r">4</td><td class="r">4</td><td class="r">4</td><td><span style="color:#8b9bb4">Modelling choice</span></td><td>No legal minimum. Below this, travel time dominates the shift</td></tr><tr><td>Between the end of one shift and the start of the next</td><td class="r">12</td><td class="r">12</td><td class="r">11</td><td><span style="color:#4da3ff">Estatuto de los Trabajadores</span></td><td>ET art. 34.3 — twelve hours. The rule that quietly shapes the whole roster</td></tr><tr><td>One uninterrupted break each week</td><td class="r">36</td><td class="r">36</td><td class="r">24</td><td><span style="color:#4da3ff">Estatuto de los Trabajadores</span></td><td>ET art. 37.1 — a day and a half</td></tr><tr><td>Overtime permitted on top of the contracted week</td><td class="r">4</td><td class="r">5</td><td class="r">0</td><td><span style="color:#4da3ff">Estatuto de los Trabajadores</span></td><td>ET art. 35.2 caps overtime at eighty hours a year; this is a weekly working approximation of it</td></tr><tr><td>Days an agent may be rostered out of seven</td><td class="r">5</td><td class="r">5</td><td class="r">6</td><td><span style="color:#8b9bb4">Modelling choice</span></td><td>Not in the statute. Five of seven is the shape of a normal contract</td></tr><tr><td>Two blocks in one day with a gap between them</td><td class="r">no</td><td class="r">yes</td><td class="r">no</td><td><span style="color:#a78bfa">Collective agreement</span></td><td>Legal in Spain and common in contact centres. Its cost is measured rather than assumed</td></tr><tr><td>How far an agent may start from their own anchor hour</td><td class="r">unbounded</td><td class="r">unbounded</td><td class="r">unbounded</td><td><span style="color:#8b9bb4">Modelling choice</span></td><td>No legal basis at all — a promise to the people working the roster, and the only row here that is pure preference</td></tr></tbody></table></figure>
 <div class="note">The row that catches people out is the twelve hours between shifts. It is statute, it is unglamorous, and it does more to shape the week than the forty-hour limit does: it is what stops a late finish being followed by an early start, which is exactly the pattern a naive optimiser reaches for when demand peaks twice a day.</div>
+<p class="note warn"><b>The search never got close enough for these to be prices.</b> The worst row here stopped with a 99% optimality gap: the solver had a roster in hand and a proof that no roster could be better than a bound 99% away from it, and exhausted its budget in between. Only 0 of 8 rows were proved optimal. A difference of a few hundred euros between two rows is far inside that, so it says nothing about the rules. It also shows in the ordering: split shifts allowed, start times pinned to ±3h moved the wrong way against the baseline. A relaxation only ever adds legal rosters and a tightening only ever removes them, so at optimality neither can cross the baseline in that direction. One that did means the baseline — the row every other row is measured against — is itself the weaker solve. What is exact here is the shift count: how many legal shift patterns each rule admits is enumerated, not searched, so that column is the one to read.</p><figure class="tb"><figcaption><b>What each rule buys, not what it costs</b><span>one solve per row at 67 agents. The solver spends freedom on coverage, not on savings — so a looser rule reads as a dearer week that covers more of the curve</span></figcaption><table><thead><tr><th>If this rule were relaxed</th><th class="r">Legal shifts</th><th class="r">Coverage</th><th class="r">vs baseline</th><th class="r">Spare hours</th><th class="r">Week costs</th><th>What it means</th></tr></thead><tbody><tr><td><b>baseline — Spanish statute</b></td><td class="r">145</td><td class="r">99.38%</td><td class="r" style="">—</td><td class="r">33h</td><td class="r">€31,284</td><td>ET arts. 34 and 37 as written</td></tr><tr><td>rest 12h → 11h</td><td class="r">145</td><td class="r">99.82%</td><td class="r" style="color:var(--accent2)">+0.44pp</td><td class="r">35h</td><td class="r">€31,388</td><td>the EU Working Time Directive floor</td></tr><tr><td>weekly rest 36h → 24h</td><td class="r">145</td><td class="r">99.56%</td><td class="r" style="color:var(--accent2)">+0.18pp</td><td class="r">29h</td><td class="r">€31,269</td><td>one day off instead of a day and a half</td></tr><tr><td>5 → 6 working days</td><td class="r">145</td><td class="r">99.60%</td><td class="r" style="color:var(--accent2)">+0.22pp</td><td class="r">49h</td><td class="r">€31,618</td><td>shorter shifts spread across six days</td></tr><tr><td>split shifts allowed</td><td class="r">1,105</td><td class="r">99.16%</td><td class="r" style="color:var(--muted)">?</td><td class="r">118h</td><td class="r">€32,243</td><td>covered the wrong way against the baseline, which the feasible set forbids — the search ran out of time here, so this row says nothing about its rule</td></tr><tr><td>max shift 9h → 12h</td><td class="r">217</td><td class="r">99.74%</td><td class="r" style="color:var(--accent2)">+0.36pp</td><td class="r">131h</td><td class="r">€32,494</td><td>long shifts, fewer handovers</td></tr><tr><td>40h → 48h week</td><td class="r">145</td><td class="r">99.91%</td><td class="r" style="color:var(--accent2)">+0.53pp</td><td class="r">24h</td><td class="r">€31,331</td><td>the directive's absolute ceiling</td></tr><tr><td>start times pinned to ±3h</td><td class="r">145</td><td class="r">99.96%</td><td class="r" style="color:var(--muted)">?</td><td class="r">44h</td><td class="r">€31,609</td><td>covered the wrong way against the baseline, which the feasible set forbids — the search ran out of time here, so this row says nothing about its rule</td></tr></tbody></table></figure>
+<div class="note">The ones that do bite are worth the argument: weekly rest 36h → 24h. Read it as a question about today, not about hiring: this is one solve per row at 67 agents. The other question — the smallest team that could still cover the week — is what <code>scripts/price_rules.py</code> answers, and it takes about an hour.</div>
 <div class="stats"><div class="stat key"><span class="k">Shifts to choose from</span><span class="v">145</span><span class="n">per agent per day, under spain</span></div><div class="stat"><span class="k">Agent-days to fill</span><span class="v">469</span><span class="n">67 agents × 7 days</span></div><div class="stat"><span class="k">Possible rosters</span><span class="v">10^1,013</span><span class="n">before a single rule is applied</span></div><div class="stat"><span class="k">Rules enforced</span><span class="v">9</span><span class="n">audited from the assignment, not the model</span></div></div>
 <h2><span class="num">05</span>Who works when</h2><p class="sub">A CP-SAT model over one circular week, under the rules above.</p>
 <figure><figcaption><b>The roster</b><span>one column per hour, Monday 00:00 on the left</span></figcaption>
@@ -2183,74 +2254,72 @@ has to keep them.</p></div>
 <text x="28" y="36" text-anchor="end">A1</text>
 <rect x="34.0" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Tue 00:00</title></rect>
-<rect x="331.6" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Wed 00:00</title></rect>
-<rect x="492.8" y="27" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 7h from Thu 02:00</title></rect>
-<rect x="629.2" y="27" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 4h from Fri 00:00</title></rect>
-<text x="1080" y="36">38h</text>
+<rect x="480.4" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Thu 00:00</title></rect>
+<rect x="926.8" y="27" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 4h from Sun 00:00</title></rect>
+<text x="1080" y="36">31h</text>
 <text x="28" y="49" text-anchor="end">A2</text>
-<rect x="34.0" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Mon 00:00</title></rect>
-<rect x="182.8" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Tue 00:00</title></rect>
-<rect x="331.6" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Wed 00:00</title></rect>
+<rect x="337.8" y="40" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 8h from Wed 01:00</title></rect>
 <rect x="480.4" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="40" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 4h from Fri 00:00</title></rect>
-<text x="1080" y="49">40h</text>
+<text x="1080" y="49">21h</text>
 <text x="28" y="62" text-anchor="end">A3</text>
 <rect x="34.0" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Mon 00:00</title></rect>
+<rect x="182.8" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Wed 00:00</title></rect>
-<rect x="480.4" y="53" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 8h from Thu 00:00</title></rect>
 <rect x="629.2" y="53" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 4h from Fri 00:00</title></rect>
-<text x="1080" y="62">30h</text>
+<text x="1080" y="62">31h</text>
 <text x="28" y="75" text-anchor="end">A4</text>
 <rect x="34.0" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Wed 00:00</title></rect>
-<rect x="480.4" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Thu 00:00</title></rect>
-<text x="1080" y="75">36h</text>
+<text x="1080" y="75">27h</text>
 <text x="28" y="88" text-anchor="end">A5</text>
 <rect x="34.0" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Tue 00:00</title></rect>
-<rect x="331.6" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Wed 00:00</title></rect>
-<rect x="480.4" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Thu 00:00</title></rect>
-<text x="1080" y="88">36h</text>
+<rect x="505.2" y="79" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 8h from Thu 04:00</title></rect>
+<rect x="629.2" y="79" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 4h from Fri 00:00</title></rect>
+<text x="1080" y="88">30h</text>
 <text x="28" y="101" text-anchor="end">A6</text>
 <rect x="34.0" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Tue 00:00</title></rect>
-<rect x="629.2" y="92" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 4h from Fri 00:00</title></rect>
-<text x="1080" y="101">22h</text>
+<rect x="480.4" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Thu 00:00</title></rect>
+<rect x="771.8" y="92" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 8h from Fri 23:00</title></rect>
+<text x="1080" y="101">35h</text>
 <text x="28" y="114" text-anchor="end">A7</text>
-<rect x="65.0" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Mon 05:00</title></rect>
+<rect x="65.0" y="105" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 8h from Mon 05:00</title></rect>
 <rect x="213.8" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Tue 05:00</title></rect>
 <rect x="362.6" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Wed 05:00</title></rect>
 <rect x="517.6" y="105" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A7: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="105" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 4h from Fri 04:00</title></rect>
-<text x="1080" y="114">40h</text>
+<text x="1080" y="114">39h</text>
 <text x="28" y="127" text-anchor="end">A8</text>
 <rect x="71.2" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Mon 06:00</title></rect>
 <rect x="220.0" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Tue 06:00</title></rect>
-<rect x="368.8" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Wed 06:00</title></rect>
+<rect x="368.8" y="118" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 8h from Wed 06:00</title></rect>
 <rect x="517.6" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="118" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A8: 4h from Fri 04:00</title></rect>
-<text x="1080" y="127">40h</text>
+<text x="1080" y="127">39h</text>
 <text x="28" y="140" text-anchor="end">A9</text>
 <rect x="71.2" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Mon 06:00</title></rect>
 <rect x="220.0" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Tue 06:00</title></rect>
 <rect x="368.8" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Wed 06:00</title></rect>
-<rect x="517.6" y="131" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 8h from Thu 06:00</title></rect>
+<rect x="517.6" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="131" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A9: 4h from Fri 04:00</title></rect>
-<text x="1080" y="140">39h</text>
+<text x="1080" y="140">40h</text>
 <text x="28" y="153" text-anchor="end">A10</text>
 <rect x="77.4" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Mon 07:00</title></rect>
 <rect x="226.2" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Tue 07:00</title></rect>
 <rect x="375.0" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Wed 07:00</title></rect>
 <rect x="523.8" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Thu 07:00</title></rect>
-<text x="1080" y="153">36h</text>
+<rect x="654.0" y="144" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A10: 4h from Fri 04:00</title></rect>
+<text x="1080" y="153">40h</text>
 <text x="28" y="166" text-anchor="end">A11</text>
-<rect x="77.4" y="157" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 9h from Mon 07:00</title></rect>
-<rect x="226.2" y="157" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 7h from Tue 07:00</title></rect>
+<rect x="77.4" y="157" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 8h from Mon 07:00</title></rect>
+<rect x="226.2" y="157" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 9h from Tue 07:00</title></rect>
 <rect x="375.0" y="157" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 9h from Wed 07:00</title></rect>
 <rect x="523.8" y="157" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A11: 9h from Thu 07:00</title></rect>
-<rect x="654.0" y="157" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A11: 4h from Fri 04:00</title></rect>
-<text x="1080" y="166">38h</text>
+<rect x="660.2" y="157" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A11: 4h from Fri 05:00</title></rect>
+<text x="1080" y="166">39h</text>
 <text x="28" y="179" text-anchor="end">A12</text>
 <rect x="77.4" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Mon 07:00</title></rect>
 <rect x="226.2" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Tue 07:00</title></rect>
@@ -2259,8 +2328,8 @@ has to keep them.</p></div>
 <rect x="660.2" y="170" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A12: 4h from Fri 05:00</title></rect>
 <text x="1080" y="179">40h</text>
 <text x="28" y="192" text-anchor="end">A13</text>
-<rect x="77.4" y="183" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 8h from Mon 07:00</title></rect>
-<rect x="226.2" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Tue 07:00</title></rect>
+<rect x="77.4" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Mon 07:00</title></rect>
+<rect x="226.2" y="183" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 8h from Tue 07:00</title></rect>
 <rect x="381.2" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Thu 08:00</title></rect>
 <rect x="666.4" y="183" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 4h from Fri 06:00</title></rect>
@@ -2281,32 +2350,31 @@ has to keep them.</p></div>
 <text x="1080" y="218">40h</text>
 <text x="28" y="231" text-anchor="end">A16</text>
 <rect x="83.6" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Mon 08:00</title></rect>
-<rect x="232.4" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Tue 08:00</title></rect>
-<rect x="381.2" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Wed 08:00</title></rect>
+<rect x="232.4" y="222" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 8h from Tue 08:00</title></rect>
+<rect x="381.2" y="222" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 8h from Wed 08:00</title></rect>
 <rect x="530.0" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Thu 08:00</title></rect>
-<rect x="672.6" y="222" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 4h from Fri 07:00</title></rect>
-<text x="1080" y="231">40h</text>
+<rect x="672.6" y="222" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 5h from Fri 07:00</title></rect>
+<text x="1080" y="231">39h</text>
 <text x="28" y="244" text-anchor="end">A17</text>
 <rect x="83.6" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Mon 08:00</title></rect>
 <rect x="232.4" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Tue 08:00</title></rect>
-<rect x="387.4" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Wed 09:00</title></rect>
+<rect x="381.2" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Thu 08:00</title></rect>
 <rect x="672.6" y="235" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 4h from Fri 07:00</title></rect>
 <text x="1080" y="244">40h</text>
 <text x="28" y="257" text-anchor="end">A18</text>
 <rect x="89.8" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Tue 09:00</title></rect>
-<rect x="387.4" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Wed 09:00</title></rect>
+<rect x="387.4" y="248" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 8h from Wed 09:00</title></rect>
 <rect x="536.2" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Thu 09:00</title></rect>
-<rect x="678.8" y="248" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 4h from Fri 08:00</title></rect>
-<text x="1080" y="257">40h</text>
+<text x="1080" y="257">35h</text>
 <text x="28" y="270" text-anchor="end">A19</text>
-<rect x="89.8" y="261" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 8h from Mon 09:00</title></rect>
+<rect x="89.8" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Tue 09:00</title></rect>
+<rect x="387.4" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Thu 09:00</title></rect>
-<rect x="678.8" y="261" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 4h from Fri 08:00</title></rect>
-<rect x="778.0" y="261" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A19: 7h from Sat 00:00</title></rect>
-<text x="1080" y="270">37h</text>
+<rect x="926.8" y="261" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A19: 4h from Sun 00:00</title></rect>
+<text x="1080" y="270">40h</text>
 <text x="28" y="283" text-anchor="end">A20</text>
 <rect x="89.8" y="274" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A20: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="274" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A20: 9h from Tue 09:00</title></rect>
@@ -2322,19 +2390,19 @@ has to keep them.</p></div>
 <rect x="678.8" y="287" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 4h from Fri 08:00</title></rect>
 <text x="1080" y="296">40h</text>
 <text x="28" y="309" text-anchor="end">A22</text>
-<rect x="89.8" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Mon 09:00</title></rect>
+<rect x="89.8" y="300" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 8h from Mon 09:00</title></rect>
 <rect x="238.6" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Thu 09:00</title></rect>
 <rect x="678.8" y="300" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 4h from Fri 08:00</title></rect>
-<text x="1080" y="309">40h</text>
+<text x="1080" y="309">39h</text>
 <text x="28" y="322" text-anchor="end">A23</text>
-<rect x="89.8" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Mon 09:00</title></rect>
+<rect x="89.8" y="313" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 5h from Mon 09:00</title></rect>
 <rect x="238.6" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Thu 09:00</title></rect>
-<rect x="678.8" y="313" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 4h from Fri 08:00</title></rect>
-<text x="1080" y="322">40h</text>
+<rect x="678.8" y="313" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 5h from Fri 08:00</title></rect>
+<text x="1080" y="322">37h</text>
 <text x="28" y="335" text-anchor="end">A24</text>
 <rect x="89.8" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Tue 09:00</title></rect>
@@ -2346,9 +2414,9 @@ has to keep them.</p></div>
 <rect x="89.8" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Wed 09:00</title></rect>
-<rect x="548.6" y="339" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 7h from Thu 11:00</title></rect>
+<rect x="536.2" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Thu 09:00</title></rect>
 <rect x="678.8" y="339" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 4h from Fri 08:00</title></rect>
-<text x="1080" y="348">38h</text>
+<text x="1080" y="348">40h</text>
 <text x="28" y="361" text-anchor="end">A26</text>
 <rect x="89.8" y="352" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A26: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="352" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A26: 9h from Tue 09:00</title></rect>
@@ -2366,17 +2434,17 @@ has to keep them.</p></div>
 <text x="28" y="387" text-anchor="end">A28</text>
 <rect x="89.8" y="378" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A28: 9h from Mon 09:00</title></rect>
 <rect x="275.8" y="378" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A28: 9h from Tue 15:00</title></rect>
-<rect x="437.0" y="378" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A28: 9h from Wed 17:00</title></rect>
+<rect x="406.0" y="378" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A28: 9h from Wed 12:00</title></rect>
 <rect x="573.4" y="378" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A28: 9h from Thu 15:00</title></rect>
 <rect x="703.6" y="378" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A28: 4h from Fri 12:00</title></rect>
 <text x="1080" y="387">40h</text>
 <text x="28" y="400" text-anchor="end">A29</text>
-<rect x="127.0" y="391" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A29: 9h from Mon 15:00</title></rect>
+<rect x="127.0" y="391" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A29: 5h from Mon 15:00</title></rect>
 <rect x="275.8" y="391" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A29: 9h from Tue 15:00</title></rect>
 <rect x="424.6" y="391" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A29: 9h from Wed 15:00</title></rect>
 <rect x="585.8" y="391" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A29: 9h from Thu 17:00</title></rect>
 <rect x="716.0" y="391" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A29: 4h from Fri 14:00</title></rect>
-<text x="1080" y="400">40h</text>
+<text x="1080" y="400">36h</text>
 <text x="28" y="413" text-anchor="end">A30</text>
 <rect x="127.0" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Mon 15:00</title></rect>
 <rect x="282.0" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Tue 16:00</title></rect>
@@ -2387,69 +2455,68 @@ has to keep them.</p></div>
 <text x="28" y="426" text-anchor="end">A31</text>
 <rect x="133.2" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Mon 16:00</title></rect>
 <rect x="282.0" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Tue 16:00</title></rect>
-<rect x="430.8" y="417" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A31: 4h from Wed 16:00</title></rect>
-<rect x="585.8" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Thu 17:00</title></rect>
-<rect x="716.0" y="417" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A31: 4h from Fri 14:00</title></rect>
-<text x="1080" y="426">35h</text>
+<rect x="430.8" y="417" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 8h from Wed 16:00</title></rect>
+<rect x="585.8" y="417" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 8h from Thu 17:00</title></rect>
+<rect x="716.0" y="417" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A31: 5h from Fri 14:00</title></rect>
+<text x="1080" y="426">39h</text>
 <text x="28" y="439" text-anchor="end">A32</text>
-<rect x="133.2" y="430" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A32: 9h from Mon 16:00</title></rect>
+<rect x="139.4" y="430" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A32: 5h from Mon 17:00</title></rect>
 <rect x="282.0" y="430" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A32: 9h from Tue 16:00</title></rect>
 <rect x="437.0" y="430" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A32: 9h from Wed 17:00</title></rect>
 <rect x="585.8" y="430" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A32: 4h from Thu 17:00</title></rect>
 <rect x="685.0" y="430" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A32: 9h from Fri 09:00</title></rect>
-<text x="1080" y="439">40h</text>
+<text x="1080" y="439">36h</text>
 <text x="28" y="452" text-anchor="end">A33</text>
-<rect x="139.4" y="443" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A33: 9h from Mon 17:00</title></rect>
+<rect x="139.4" y="443" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A33: 7h from Mon 17:00</title></rect>
 <rect x="288.2" y="443" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A33: 9h from Tue 17:00</title></rect>
-<rect x="437.0" y="443" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A33: 7h from Wed 17:00</title></rect>
-<rect x="585.8" y="443" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A33: 4h from Thu 17:00</title></rect>
+<rect x="437.0" y="443" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A33: 9h from Wed 17:00</title></rect>
 <rect x="685.0" y="443" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A33: 9h from Fri 09:00</title></rect>
-<text x="1080" y="452">38h</text>
+<text x="1080" y="452">34h</text>
 <text x="28" y="465" text-anchor="end">A34</text>
-<rect x="139.4" y="456" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 9h from Mon 17:00</title></rect>
+<rect x="139.4" y="456" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 7h from Mon 17:00</title></rect>
 <rect x="288.2" y="456" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 4h from Tue 17:00</title></rect>
 <rect x="437.0" y="456" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 9h from Wed 17:00</title></rect>
 <rect x="685.0" y="456" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 9h from Fri 09:00</title></rect>
 <rect x="815.2" y="456" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 9h from Sat 06:00</title></rect>
-<text x="1080" y="465">40h</text>
+<text x="1080" y="465">38h</text>
 <text x="28" y="478" text-anchor="end">A35</text>
-<rect x="145.6" y="469" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A35: 9h from Mon 18:00</title></rect>
+<rect x="145.6" y="469" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A35: 8h from Mon 18:00</title></rect>
 <rect x="294.4" y="469" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A35: 4h from Tue 18:00</title></rect>
 <rect x="685.0" y="469" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A35: 9h from Fri 09:00</title></rect>
 <rect x="815.2" y="469" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A35: 9h from Sat 06:00</title></rect>
 <rect x="945.4" y="469" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A35: 9h from Sun 03:00</title></rect>
-<text x="1080" y="478">40h</text>
+<text x="1080" y="478">39h</text>
 <text x="28" y="491" text-anchor="end">A36</text>
-<rect x="89.8" y="482" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 4h from Mon 09:00</title></rect>
+<rect x="89.8" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Mon 09:00</title></rect>
 <rect x="294.4" y="482" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A36: 9h from Tue 18:00</title></rect>
-<rect x="685.0" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Fri 09:00</title></rect>
+<rect x="678.8" y="482" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 4h from Fri 08:00</title></rect>
 <rect x="815.2" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Sat 06:00</title></rect>
 <rect x="945.4" y="482" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A36: 9h from Sun 03:00</title></rect>
 <text x="1080" y="491">40h</text>
 <text x="28" y="504" text-anchor="end">A37</text>
 <rect x="145.6" y="495" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 6h from Mon 18:00</title></rect>
-<rect x="294.4" y="495" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 6h from Tue 18:00</title></rect>
+<rect x="294.4" y="495" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 8h from Tue 18:00</title></rect>
 <rect x="691.2" y="495" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 9h from Fri 10:00</title></rect>
 <rect x="821.4" y="495" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 9h from Sat 07:00</title></rect>
-<rect x="951.6" y="495" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 9h from Sun 04:00</title></rect>
-<text x="1080" y="504">39h</text>
+<rect x="951.6" y="495" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 8h from Sun 04:00</title></rect>
+<text x="1080" y="504">40h</text>
 <text x="28" y="517" text-anchor="end">A38</text>
-<rect x="145.6" y="508" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 6h from Mon 18:00</title></rect>
-<rect x="443.2" y="508" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 7h from Wed 18:00</title></rect>
+<rect x="145.6" y="508" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 4h from Mon 18:00</title></rect>
+<rect x="443.2" y="508" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 9h from Wed 18:00</title></rect>
 <rect x="691.2" y="508" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 9h from Fri 10:00</title></rect>
-<rect x="827.6" y="508" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 8h from Sat 08:00</title></rect>
+<rect x="821.4" y="508" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="508" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 9h from Sun 04:00</title></rect>
-<text x="1080" y="517">39h</text>
+<text x="1080" y="517">40h</text>
 <text x="28" y="530" text-anchor="end">A39</text>
 <rect x="145.6" y="521" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 4h from Mon 18:00</title></rect>
 <rect x="548.6" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Thu 11:00</title></rect>
-<rect x="691.2" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Fri 10:00</title></rect>
+<rect x="691.2" y="521" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 8h from Fri 10:00</title></rect>
 <rect x="821.4" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="521" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A39: 9h from Sun 04:00</title></rect>
-<text x="1080" y="530">40h</text>
+<text x="1080" y="530">39h</text>
 <text x="28" y="543" text-anchor="end">A40</text>
-<rect x="145.6" y="534" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 4h from Mon 18:00</title></rect>
-<rect x="294.4" y="534" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 8h from Tue 18:00</title></rect>
+<rect x="145.6" y="534" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 6h from Mon 18:00</title></rect>
+<rect x="294.4" y="534" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 6h from Tue 18:00</title></rect>
 <rect x="691.2" y="534" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 9h from Fri 10:00</title></rect>
 <rect x="821.4" y="534" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="534" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 9h from Sun 04:00</title></rect>
@@ -2462,73 +2529,73 @@ has to keep them.</p></div>
 <rect x="951.6" y="547" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A41: 9h from Sun 04:00</title></rect>
 <text x="1080" y="556">39h</text>
 <text x="28" y="569" text-anchor="end">A42</text>
-<rect x="443.2" y="560" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A42: 6h from Wed 18:00</title></rect>
-<rect x="592.0" y="560" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 4h from Thu 18:00</title></rect>
+<rect x="443.2" y="560" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A42: 7h from Wed 18:00</title></rect>
+<rect x="592.0" y="560" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A42: 5h from Thu 18:00</title></rect>
 <rect x="697.4" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Fri 11:00</title></rect>
 <rect x="827.6" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Sat 08:00</title></rect>
 <rect x="970.2" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Sun 07:00</title></rect>
-<text x="1080" y="569">37h</text>
+<text x="1080" y="569">39h</text>
 <text x="28" y="582" text-anchor="end">A43</text>
-<rect x="443.2" y="573" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A43: 9h from Wed 18:00</title></rect>
-<rect x="592.0" y="573" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 4h from Thu 18:00</title></rect>
+<rect x="443.2" y="573" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A43: 6h from Wed 18:00</title></rect>
+<rect x="567.2" y="573" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 5h from Thu 14:00</title></rect>
 <rect x="697.4" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Fri 11:00</title></rect>
 <rect x="827.6" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Sat 08:00</title></rect>
-<rect x="970.2" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Sun 07:00</title></rect>
-<text x="1080" y="582">40h</text>
+<rect x="970.2" y="573" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 8h from Sun 07:00</title></rect>
+<text x="1080" y="582">37h</text>
 <text x="28" y="595" text-anchor="end">A44</text>
-<rect x="443.2" y="586" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A44: 6h from Wed 18:00</title></rect>
-<rect x="592.0" y="586" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A44: 6h from Thu 18:00</title></rect>
+<rect x="443.2" y="586" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A44: 7h from Wed 18:00</title></rect>
+<rect x="592.0" y="586" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A44: 4h from Thu 18:00</title></rect>
 <rect x="703.6" y="586" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A44: 9h from Fri 12:00</title></rect>
 <rect x="833.8" y="586" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A44: 9h from Sat 09:00</title></rect>
 <rect x="976.4" y="586" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A44: 9h from Sun 08:00</title></rect>
-<text x="1080" y="595">39h</text>
+<text x="1080" y="595">38h</text>
 <text x="28" y="608" text-anchor="end">A45</text>
 <rect x="96.0" y="599" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A45: 4h from Mon 10:00</title></rect>
 <rect x="592.0" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Thu 18:00</title></rect>
-<rect x="740.8" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Fri 18:00</title></rect>
+<rect x="740.8" y="599" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 7h from Fri 18:00</title></rect>
 <rect x="871.0" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="599" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A45: 9h from Sun 12:00</title></rect>
-<text x="1080" y="608">40h</text>
+<text x="1080" y="608">38h</text>
 <text x="28" y="621" text-anchor="end">A46</text>
 <rect x="294.4" y="612" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 6h from Tue 18:00</title></rect>
 <rect x="592.0" y="612" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 6h from Thu 18:00</title></rect>
 <rect x="740.8" y="612" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 9h from Fri 18:00</title></rect>
-<rect x="871.0" y="612" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 9h from Sat 15:00</title></rect>
+<rect x="877.2" y="612" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 8h from Sat 16:00</title></rect>
 <rect x="1001.2" y="612" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A46: 9h from Sun 12:00</title></rect>
-<text x="1080" y="621">39h</text>
+<text x="1080" y="621">38h</text>
 <text x="28" y="634" text-anchor="end">A47</text>
 <rect x="443.2" y="625" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 6h from Wed 18:00</title></rect>
 <rect x="592.0" y="625" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 6h from Thu 18:00</title></rect>
-<rect x="740.8" y="625" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 9h from Fri 18:00</title></rect>
+<rect x="740.8" y="625" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 7h from Fri 18:00</title></rect>
 <rect x="871.0" y="625" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="625" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A47: 9h from Sun 12:00</title></rect>
-<text x="1080" y="634">39h</text>
+<text x="1080" y="634">37h</text>
 <text x="28" y="647" text-anchor="end">A48</text>
-<rect x="145.6" y="638" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A48: 4h from Mon 18:00</title></rect>
+<rect x="145.6" y="638" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 6h from Mon 18:00</title></rect>
 <rect x="592.0" y="638" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 6h from Thu 18:00</title></rect>
 <rect x="740.8" y="638" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="638" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="638" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A48: 9h from Sun 12:00</title></rect>
-<text x="1080" y="647">37h</text>
+<text x="1080" y="647">39h</text>
 <text x="28" y="660" text-anchor="end">A49</text>
-<rect x="145.6" y="651" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 6h from Mon 18:00</title></rect>
-<rect x="387.4" y="651" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A49: 7h from Wed 09:00</title></rect>
+<rect x="145.6" y="651" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 8h from Mon 18:00</title></rect>
+<rect x="387.4" y="651" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A49: 4h from Wed 09:00</title></rect>
 <rect x="740.8" y="651" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="651" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="651" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A49: 9h from Sun 12:00</title></rect>
-<text x="1080" y="660">40h</text>
+<text x="1080" y="660">39h</text>
 <text x="28" y="673" text-anchor="end">A50</text>
 <rect x="244.8" y="664" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 9h from Tue 10:00</title></rect>
 <rect x="387.4" y="664" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 4h from Wed 09:00</title></rect>
-<rect x="740.8" y="664" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 9h from Fri 18:00</title></rect>
+<rect x="740.8" y="664" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 8h from Fri 18:00</title></rect>
 <rect x="871.0" y="664" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="664" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 9h from Sun 12:00</title></rect>
-<text x="1080" y="673">40h</text>
+<text x="1080" y="673">39h</text>
 <text x="28" y="686" text-anchor="end">A51</text>
 <rect x="238.6" y="677" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A51: 4h from Tue 09:00</title></rect>
-<rect x="616.8" y="677" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 7h from Thu 22:00</title></rect>
+<rect x="610.6" y="677" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 8h from Thu 21:00</title></rect>
 <rect x="747.0" y="677" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 9h from Fri 19:00</title></rect>
-<rect x="877.2" y="677" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 9h from Sat 16:00</title></rect>
+<rect x="883.4" y="677" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 8h from Sat 17:00</title></rect>
 <rect x="1007.4" y="677" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A51: 9h from Sun 13:00</title></rect>
 <text x="1080" y="686">38h</text>
 <text x="28" y="699" text-anchor="end">A52</text>
@@ -2541,37 +2608,36 @@ has to keep them.</p></div>
 <text x="28" y="712" text-anchor="end">A53</text>
 <rect x="158.0" y="703" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 4h from Mon 20:00</title></rect>
 <rect x="306.8" y="703" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 4h from Tue 20:00</title></rect>
-<rect x="747.0" y="703" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 8h from Fri 19:00</title></rect>
+<rect x="747.0" y="703" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 7h from Fri 19:00</title></rect>
 <rect x="877.2" y="703" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 9h from Sat 16:00</title></rect>
 <rect x="1007.4" y="703" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A53: 9h from Sun 13:00</title></rect>
-<text x="1080" y="712">34h</text>
+<text x="1080" y="712">33h</text>
 <text x="28" y="725" text-anchor="end">A54</text>
 <rect x="530.0" y="716" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A54: 4h from Thu 08:00</title></rect>
-<rect x="753.2" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Fri 20:00</title></rect>
+<rect x="753.2" y="716" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 6h from Fri 20:00</title></rect>
 <rect x="883.4" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Sat 17:00</title></rect>
 <rect x="1013.6" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Sun 14:00</title></rect>
-<text x="1080" y="725">31h</text>
+<text x="1080" y="725">28h</text>
 <text x="28" y="738" text-anchor="end">A55</text>
-<rect x="530.0" y="729" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A55: 4h from Thu 08:00</title></rect>
-<rect x="753.2" y="729" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 7h from Fri 20:00</title></rect>
+<rect x="331.6" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Wed 00:00</title></rect>
+<rect x="480.4" y="729" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 4h from Thu 00:00</title></rect>
+<rect x="753.2" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Fri 20:00</title></rect>
 <rect x="889.6" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Sat 18:00</title></rect>
 <rect x="1019.8" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Sun 15:00</title></rect>
-<text x="1080" y="738">29h</text>
+<text x="1080" y="738">40h</text>
 <text x="28" y="751" text-anchor="end">A56</text>
-<rect x="34.0" y="742" width="5.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 1h from Mon 00:00</title></rect>
-<rect x="331.6" y="742" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 9h from Wed 00:00</title></rect>
-<rect x="623.0" y="742" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 4h from Thu 23:00</title></rect>
-<rect x="771.8" y="742" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 9h from Fri 23:00</title></rect>
-<rect x="914.4" y="742" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 6h from Sat 22:00</title></rect>
+<rect x="34.0" y="742" width="11.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 2h from Mon 00:00</title></rect>
+<rect x="604.4" y="742" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 4h from Thu 20:00</title></rect>
+<rect x="771.8" y="742" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 7h from Fri 23:00</title></rect>
+<rect x="914.4" y="742" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 7h from Sat 22:00</title></rect>
 <rect x="1032.2" y="742" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 7h from Sun 17:00</title></rect>
-<text x="1080" y="751">36h</text>
+<text x="1080" y="751">27h</text>
 <text x="28" y="764" text-anchor="end">A57</text>
 <rect x="34.0" y="755" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 3h from Mon 00:00</title></rect>
-<rect x="480.4" y="755" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 8h from Thu 00:00</title></rect>
 <rect x="697.4" y="755" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A57: 4h from Fri 11:00</title></rect>
 <rect x="796.6" y="755" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 9h from Sat 03:00</title></rect>
 <rect x="1057.0" y="755" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 3h from Sun 21:00</title></rect>
-<text x="1080" y="764">27h</text>
+<text x="1080" y="764">19h</text>
 <text x="28" y="777" text-anchor="end">A58</text>
 <rect x="34.0" y="768" width="11.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A58: 2h from Mon 00:00</title></rect>
 <rect x="697.4" y="768" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A58: 4h from Fri 11:00</title></rect>
@@ -2580,50 +2646,56 @@ has to keep them.</p></div>
 <text x="1080" y="777">18h</text>
 <text x="28" y="790" text-anchor="end">A59</text>
 <rect x="34.0" y="781" width="5.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 1h from Mon 00:00</title></rect>
+<rect x="164.2" y="781" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 6h from Mon 21:00</title></rect>
 <rect x="604.4" y="781" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 4h from Thu 20:00</title></rect>
 <rect x="703.6" y="781" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A59: 5h from Fri 12:00</title></rect>
 <rect x="920.6" y="781" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 5h from Sat 23:00</title></rect>
 <rect x="1057.0" y="781" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 3h from Sun 21:00</title></rect>
-<text x="1080" y="790">18h</text>
+<text x="1080" y="790">24h</text>
 <text x="28" y="803" text-anchor="end">A60</text>
-<rect x="34.0" y="794" width="11.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 2h from Mon 00:00</title></rect>
+<rect x="34.0" y="794" width="5.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 1h from Mon 00:00</title></rect>
+<rect x="592.0" y="794" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 6h from Thu 18:00</title></rect>
 <rect x="703.6" y="794" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A60: 5h from Fri 12:00</title></rect>
 <rect x="920.6" y="794" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 5h from Sat 23:00</title></rect>
 <rect x="1057.0" y="794" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 3h from Sun 21:00</title></rect>
-<text x="1080" y="803">15h</text>
+<text x="1080" y="803">20h</text>
 <text x="28" y="816" text-anchor="end">A61</text>
-<rect x="189.0" y="807" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A61: 8h from Tue 01:00</title></rect>
-<rect x="982.6" y="807" width="36.0" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A61: 6h from Sun 09:00</title></rect>
-<text x="1080" y="816">14h</text>
+<rect x="629.2" y="807" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A61: 4h from Fri 00:00</title></rect>
+<rect x="778.0" y="807" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A61: 6h from Sat 00:00</title></rect>
+<rect x="982.6" y="807" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A61: 7h from Sun 09:00</title></rect>
+<text x="1080" y="816">17h</text>
 <text x="28" y="829" text-anchor="end">A62</text>
-<rect x="635.4" y="820" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 7h from Fri 01:00</title></rect>
-<rect x="778.0" y="820" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 6h from Sat 00:00</title></rect>
+<rect x="34.0" y="820" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 9h from Mon 00:00</title></rect>
+<rect x="629.2" y="820" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 4h from Fri 00:00</title></rect>
 <rect x="926.8" y="820" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 4h from Sun 00:00</title></rect>
 <text x="1080" y="829">17h</text>
 <text x="28" y="842" text-anchor="end">A63</text>
-<rect x="691.2" y="833" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A63: 4h from Fri 10:00</title></rect>
-<rect x="790.4" y="833" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 4h from Sat 02:00</title></rect>
+<rect x="182.8" y="833" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 9h from Tue 00:00</title></rect>
+<rect x="331.6" y="833" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 9h from Wed 00:00</title></rect>
+<rect x="685.0" y="833" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A63: 5h from Fri 09:00</title></rect>
+<rect x="790.4" y="833" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 6h from Sat 02:00</title></rect>
 <rect x="926.8" y="833" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 4h from Sun 00:00</title></rect>
-<text x="1080" y="842">12h</text>
+<text x="1080" y="842">33h</text>
 <text x="28" y="855" text-anchor="end">A64</text>
+<rect x="486.6" y="846" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 8h from Thu 01:00</title></rect>
 <rect x="691.2" y="846" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A64: 4h from Fri 10:00</title></rect>
 <rect x="790.4" y="846" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 4h from Sat 02:00</title></rect>
 <rect x="926.8" y="846" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 4h from Sun 00:00</title></rect>
-<text x="1080" y="855">12h</text>
+<text x="1080" y="855">20h</text>
 <text x="28" y="868" text-anchor="end">A65</text>
+<rect x="331.6" y="859" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A65: 9h from Wed 00:00</title></rect>
 <rect x="691.2" y="859" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A65: 4h from Fri 10:00</title></rect>
-<rect x="926.8" y="859" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A65: 5h from Sun 00:00</title></rect>
-<text x="1080" y="868">9h</text>
+<rect x="926.8" y="859" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A65: 4h from Sun 00:00</title></rect>
+<text x="1080" y="868">17h</text>
 <text x="28" y="881" text-anchor="end">A66</text>
-<rect x="685.0" y="872" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A66: 4h from Fri 09:00</title></rect>
-<rect x="926.8" y="872" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A66: 4h from Sun 00:00</title></rect>
-<text x="1080" y="881">8h</text>
+<rect x="486.6" y="872" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A66: 7h from Thu 01:00</title></rect>
+<rect x="685.0" y="872" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A66: 9h from Fri 09:00</title></rect>
+<text x="1080" y="881">16h</text>
 <text x="28" y="894" text-anchor="end">A67</text>
-<rect x="381.2" y="885" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A67: 9h from Wed 08:00</title></rect>
-<rect x="629.2" y="885" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A67: 4h from Fri 00:00</title></rect>
-<rect x="852.4" y="885" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A67: 7h from Sat 12:00</title></rect>
+<rect x="635.4" y="885" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A67: 4h from Fri 01:00</title></rect>
+<rect x="852.4" y="885" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A67: 8h from Sat 12:00</title></rect>
 <rect x="1050.8" y="885" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A67: 4h from Sun 20:00</title></rect>
-<text x="1080" y="894">24h</text>
+<text x="1080" y="894">16h</text>
 </svg>
 <div class="legend"><span><i style="--c:#4da3ff"></i>day</span><span><i style="--c:#ffb454"></i>includes night hours</span></div>
 </figure>
@@ -2641,30 +2713,30 @@ has to keep them.</p></div>
 <text class="cell" x="74" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="98" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
-<rect x="144" y="34" width="44" height="20" rx="3" fill="#2c4f7b"><title>Wed 00:00 — 12 vs 10 needed (+2, spare)</title></rect>
-<text class="cell" x="166" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="144" y="34" width="44" height="20" rx="3" fill="#2c4a72"><title>Wed 00:00 — 11 vs 10 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="190" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
-<rect x="236" y="34" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 00:00 — 11 vs 10 needed (+1, spare)</title></rect>
-<text class="cell" x="258" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="236" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
+<text class="cell" x="258" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
 <rect x="282" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 00:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="328" y="34" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sun 00:00 — 13 vs 15 needed (-2, short)</title></rect>
-<text class="cell" x="350" y="48" text-anchor="middle" fill="rgba(10,14,22,.85)">13</text>
+<rect x="328" y="34" width="44" height="20" rx="3" fill="#946275"><title>Sun 00:00 — 14 vs 15 needed (-1, short)</title></rect>
+<text class="cell" x="350" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="52" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="98" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="144" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="190" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="236" y="56" width="44" height="20" rx="3" fill="#2c5385"><title>Fri 01:00 — 12 vs 9 needed (+3, spare)</title></rect>
-<text class="cell" x="258" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="282" y="56" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 01:00 — 14 vs 12 needed (+2, spare)</title></rect>
-<text class="cell" x="304" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="328" y="56" width="44" height="20" rx="3" fill="#d87f92"><title>Sun 01:00 — 10 vs 14 needed (-4, short)</title></rect>
-<text class="cell" x="350" y="70" text-anchor="middle" fill="rgba(10,14,22,.85)">10</text>
+<rect x="190" y="56" width="44" height="20" rx="3" fill="#2c4a72"><title>Thu 01:00 — 10 vs 9 needed (+1, spare)</title></rect>
+<text class="cell" x="212" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="236" y="56" width="44" height="20" rx="3" fill="#2c4a72"><title>Fri 01:00 — 10 vs 9 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="282" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 01:00 — 12 vs 12 needed (+0, exact)</title></rect>
+<text class="cell" x="304" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="328" y="56" width="44" height="20" rx="3" fill="#cf7b8e"><title>Sun 01:00 — 11 vs 14 needed (-3, short)</title></rect>
+<text class="cell" x="350" y="70" text-anchor="middle" fill="rgba(10,14,22,.85)">11</text>
 <rect x="52" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
 <rect x="98" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
@@ -2673,12 +2745,12 @@ has to keep them.</p></div>
 <text class="cell" x="166" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
 <rect x="190" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
-<rect x="236" y="78" width="44" height="20" rx="3" fill="#2c4f7b"><title>Fri 02:00 — 9 vs 7 needed (+2, spare)</title></rect>
-<text class="cell" x="258" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="282" y="78" width="44" height="20" rx="3" fill="#2d5b96"><title>Sat 02:00 — 16 vs 11 needed (+5, spare)</title></rect>
-<text class="cell" x="304" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
-<rect x="328" y="78" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sun 02:00 — 9 vs 11 needed (-2, short)</title></rect>
-<text class="cell" x="350" y="92" text-anchor="middle" fill="rgba(10,14,22,.85)">9</text>
+<rect x="236" y="78" width="44" height="20" rx="3" fill="#2c4a72"><title>Fri 02:00 — 8 vs 7 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
+<rect x="282" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 02:00 — 11 vs 11 needed (+0, exact)</title></rect>
+<text class="cell" x="304" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="328" y="78" width="44" height="20" rx="3" fill="#946275"><title>Sun 02:00 — 10 vs 11 needed (-1, short)</title></rect>
+<text class="cell" x="350" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
 <text class="ax" x="44" y="115" text-anchor="end">03</text>
 <rect x="52" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
@@ -2688,12 +2760,12 @@ has to keep them.</p></div>
 <text class="cell" x="166" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="190" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="236" y="100" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 03:00 — 7 vs 6 needed (+1, spare)</title></rect>
+<rect x="236" y="100" width="44" height="20" rx="3" fill="#2c4a72"><title>Fri 03:00 — 7 vs 6 needed (+1, spare)</title></rect>
 <text class="cell" x="258" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
-<rect x="282" y="100" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 03:00 — 10 vs 9 needed (+1, spare)</title></rect>
+<rect x="282" y="100" width="44" height="20" rx="3" fill="#2c4a72"><title>Sat 03:00 — 10 vs 9 needed (+1, spare)</title></rect>
 <text class="cell" x="304" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
-<rect x="328" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 03:00 — 10 vs 10 needed (+0, exact)</title></rect>
-<text class="cell" x="350" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="328" y="100" width="44" height="20" rx="3" fill="#2c4a72"><title>Sun 03:00 — 11 vs 10 needed (+1, spare)</title></rect>
+<text class="cell" x="350" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="52" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 04:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="98" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 04:00 — 6 vs 6 needed (+0, exact)</title></rect>
@@ -2704,7 +2776,7 @@ has to keep them.</p></div>
 <text class="cell" x="212" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="236" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 04:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="282" y="122" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 04:00 — 8 vs 7 needed (+1, spare)</title></rect>
+<rect x="282" y="122" width="44" height="20" rx="3" fill="#2c4a72"><title>Sat 04:00 — 8 vs 7 needed (+1, spare)</title></rect>
 <text class="cell" x="304" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
 <rect x="328" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 04:00 — 8 vs 8 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
@@ -2747,8 +2819,8 @@ has to keep them.</p></div>
 <text class="cell" x="212" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="236" y="188" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 07:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="282" y="188" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 07:00 — 10 vs 9 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="282" y="188" width="44" height="20" rx="3" fill="#2c507f"><title>Sat 07:00 — 11 vs 9 needed (+2, spare)</title></rect>
+<text class="cell" x="304" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="328" y="188" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 07:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="52" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 08:00 — 17 vs 17 needed (+0, exact)</title></rect>
@@ -2761,22 +2833,22 @@ has to keep them.</p></div>
 <text class="cell" x="212" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
 <rect x="236" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 08:00 — 16 vs 16 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
-<rect x="282" y="210" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 08:00 — 12 vs 10 needed (+2, spare)</title></rect>
+<rect x="282" y="210" width="44" height="20" rx="3" fill="#2c507f"><title>Sat 08:00 — 12 vs 10 needed (+2, spare)</title></rect>
 <text class="cell" x="304" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 08:00 — 10 vs 10 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
 <text class="ax" x="44" y="247" text-anchor="end">09</text>
 <rect x="52" y="232" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 09:00 — 23 vs 23 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
-<rect x="98" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 09:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<rect x="98" y="232" width="44" height="20" rx="3" fill="#2c4a72"><title>Tue 09:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="144" y="232" width="44" height="20" rx="3" fill="#2c4f7b"><title>Wed 09:00 — 22 vs 20 needed (+2, spare)</title></rect>
+<rect x="144" y="232" width="44" height="20" rx="3" fill="#2c507f"><title>Wed 09:00 — 22 vs 20 needed (+2, spare)</title></rect>
 <text class="cell" x="166" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="190" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 09:00 — 21 vs 20 needed (+1, spare)</title></rect>
-<text class="cell" x="212" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="236" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 09:00 — 21 vs 20 needed (+1, spare)</title></rect>
-<text class="cell" x="258" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="282" y="232" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 09:00 — 13 vs 11 needed (+2, spare)</title></rect>
+<rect x="190" y="232" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 09:00 — 22 vs 20 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
+<rect x="236" y="232" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 09:00 — 20 vs 20 needed (+0, exact)</title></rect>
+<text class="cell" x="258" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="282" y="232" width="44" height="20" rx="3" fill="#2c507f"><title>Sat 09:00 — 13 vs 11 needed (+2, spare)</title></rect>
 <text class="cell" x="304" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="328" y="232" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 09:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
@@ -2786,13 +2858,13 @@ has to keep them.</p></div>
 <text class="cell" x="120" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="144" y="254" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 10:00 — 24 vs 24 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
-<rect x="190" y="254" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 10:00 — 22 vs 21 needed (+1, spare)</title></rect>
-<text class="cell" x="212" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="236" y="254" width="44" height="20" rx="3" fill="#2d578e"><title>Fri 10:00 — 26 vs 22 needed (+4, spare)</title></rect>
-<text class="cell" x="258" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">26</text>
+<rect x="190" y="254" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 10:00 — 23 vs 21 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
+<rect x="236" y="254" width="44" height="20" rx="3" fill="#2c507f"><title>Fri 10:00 — 24 vs 22 needed (+2, spare)</title></rect>
+<text class="cell" x="258" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
 <rect x="282" y="254" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 10:00 — 13 vs 13 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
-<rect x="328" y="254" width="44" height="20" rx="3" fill="#c27589"><title>Sun 10:00 — 11 vs 14 needed (-3, short)</title></rect>
+<rect x="328" y="254" width="44" height="20" rx="3" fill="#cf7b8e"><title>Sun 10:00 — 11 vs 14 needed (-3, short)</title></rect>
 <text class="cell" x="350" y="268" text-anchor="middle" fill="rgba(10,14,22,.85)">11</text>
 <rect x="52" y="276" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 11:00 — 24 vs 24 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
@@ -2802,52 +2874,52 @@ has to keep them.</p></div>
 <text class="cell" x="166" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
 <rect x="190" y="276" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 11:00 — 24 vs 24 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
-<rect x="236" y="276" width="44" height="20" rx="3" fill="#2d5f9e"><title>Fri 11:00 — 28 vs 22 needed (+6, spare)</title></rect>
-<text class="cell" x="258" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">28</text>
+<rect x="236" y="276" width="44" height="20" rx="3" fill="#2d5f9e"><title>Fri 11:00 — 27 vs 22 needed (+5, spare)</title></rect>
+<text class="cell" x="258" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">27</text>
 <rect x="282" y="276" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 11:00 — 13 vs 13 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="290" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
-<rect x="328" y="276" width="44" height="20" rx="3" fill="#c27589"><title>Sun 11:00 — 11 vs 14 needed (-3, short)</title></rect>
+<rect x="328" y="276" width="44" height="20" rx="3" fill="#cf7b8e"><title>Sun 11:00 — 11 vs 14 needed (-3, short)</title></rect>
 <text class="cell" x="350" y="290" text-anchor="middle" fill="rgba(10,14,22,.85)">11</text>
 <text class="ax" x="44" y="313" text-anchor="end">12</text>
-<rect x="52" y="298" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 12:00 — 24 vs 23 needed (+1, spare)</title></rect>
+<rect x="52" y="298" width="44" height="20" rx="3" fill="#2c4a72"><title>Mon 12:00 — 24 vs 23 needed (+1, spare)</title></rect>
 <text class="cell" x="74" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
 <rect x="98" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 12:00 — 23 vs 23 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
-<rect x="144" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 12:00 — 24 vs 24 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
+<rect x="144" y="298" width="44" height="20" rx="3" fill="#2c4a72"><title>Wed 12:00 — 25 vs 24 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">25</text>
 <rect x="190" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 12:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 12:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="282" y="298" width="44" height="20" rx="3" fill="#8d5f72"><title>Sat 12:00 — 12 vs 13 needed (-1, short)</title></rect>
+<rect x="282" y="298" width="44" height="20" rx="3" fill="#946275"><title>Sat 12:00 — 12 vs 13 needed (-1, short)</title></rect>
 <text class="cell" x="304" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="328" y="298" width="44" height="20" rx="3" fill="#2c4970"><title>Sun 12:00 — 15 vs 14 needed (+1, spare)</title></rect>
-<text class="cell" x="350" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">15</text>
+<rect x="328" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 12:00 — 14 vs 14 needed (+0, exact)</title></rect>
+<text class="cell" x="350" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="52" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 13:00 — 23 vs 23 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
-<rect x="98" y="320" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 13:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<rect x="98" y="320" width="44" height="20" rx="3" fill="#2c4a72"><title>Tue 13:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="144" y="320" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 13:00 — 23 vs 22 needed (+1, spare)</title></rect>
+<rect x="144" y="320" width="44" height="20" rx="3" fill="#2c4a72"><title>Wed 13:00 — 23 vs 22 needed (+1, spare)</title></rect>
 <text class="cell" x="166" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="190" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 13:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 13:00 — 21 vs 21 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="282" y="320" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sat 13:00 — 12 vs 14 needed (-2, short)</title></rect>
+<rect x="282" y="320" width="44" height="20" rx="3" fill="#b46f83"><title>Sat 13:00 — 12 vs 14 needed (-2, short)</title></rect>
 <text class="cell" x="304" y="334" text-anchor="middle" fill="rgba(10,14,22,.85)">12</text>
 <rect x="328" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 13:00 — 13 vs 13 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="52" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="98" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 14:00 — 20 vs 20 needed (+0, exact)</title></rect>
-<text class="cell" x="120" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="144" y="342" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 14:00 — 22 vs 21 needed (+1, spare)</title></rect>
-<text class="cell" x="166" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="190" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="98" y="342" width="44" height="20" rx="3" fill="#2c4a72"><title>Tue 14:00 — 21 vs 20 needed (+1, spare)</title></rect>
+<text class="cell" x="120" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="144" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
+<text class="cell" x="166" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="190" y="342" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 14:00 — 23 vs 21 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="236" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="282" y="342" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sat 14:00 — 12 vs 14 needed (-2, short)</title></rect>
+<rect x="282" y="342" width="44" height="20" rx="3" fill="#b46f83"><title>Sat 14:00 — 12 vs 14 needed (-2, short)</title></rect>
 <text class="cell" x="304" y="356" text-anchor="middle" fill="rgba(10,14,22,.85)">12</text>
 <rect x="328" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 14:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
@@ -2856,41 +2928,41 @@ has to keep them.</p></div>
 <text class="cell" x="74" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
 <rect x="98" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 15:00 — 20 vs 20 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="144" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 15:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<rect x="144" y="364" width="44" height="20" rx="3" fill="#2c4a72"><title>Wed 15:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="166" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="190" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 15:00 — 20 vs 20 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="190" y="364" width="44" height="20" rx="3" fill="#2c4a72"><title>Thu 15:00 — 21 vs 20 needed (+1, spare)</title></rect>
+<text class="cell" x="212" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
 <rect x="236" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 15:00 — 19 vs 19 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
-<rect x="282" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 15:00 — 15 vs 14 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">15</text>
+<rect x="282" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 15:00 — 14 vs 14 needed (+0, exact)</title></rect>
+<text class="cell" x="304" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="328" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 15:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="52" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 16:00 — 20 vs 19 needed (+1, spare)</title></rect>
-<text class="cell" x="74" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="98" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 16:00 — 20 vs 19 needed (+1, spare)</title></rect>
-<text class="cell" x="120" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="52" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 16:00 — 19 vs 19 needed (+0, exact)</title></rect>
+<text class="cell" x="74" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
+<rect x="98" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 16:00 — 19 vs 19 needed (+0, exact)</title></rect>
+<text class="cell" x="120" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
 <rect x="144" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 16:00 — 20 vs 20 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="190" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 16:00 — 18 vs 17 needed (+1, spare)</title></rect>
-<text class="cell" x="212" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
+<rect x="190" y="386" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 16:00 — 19 vs 17 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
 <rect x="236" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 16:00 — 18 vs 18 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
-<rect x="282" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 16:00 — 13 vs 12 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
+<rect x="282" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 16:00 — 12 vs 12 needed (+0, exact)</title></rect>
+<text class="cell" x="304" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 16:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="52" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
-<rect x="98" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
+<rect x="98" y="408" width="44" height="20" rx="3" fill="#2c4a72"><title>Tue 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
-<rect x="144" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
-<text class="cell" x="166" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
+<rect x="144" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
+<text class="cell" x="166" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
 <rect x="190" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
 <rect x="236" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 17:00 — 16 vs 16 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
-<rect x="282" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 17:00 — 12 vs 11 needed (+1, spare)</title></rect>
+<rect x="282" y="408" width="44" height="20" rx="3" fill="#2c4a72"><title>Sat 17:00 — 12 vs 11 needed (+1, spare)</title></rect>
 <text class="cell" x="304" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 17:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
@@ -2915,37 +2987,37 @@ has to keep them.</p></div>
 <text class="cell" x="120" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="144" y="452" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 19:00 — 13 vs 13 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
-<rect x="190" y="452" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 19:00 — 14 vs 13 needed (+1, spare)</title></rect>
-<text class="cell" x="212" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
+<rect x="190" y="452" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 19:00 — 13 vs 13 needed (+0, exact)</title></rect>
+<text class="cell" x="212" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="236" y="452" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 19:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="282" y="452" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 19:00 — 11 vs 11 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="328" y="452" width="44" height="20" rx="3" fill="#2c4970"><title>Sun 19:00 — 12 vs 11 needed (+1, spare)</title></rect>
+<rect x="282" y="452" width="44" height="20" rx="3" fill="#2c4a72"><title>Sat 19:00 — 12 vs 11 needed (+1, spare)</title></rect>
+<text class="cell" x="304" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="328" y="452" width="44" height="20" rx="3" fill="#2c4a72"><title>Sun 19:00 — 12 vs 11 needed (+1, spare)</title></rect>
 <text class="cell" x="350" y="466" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="52" y="474" width="44" height="20" rx="3" fill="#2c5385"><title>Mon 20:00 — 14 vs 11 needed (+3, spare)</title></rect>
-<text class="cell" x="74" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="98" y="474" width="44" height="20" rx="3" fill="#2c4f7b"><title>Tue 20:00 — 14 vs 12 needed (+2, spare)</title></rect>
+<rect x="52" y="474" width="44" height="20" rx="3" fill="#2c507f"><title>Mon 20:00 — 13 vs 11 needed (+2, spare)</title></rect>
+<text class="cell" x="74" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
+<rect x="98" y="474" width="44" height="20" rx="3" fill="#2c507f"><title>Tue 20:00 — 14 vs 12 needed (+2, spare)</title></rect>
 <text class="cell" x="120" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="144" y="474" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 20:00 — 12 vs 12 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="190" y="474" width="44" height="20" rx="3" fill="#2c4f7b"><title>Thu 20:00 — 14 vs 12 needed (+2, spare)</title></rect>
+<rect x="144" y="474" width="44" height="20" rx="3" fill="#2c4a72"><title>Wed 20:00 — 13 vs 12 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
+<rect x="190" y="474" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 20:00 — 14 vs 12 needed (+2, spare)</title></rect>
 <text class="cell" x="212" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="236" y="474" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 20:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="282" y="474" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 20:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="328" y="474" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sun 20:00 — 13 vs 11 needed (+2, spare)</title></rect>
+<rect x="328" y="474" width="44" height="20" rx="3" fill="#2c507f"><title>Sun 20:00 — 13 vs 11 needed (+2, spare)</title></rect>
 <text class="cell" x="350" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <text class="ax" x="44" y="511" text-anchor="end">21</text>
-<rect x="52" y="496" width="44" height="20" rx="3" fill="#2c5385"><title>Mon 21:00 — 14 vs 11 needed (+3, spare)</title></rect>
+<rect x="52" y="496" width="44" height="20" rx="3" fill="#2d568b"><title>Mon 21:00 — 14 vs 11 needed (+3, spare)</title></rect>
 <text class="cell" x="74" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="98" y="496" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 21:00 — 13 vs 12 needed (+1, spare)</title></rect>
+<rect x="98" y="496" width="44" height="20" rx="3" fill="#2c4a72"><title>Tue 21:00 — 13 vs 12 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="144" y="496" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 21:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="190" y="496" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 21:00 — 12 vs 12 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="190" y="496" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 21:00 — 14 vs 12 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="236" y="496" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 21:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="282" y="496" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 21:00 — 11 vs 11 needed (+0, exact)</title></rect>
@@ -2958,13 +3030,13 @@ has to keep them.</p></div>
 <text class="cell" x="120" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="144" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 22:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="190" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 22:00 — 11 vs 11 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="190" y="518" width="44" height="20" rx="3" fill="#2c507f"><title>Thu 22:00 — 13 vs 11 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="236" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 22:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="282" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 22:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="328" y="518" width="44" height="20" rx="3" fill="#c27589"><title>Sun 22:00 — 8 vs 11 needed (-3, short)</title></rect>
+<rect x="328" y="518" width="44" height="20" rx="3" fill="#cf7b8e"><title>Sun 22:00 — 8 vs 11 needed (-3, short)</title></rect>
 <text class="cell" x="350" y="532" text-anchor="middle" fill="rgba(10,14,22,.85)">8</text>
 <rect x="52" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 23:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
@@ -2974,19 +3046,19 @@ has to keep them.</p></div>
 <text class="cell" x="166" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="190" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 23:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="236" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 23:00 — 12 vs 12 needed (+0, exact)</title></rect>
-<text class="cell" x="258" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="236" y="540" width="44" height="20" rx="3" fill="#2c4a72"><title>Fri 23:00 — 13 vs 12 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="282" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 23:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="328" y="540" width="44" height="20" rx="3" fill="#ec879b"><title>Sun 23:00 — 7 vs 12 needed (-5, short)</title></rect>
+<rect x="328" y="540" width="44" height="20" rx="3" fill="#ff8fa3"><title>Sun 23:00 — 7 vs 12 needed (-5, short)</title></rect>
 <text class="cell" x="350" y="554" text-anchor="middle" fill="rgba(10,14,22,.85)">7</text>
 </svg></figure>
 <h3>How it got there</h3>
 <p>CP-SAT does not walk to an answer, it closes on one
 from both sides. A portfolio of eight workers proposes rosters from above while
 a bound climbs from below, and the search is finished when the two meet. On this
-week it found <b>17 successively better rosters</b> in
-120 seconds and never did meet the bound — which is normal, and the
+week it found <b>20 successively better rosters</b> in
+60 seconds and never did meet the bound — which is normal, and the
 gap it stopped at is the honest measure of how much is still unknown.</p>
 <figure class="ch"><figcaption><b>The search, second by second</b><span>68,005 boolean variables, 8 workers</span></figcaption>
 <svg viewBox="0 0 1000 300" role="img" aria-label="The search, second by second">
@@ -3001,44 +3073,47 @@ gap it stopped at is the honest measure of how much is still unknown.</p>
 <line class="grid" x1="70" y1="260.0" x2="984" y2="260.0"/>
 <text class="ax" x="62" y="264.0" text-anchor="end">0</text>
 <text class="ax" x="70.0" y="278" text-anchor="middle">0s</text>
-<text class="ax" x="252.8" y="278" text-anchor="middle">24s</text>
-<text class="ax" x="435.6" y="278" text-anchor="middle">48s</text>
-<text class="ax" x="618.4" y="278" text-anchor="middle">72s</text>
-<text class="ax" x="801.2" y="278" text-anchor="middle">96s</text>
-<text class="ax" x="984.0" y="278" text-anchor="middle">120s</text>
-<polygon points="535.9,46.8 549.7,46.8 549.7,46.8 579.0,46.8 579.0,46.8 627.5,46.8 627.5,46.9 650.5,46.9 650.5,47.2 677.9,47.2 677.9,47.2 765.9,47.2 765.9,47.2 794.6,47.2 794.6,47.3 840.3,47.3 840.3,47.3 854.5,47.3 854.5,47.3 902.1,47.3 902.1,47.4 911.5,47.4 911.5,47.4 920.4,47.4 920.4,47.4 933.9,47.4 933.9,47.4 934.2,47.4 934.2,47.4 950.2,47.4 950.2,47.4 969.5,47.4 969.5,47.4 984.0,47.4 984.0,260.0 70,260.0" fill="#4da3ff" opacity="0.06"/>
-<polyline points="535.9,260.0 549.7,260.0 549.7,260.0 579.0,260.0 579.0,260.0 627.5,260.0 627.5,259.5 650.5,259.5 650.5,259.5 677.9,259.5 677.9,259.5 765.9,259.5 765.9,259.1 794.6,259.1 794.6,259.1 840.3,259.1 840.3,259.1 854.5,259.1 854.5,259.1 902.1,259.1 902.1,259.1 911.5,259.1 911.5,259.1 920.4,259.1 920.4,259.1 933.9,259.1 933.9,259.1 934.2,259.1 934.2,259.1 950.2,259.1 950.2,259.1 969.5,259.1 969.5,259.1 984.0,259.1" fill="none" stroke="#22d3a6" stroke-width="2"/>
-<polyline points="535.9,46.8 549.7,46.8 549.7,46.8 579.0,46.8 579.0,46.8 627.5,46.8 627.5,46.9 650.5,46.9 650.5,47.2 677.9,47.2 677.9,47.2 765.9,47.2 765.9,47.2 794.6,47.2 794.6,47.3 840.3,47.3 840.3,47.3 854.5,47.3 854.5,47.3 902.1,47.3 902.1,47.4 911.5,47.4 911.5,47.4 920.4,47.4 920.4,47.4 933.9,47.4 933.9,47.4 934.2,47.4 934.2,47.4 950.2,47.4 950.2,47.4 969.5,47.4 969.5,47.4 984.0,47.4" fill="none" stroke="#4da3ff" stroke-width="2"/>
-<circle cx="535.9" cy="46.8" r="2.2" fill="#4da3ff" opacity="0.85"><title>61.2s — objective 286,195, bound 0</title></circle>
-<circle cx="549.7" cy="46.8" r="2.2" fill="#4da3ff" opacity="0.85"><title>63.0s — objective 286,161, bound 0</title></circle>
-<circle cx="579.0" cy="46.8" r="2.2" fill="#4da3ff" opacity="0.85"><title>66.8s — objective 286,149, bound 0</title></circle>
-<circle cx="627.5" cy="46.9" r="2.2" fill="#4da3ff" opacity="0.85"><title>73.2s — objective 286,031, bound 645</title></circle>
-<circle cx="650.5" cy="47.2" r="2.2" fill="#4da3ff" opacity="0.85"><title>76.2s — objective 285,691, bound 645</title></circle>
-<circle cx="677.9" cy="47.2" r="2.2" fill="#4da3ff" opacity="0.85"><title>79.8s — objective 285,647, bound 645</title></circle>
-<circle cx="765.9" cy="47.2" r="2.2" fill="#4da3ff" opacity="0.85"><title>91.4s — objective 285,603, bound 1,270</title></circle>
-<circle cx="794.6" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>95.1s — objective 285,570, bound 1,270</title></circle>
-<circle cx="840.3" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>101.1s — objective 285,559, bound 1,270</title></circle>
-<circle cx="854.5" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>103.0s — objective 285,476, bound 1,270</title></circle>
-<circle cx="902.1" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>109.2s — objective 285,435, bound 1,270</title></circle>
-<circle cx="911.5" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>110.5s — objective 285,429, bound 1,270</title></circle>
-<circle cx="920.4" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>111.6s — objective 285,423, bound 1,270</title></circle>
-<circle cx="933.9" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>113.4s — objective 285,378, bound 1,270</title></circle>
-<circle cx="934.2" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>113.5s — objective 285,372, bound 1,270</title></circle>
-<circle cx="950.2" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>115.6s — objective 285,348, bound 1,270</title></circle>
-<circle cx="969.5" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>118.1s — objective 285,331, bound 1,270</title></circle>
-<line x1="969.5" y1="47.4" x2="969.5" y2="259.1" stroke="#ffb454" stroke-width="1.4" stroke-dasharray="3 3"/>
-<text class="val" x="961.5" y="153.2" text-anchor="end" fill="#ffb454">100% gap</text>
+<text class="ax" x="252.8" y="278" text-anchor="middle">12s</text>
+<text class="ax" x="435.6" y="278" text-anchor="middle">24s</text>
+<text class="ax" x="618.4" y="278" text-anchor="middle">36s</text>
+<text class="ax" x="801.2" y="278" text-anchor="middle">48s</text>
+<text class="ax" x="984.0" y="278" text-anchor="middle">60s</text>
+<polygon points="431.9,46.8 445.0,46.8 445.0,46.8 530.7,46.8 530.7,47.2 531.9,47.2 531.9,47.3 575.9,47.3 575.9,47.3 601.8,47.3 601.8,47.3 635.0,47.3 635.0,47.4 704.4,47.4 704.4,47.5 728.2,47.5 728.2,47.5 775.5,47.5 775.5,47.6 775.6,47.6 775.6,47.6 794.0,47.6 794.0,55.1 820.4,55.1 820.4,55.1 825.7,55.1 825.7,62.6 843.5,62.6 843.5,62.6 845.6,62.6 845.6,62.6 845.9,62.6 845.9,70.0 871.0,70.0 871.0,70.1 879.4,70.1 879.4,70.1 908.7,70.1 908.7,70.4 984.0,70.4 984.0,260.0 70,260.0" fill="#4da3ff" opacity="0.06"/>
+<polyline points="431.9,260.0 445.0,260.0 445.0,260.0 530.7,260.0 530.7,259.5 531.9,259.5 531.9,259.5 575.9,259.5 575.9,259.5 601.8,259.5 601.8,259.5 635.0,259.5 635.0,259.5 704.4,259.5 704.4,259.1 728.2,259.1 728.2,259.1 775.5,259.1 775.5,259.1 775.6,259.1 775.6,259.1 794.0,259.1 794.0,259.1 820.4,259.1 820.4,259.1 825.7,259.1 825.7,259.1 843.5,259.1 843.5,259.1 845.6,259.1 845.6,259.1 845.9,259.1 845.9,259.1 871.0,259.1 871.0,259.1 879.4,259.1 879.4,259.1 908.7,259.1 908.7,259.1 984.0,259.1" fill="none" stroke="#22d3a6" stroke-width="2"/>
+<polyline points="431.9,46.8 445.0,46.8 445.0,46.8 530.7,46.8 530.7,47.2 531.9,47.2 531.9,47.3 575.9,47.3 575.9,47.3 601.8,47.3 601.8,47.3 635.0,47.3 635.0,47.4 704.4,47.4 704.4,47.5 728.2,47.5 728.2,47.5 775.5,47.5 775.5,47.6 775.6,47.6 775.6,47.6 794.0,47.6 794.0,55.1 820.4,55.1 820.4,55.1 825.7,55.1 825.7,62.6 843.5,62.6 843.5,62.6 845.6,62.6 845.6,62.6 845.9,62.6 845.9,70.0 871.0,70.0 871.0,70.1 879.4,70.1 879.4,70.1 908.7,70.1 908.7,70.4 984.0,70.4" fill="none" stroke="#4da3ff" stroke-width="2"/>
+<circle cx="431.9" cy="46.8" r="2.2" fill="#4da3ff" opacity="0.85"><title>23.8s — objective 286,195, bound 0</title></circle>
+<circle cx="445.0" cy="46.8" r="2.2" fill="#4da3ff" opacity="0.85"><title>24.6s — objective 286,184, bound 0</title></circle>
+<circle cx="530.7" cy="47.2" r="2.2" fill="#4da3ff" opacity="0.85"><title>30.2s — objective 285,672, bound 645</title></circle>
+<circle cx="531.9" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>30.3s — objective 285,516, bound 645</title></circle>
+<circle cx="575.9" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>33.2s — objective 285,494, bound 645</title></circle>
+<circle cx="601.8" cy="47.3" r="2.2" fill="#4da3ff" opacity="0.85"><title>34.9s — objective 285,461, bound 645</title></circle>
+<circle cx="635.0" cy="47.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>37.1s — objective 285,395, bound 645</title></circle>
+<circle cx="704.4" cy="47.5" r="2.2" fill="#4da3ff" opacity="0.85"><title>41.6s — objective 285,260, bound 1,270</title></circle>
+<circle cx="728.2" cy="47.5" r="2.2" fill="#4da3ff" opacity="0.85"><title>43.2s — objective 285,248, bound 1,270</title></circle>
+<circle cx="775.5" cy="47.6" r="2.2" fill="#4da3ff" opacity="0.85"><title>46.3s — objective 285,127, bound 1,270</title></circle>
+<circle cx="775.6" cy="47.6" r="2.2" fill="#4da3ff" opacity="0.85"><title>46.3s — objective 285,115, bound 1,270</title></circle>
+<circle cx="794.0" cy="55.1" r="2.2" fill="#4da3ff" opacity="0.85"><title>47.5s — objective 275,041, bound 1,270</title></circle>
+<circle cx="820.4" cy="55.1" r="2.2" fill="#4da3ff" opacity="0.85"><title>49.3s — objective 275,019, bound 1,270</title></circle>
+<circle cx="825.7" cy="62.6" r="2.2" fill="#4da3ff" opacity="0.85"><title>49.6s — objective 265,015, bound 1,270</title></circle>
+<circle cx="843.5" cy="62.6" r="2.2" fill="#4da3ff" opacity="0.85"><title>50.8s — objective 265,009, bound 1,270</title></circle>
+<circle cx="845.6" cy="62.6" r="2.2" fill="#4da3ff" opacity="0.85"><title>50.9s — objective 265,008, bound 1,270</title></circle>
+<circle cx="845.9" cy="70.0" r="2.2" fill="#4da3ff" opacity="0.85"><title>50.9s — objective 254,976, bound 1,270</title></circle>
+<circle cx="871.0" cy="70.1" r="2.2" fill="#4da3ff" opacity="0.85"><title>52.6s — objective 254,915, bound 1,270</title></circle>
+<circle cx="879.4" cy="70.1" r="2.2" fill="#4da3ff" opacity="0.85"><title>53.1s — objective 254,895, bound 1,270</title></circle>
+<circle cx="908.7" cy="70.4" r="2.2" fill="#4da3ff" opacity="0.85"><title>55.1s — objective 254,557, bound 1,270</title></circle>
+<line x1="908.7" y1="70.4" x2="908.7" y2="259.1" stroke="#ffb454" stroke-width="1.4" stroke-dasharray="3 3"/>
+<text class="val" x="900.7" y="164.7" text-anchor="end" fill="#ffb454">100% gap</text>
 </svg>
 <div class="legend"><span><i style="--c:#4da3ff"></i>best roster found</span><span><i style="--c:#22d3a6"></i>proof nothing better exists below this</span><span><i style="--c:#ffb454"></i>what is still unknown</span></div></figure>
-<div class="stats"><div class="stat key"><span class="k">Rosters found</span><span class="v">17</span><span class="n">each better than the last</span></div><div class="stat"><span class="k">First at</span><span class="v">61.2s</span><span class="n">objective 286,195</span></div><div class="stat good"><span class="k">Improvement</span><span class="v">0%</span><span class="n">off the first legal week it found</span></div><div class="stat warn"><span class="k">Gap left</span><span class="v">100%</span><span class="n">what the clock did not resolve</span></div></div>
-<div class="note">The blue line is the best week found so far and the green one is the proof that nothing cheaper than that value exists. Blue falls quickly — most of the 0% is gone early — and then crawls, which is the usual shape: the easy savings are the obvious ones. Green barely moves, and that is the real story. Proving a roster optimal is far harder than finding a good one, so the gap stays wide even though the roster stopped improving. The word <i>optimal</i> is not available here and is not used.</div>
-<div class="stats"><div class="stat"><span class="k">Agents</span><span class="v">67</span><span class="n">spain rules</span></div><div class="stat warn"><span class="k">Coverage</span><span class="v">98.8%</span><span class="n">27h short</span></div><div class="stat"><span class="k">Spare</span><span class="v">68h</span><span class="n">paid and not needed</span></div><div class="stat good"><span class="k">Rules</span><span class="v">all respected</span><span class="n">audited from the assignment</span></div></div>
+<div class="stats"><div class="stat key"><span class="k">Rosters found</span><span class="v">20</span><span class="n">each better than the last</span></div><div class="stat"><span class="k">First at</span><span class="v">23.8s</span><span class="n">objective 286,195</span></div><div class="stat good"><span class="k">Improvement</span><span class="v">11%</span><span class="n">off the first legal week it found</span></div><div class="stat warn"><span class="k">Gap left</span><span class="v">100%</span><span class="n">what the clock did not resolve</span></div></div>
+<div class="note">The blue line is the best week found so far and the green one is the proof that nothing cheaper than that value exists. Blue falls quickly — most of the 11% is gone early — and then crawls, which is the usual shape: the easy savings are the obvious ones. Green barely moves, and that is the real story. Proving a roster optimal is far harder than finding a good one, so the gap stays wide even though the roster stopped improving. The word <i>optimal</i> is not available here and is not used.</div>
+<div class="stats"><div class="stat"><span class="k">Agents</span><span class="v">67</span><span class="n">spain rules</span></div><div class="stat warn"><span class="k">Coverage</span><span class="v">98.9%</span><span class="n">24h short</span></div><div class="stat"><span class="k">Spare</span><span class="v">61h</span><span class="n">paid and not needed</span></div><div class="stat good"><span class="k">Rules</span><span class="v">all respected</span><span class="n">audited from the assignment</span></div></div>
 <h2><span class="num">06</span>Move the numbers yourself</h2><p class="sub">The same pipeline, running in your browser. Change how many people you have, or what you promise them, and watch the matrix rebuild.</p>
 <p>Everything above is one scenario. The panel below is the
 whole thing — Erlang C, the shift catalogue, the rules audit and the cost model
 — ported to JavaScript and running on the page, so the question "what if we were
 four people short" takes a few milliseconds instead of a terminal.</p>
-<div class="note"><b>This is the greedy roster, not the solver.</b> CP-SAT does not run in a browser, so the panel builds each week the way the warm start does: hand every agent the shift that closes the biggest remaining hole, if the rules still hold. That is instant and it is legal — the audit runs live and will say so if it ever is not — but it leaves more spare hours than the solver. On this week the solver reached 68h spare; the greedy alone lands higher, and the difference is what the sixty seconds of search above bought.</div>
+<div class="note"><b>This is the greedy roster, not the solver.</b> CP-SAT does not run in a browser, so the panel builds each week the way the warm start does: hand every agent the shift that closes the biggest remaining hole, if the rules still hold. That is instant and it is legal — the audit runs live and will say so if it ever is not — but it leaves more spare hours than the solver. On this week the solver reached 61h spare; the greedy alone lands higher, and the difference is what the sixty seconds of search above bought.</div>
 
 <div class="sim">
   <div class="controls">
@@ -3108,7 +3183,7 @@ four people short" takes a few milliseconds instead of a terminal.</p>
 <script>window.SHIFTMESH_DATA = {"arrivals":[[47.88,35.15,24.1,17.49,15.91,21.36,32.95,62.16,96.38,138.27,146.1,151.81,140.61,135.59,129.12,124.69,107.19,92.6,78.72,62.61,55.67,53.47,53.74,55.21],[43.8,31.57,19.94,14.62,14.57,21.08,33.54,59.3,95.46,128.07,143.72,140.56,137.83,133.15,122.97,116.64,106.81,91.42,76.43,61.03,57.41,52.43,50.45,54.25],[41.91,29.3,20.71,15.05,16.04,20.03,34.31,55.32,93.28,115.6,137.06,136.34,135.78,128.46,125.07,115.28,105.2,93.26,75.95,60.31,53.22,50.11,50.36,55.45],[44.05,31.66,21.12,15.43,14.45,18.31,32.25,53.76,91.45,118.52,130.94,135.46,123.3,125.12,115.67,111.29,96.51,87.61,73.25,58.62,51.68,49.14,44.45,57.42],[46.89,33.85,22.25,14.96,14.58,18.41,30.81,54.79,87.6,117.3,129.97,130.8,125.9,120.7,112.3,110.99,96.21,79.76,68.01,55.44,49.36,46.02,45.87,51.62],[62.9,53.64,41.99,29.95,22.88,20.49,21.12,28.12,40.06,52.94,60.02,61.35,63.59,65.64,60.81,59.05,56.09,51.91,51.29,48.8,44.7,46.43,50.5,62.03],[72.12,63.67,45.96,33.45,26.15,22.1,24.26,30.63,40.71,52.77,59.59,62.02,65.29,62.76,59.18,58.9,51.82,52.0,48.11,44.13,40.9,41.03,40.82,53.94]],"targetSeconds":30.0,"rules":{"spain":{"minShift":4,"maxShift":9,"maxWeekly":40,"maxOvertime":4,"maxDays":5,"minRest":12,"minWeeklyRest":36,"maxStartSpread":24},"spain-callcentre":{"minShift":4,"maxShift":10,"maxWeekly":39,"maxOvertime":5,"maxDays":5,"minRest":12,"minWeeklyRest":36,"maxStartSpread":24},"eu-minimum":{"minShift":4,"maxShift":12,"maxWeekly":48,"maxOvertime":0,"maxDays":6,"minRest":11,"minWeeklyRest":24,"maxStartSpread":24}},"pay":{"grossAnnual":17139.58,"annualHours":1764.0,"socialSecurity":0.3215,"nightPremium":1.96,"sundayPremium":15.33,"overtimeUplift":0.25}};</script>
 
 <h2><span class="num">07</span>What it costs</h2><p class="sub">Priced against the Spanish sector agreement, premium by premium.</p>
-<div class="prose"><p>An hour of rostered agent time costs
+<div class="prose single"><p>An hour of rostered agent time costs
 <b>&euro;12.84</b>: &euro;17,139.58 a year over
 1,764 rostered hours is &euro;9.72 gross,
 and employer social security adds 32.15%.</p><p>Premiums go on the <i>ordinary</i> hour, not the loaded one, which is how the
@@ -3125,18 +3200,18 @@ top.</p></div>
 </tr></thead><tbody>
 <tr>
 <td>Ordinary hours</td>
-<td class="r">2,311 h</td>
-<td class="r">€29,673</td>
+<td class="r">2,307 h</td>
+<td class="r">€29,622</td>
 </tr>
 <tr>
 <td>Night premium</td>
-<td class="r">516 h</td>
-<td class="r">€1,337</td>
+<td class="r">512 h</td>
+<td class="r">€1,326</td>
 </tr>
 <tr>
 <td>Sunday premium</td>
-<td class="r">33 shifts</td>
-<td class="r">€506</td>
+<td class="r">34 shifts</td>
+<td class="r">€521</td>
 </tr>
 <tr>
 <td>Holiday premium</td>
@@ -3150,259 +3225,346 @@ top.</p></div>
 </tr>
 <tr class="tot">
 <td>Total</td>
-<td class="r">2,311 h</td>
-<td class="r">€31,516</td>
+<td class="r">2,307 h</td>
+<td class="r">€31,470</td>
 </tr>
 </tbody></table></figure>
-<div class="stats"><div class="stat key"><span class="k">Week</span><span class="v">€31,516</span><span class="n">all premiums in</span></div><div class="stat"><span class="k">Year</span><span class="v">€1.64M</span><span class="n">at 52 weeks</span></div><div class="stat"><span class="k">Per contact</span><span class="v">€3.213</span><span class="n">over 9,807 contacts</span></div><div class="stat"><span class="k">Blended hour</span><span class="v">€13.64</span><span class="n">vs €12.84 base</span></div></div>
-<figure class="ch"><figcaption><b>Cost per agent, this week</b><span>first 32 agents — every bar is the same grade, so the colour on top is the whole story</span></figcaption>
+<div class="stats"><div class="stat key"><span class="k">Week</span><span class="v">€31,470</span><span class="n">all premiums in</span></div><div class="stat"><span class="k">Year</span><span class="v">€1.64M</span><span class="n">at 52 weeks</span></div><div class="stat"><span class="k">Per contact</span><span class="v">€3.209</span><span class="n">over 9,807 contacts</span></div><div class="stat"><span class="k">Blended hour</span><span class="v">€13.64</span><span class="n">vs €12.84 base</span></div></div>
+<figure class="ch"><figcaption><b>Cost per agent, this week</b><span>all 67 rostered agents — every bar is the same grade, so the colour is the whole story</span></figcaption>
 <svg viewBox="0 0 1000 260" role="img" aria-label="Cost per agent, this week">
 <line class="grid" x1="62" y1="30.0" x2="988" y2="30.0"/>
-<text class="ax" x="54" y="34.0" text-anchor="end">586</text>
+<text class="ax" x="54" y="34.0" text-anchor="end">591</text>
 <line class="grid" x1="62" y1="76.0" x2="988" y2="76.0"/>
-<text class="ax" x="54" y="80.0" text-anchor="end">440</text>
+<text class="ax" x="54" y="80.0" text-anchor="end">443</text>
 <line class="grid" x1="62" y1="122.0" x2="988" y2="122.0"/>
-<text class="ax" x="54" y="126.0" text-anchor="end">293</text>
+<text class="ax" x="54" y="126.0" text-anchor="end">296</text>
 <line class="grid" x1="62" y1="168.0" x2="988" y2="168.0"/>
-<text class="ax" x="54" y="172.0" text-anchor="end">147</text>
+<text class="ax" x="54" y="172.0" text-anchor="end">148</text>
 <line class="grid" x1="62" y1="214.0" x2="988" y2="214.0"/>
 <text class="ax" x="54" y="218.0" text-anchor="end">0</text>
-<rect x="66.6" y="60.8" width="19.7" height="153.2" fill="#4da3ff" opacity="0.92"><title>A1 — ordinary hours: 488 EUR</title></rect>
-<rect x="66.6" y="39.7" width="19.7" height="21.1" fill="#a78bfa" opacity="0.92"><title>A1 — night premium: 67 EUR</title></rect>
-<text class="ax" x="76.5" y="230" text-anchor="middle">A1</text>
-<text class="val" x="76.5" y="33.7" text-anchor="middle">555</text>
-<rect x="95.6" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A2 — ordinary hours: 514 EUR</title></rect>
-<rect x="95.6" y="30.0" width="19.7" height="22.8" fill="#a78bfa" opacity="0.92"><title>A2 — night premium: 73 EUR</title></rect>
-<text class="ax" x="105.4" y="230" text-anchor="middle">A2</text>
-<text class="val" x="105.4" y="24.0" text-anchor="middle">586</text>
-<rect x="124.5" y="93.1" width="19.7" height="120.9" fill="#4da3ff" opacity="0.92"><title>A3 — ordinary hours: 385 EUR</title></rect>
-<rect x="124.5" y="75.2" width="19.7" height="17.9" fill="#a78bfa" opacity="0.92"><title>A3 — night premium: 57 EUR</title></rect>
-<text class="ax" x="134.3" y="230" text-anchor="middle">A3</text>
-<text class="val" x="134.3" y="69.2" text-anchor="middle">442</text>
-<rect x="153.4" y="68.9" width="19.7" height="145.1" fill="#4da3ff" opacity="0.92"><title>A4 — ordinary hours: 462 EUR</title></rect>
-<rect x="153.4" y="49.4" width="19.7" height="19.5" fill="#a78bfa" opacity="0.92"><title>A4 — night premium: 62 EUR</title></rect>
-<text class="ax" x="163.3" y="230" text-anchor="middle">A4</text>
-<text class="val" x="163.3" y="43.4" text-anchor="middle">524</text>
-<rect x="182.4" y="68.9" width="19.7" height="145.1" fill="#4da3ff" opacity="0.92"><title>A5 — ordinary hours: 462 EUR</title></rect>
-<rect x="182.4" y="49.4" width="19.7" height="19.5" fill="#a78bfa" opacity="0.92"><title>A5 — night premium: 62 EUR</title></rect>
-<text class="ax" x="192.2" y="230" text-anchor="middle">A5</text>
-<text class="val" x="192.2" y="43.4" text-anchor="middle">524</text>
-<rect x="211.3" y="125.3" width="19.7" height="88.7" fill="#4da3ff" opacity="0.92"><title>A6 — ordinary hours: 282 EUR</title></rect>
-<rect x="211.3" y="112.3" width="19.7" height="13.0" fill="#a78bfa" opacity="0.92"><title>A6 — night premium: 41 EUR</title></rect>
-<text class="ax" x="221.2" y="230" text-anchor="middle">A6</text>
-<text class="val" x="221.2" y="106.3" text-anchor="middle">324</text>
-<rect x="240.3" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A7 — ordinary hours: 514 EUR</title></rect>
-<rect x="240.3" y="48.7" width="19.7" height="4.1" fill="#a78bfa" opacity="0.92"><title>A7 — night premium: 13 EUR</title></rect>
-<text class="ax" x="250.1" y="230" text-anchor="middle">A7</text>
-<text class="val" x="250.1" y="42.7" text-anchor="middle">527</text>
-<rect x="269.2" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A8 — ordinary hours: 514 EUR</title></rect>
-<rect x="269.2" y="51.1" width="19.7" height="1.6" fill="#a78bfa" opacity="0.92"><title>A8 — night premium: 5 EUR</title></rect>
-<text class="ax" x="279.0" y="230" text-anchor="middle">A8</text>
-<text class="val" x="279.0" y="45.1" text-anchor="middle">519</text>
-<rect x="298.1" y="56.8" width="19.7" height="157.2" fill="#4da3ff" opacity="0.92"><title>A9 — ordinary hours: 501 EUR</title></rect>
-<rect x="298.1" y="55.2" width="19.7" height="1.6" fill="#a78bfa" opacity="0.92"><title>A9 — night premium: 5 EUR</title></rect>
-<text class="ax" x="308.0" y="230" text-anchor="middle">A9</text>
-<text class="val" x="308.0" y="49.2" text-anchor="middle">506</text>
-<rect x="327.1" y="68.9" width="19.7" height="145.1" fill="#4da3ff" opacity="0.92"><title>A10 — ordinary hours: 462 EUR</title></rect>
-<text class="ax" x="336.9" y="230" text-anchor="middle">A10</text>
-<text class="val" x="336.9" y="62.9" text-anchor="middle">462</text>
-<rect x="356.0" y="60.8" width="19.7" height="153.2" fill="#4da3ff" opacity="0.92"><title>A11 — ordinary hours: 488 EUR</title></rect>
-<rect x="356.0" y="59.2" width="19.7" height="1.6" fill="#a78bfa" opacity="0.92"><title>A11 — night premium: 5 EUR</title></rect>
-<text class="ax" x="365.8" y="230" text-anchor="middle">A11</text>
-<text class="val" x="365.8" y="53.2" text-anchor="middle">493</text>
-<rect x="384.9" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A12 — ordinary hours: 514 EUR</title></rect>
-<rect x="384.9" y="52.0" width="19.7" height="0.8" fill="#a78bfa" opacity="0.92"><title>A12 — night premium: 3 EUR</title></rect>
-<text class="ax" x="394.8" y="230" text-anchor="middle">A12</text>
-<text class="val" x="394.8" y="46.0" text-anchor="middle">516</text>
-<rect x="413.9" y="56.8" width="19.7" height="157.2" fill="#4da3ff" opacity="0.92"><title>A13 — ordinary hours: 501 EUR</title></rect>
-<text class="ax" x="423.7" y="230" text-anchor="middle">A13</text>
-<text class="val" x="423.7" y="50.8" text-anchor="middle">501</text>
-<rect x="442.8" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A14 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="452.7" y="230" text-anchor="middle">A14</text>
-<text class="val" x="452.7" y="46.8" text-anchor="middle">514</text>
-<rect x="471.8" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A15 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="481.6" y="230" text-anchor="middle">A15</text>
-<text class="val" x="481.6" y="46.8" text-anchor="middle">514</text>
-<rect x="500.7" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A16 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="510.5" y="230" text-anchor="middle">A16</text>
-<text class="val" x="510.5" y="46.8" text-anchor="middle">514</text>
-<rect x="529.6" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A17 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="539.5" y="230" text-anchor="middle">A17</text>
-<text class="val" x="539.5" y="46.8" text-anchor="middle">514</text>
-<rect x="558.6" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A18 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="568.4" y="230" text-anchor="middle">A18</text>
-<text class="val" x="568.4" y="46.8" text-anchor="middle">514</text>
-<rect x="587.5" y="64.9" width="19.7" height="149.1" fill="#4da3ff" opacity="0.92"><title>A19 — ordinary hours: 475 EUR</title></rect>
-<rect x="587.5" y="60.0" width="19.7" height="4.9" fill="#a78bfa" opacity="0.92"><title>A19 — night premium: 16 EUR</title></rect>
-<text class="ax" x="597.3" y="230" text-anchor="middle">A19</text>
-<text class="val" x="597.3" y="54.0" text-anchor="middle">491</text>
-<rect x="616.4" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A20 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="626.3" y="230" text-anchor="middle">A20</text>
-<text class="val" x="626.3" y="46.8" text-anchor="middle">514</text>
-<rect x="645.4" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A21 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="655.2" y="230" text-anchor="middle">A21</text>
-<text class="val" x="655.2" y="46.8" text-anchor="middle">514</text>
-<rect x="674.3" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A22 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="684.2" y="230" text-anchor="middle">A22</text>
-<text class="val" x="684.2" y="46.8" text-anchor="middle">514</text>
-<rect x="703.3" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A23 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="713.1" y="230" text-anchor="middle">A23</text>
-<text class="val" x="713.1" y="46.8" text-anchor="middle">514</text>
-<rect x="732.2" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A24 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="742.0" y="230" text-anchor="middle">A24</text>
-<text class="val" x="742.0" y="46.8" text-anchor="middle">514</text>
-<rect x="761.1" y="60.8" width="19.7" height="153.2" fill="#4da3ff" opacity="0.92"><title>A25 — ordinary hours: 488 EUR</title></rect>
-<text class="ax" x="771.0" y="230" text-anchor="middle">A25</text>
-<text class="val" x="771.0" y="54.8" text-anchor="middle">488</text>
-<rect x="790.1" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A26 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="799.9" y="230" text-anchor="middle">A26</text>
-<text class="val" x="799.9" y="46.8" text-anchor="middle">514</text>
-<rect x="819.0" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A27 — ordinary hours: 514 EUR</title></rect>
-<text class="ax" x="828.8" y="230" text-anchor="middle">A27</text>
-<text class="val" x="828.8" y="46.8" text-anchor="middle">514</text>
-<rect x="847.9" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A28 — ordinary hours: 514 EUR</title></rect>
-<rect x="847.9" y="46.3" width="19.7" height="6.5" fill="#a78bfa" opacity="0.92"><title>A28 — night premium: 21 EUR</title></rect>
-<text class="ax" x="857.8" y="230" text-anchor="middle">A28</text>
-<text class="val" x="857.8" y="40.3" text-anchor="middle">534</text>
-<rect x="876.9" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A29 — ordinary hours: 514 EUR</title></rect>
-<rect x="876.9" y="44.6" width="19.7" height="8.1" fill="#a78bfa" opacity="0.92"><title>A29 — night premium: 26 EUR</title></rect>
-<text class="ax" x="886.7" y="230" text-anchor="middle">A29</text>
-<text class="val" x="886.7" y="38.6" text-anchor="middle">540</text>
-<rect x="905.8" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A30 — ordinary hours: 514 EUR</title></rect>
-<rect x="905.8" y="43.8" width="19.7" height="8.9" fill="#a78bfa" opacity="0.92"><title>A30 — night premium: 28 EUR</title></rect>
-<text class="ax" x="915.7" y="230" text-anchor="middle">A30</text>
-<text class="val" x="915.7" y="37.8" text-anchor="middle">542</text>
-<rect x="934.8" y="72.9" width="19.7" height="141.1" fill="#4da3ff" opacity="0.92"><title>A31 — ordinary hours: 449 EUR</title></rect>
-<rect x="934.8" y="64.8" width="19.7" height="8.1" fill="#a78bfa" opacity="0.92"><title>A31 — night premium: 26 EUR</title></rect>
-<text class="ax" x="944.6" y="230" text-anchor="middle">A31</text>
-<text class="val" x="944.6" y="58.8" text-anchor="middle">475</text>
-<rect x="963.7" y="52.8" width="19.7" height="161.2" fill="#4da3ff" opacity="0.92"><title>A32 — ordinary hours: 514 EUR</title></rect>
-<rect x="963.7" y="44.6" width="19.7" height="8.1" fill="#a78bfa" opacity="0.92"><title>A32 — night premium: 26 EUR</title></rect>
-<text class="ax" x="973.5" y="230" text-anchor="middle">A32</text>
-<text class="val" x="973.5" y="38.6" text-anchor="middle">540</text>
+<rect x="64.2" y="90.1" width="9.4" height="123.9" fill="#4da3ff" opacity="0.92"><title>A1 — ordinary hours: 398 EUR</title></rect>
+<rect x="64.2" y="72.4" width="9.4" height="17.7" fill="#a78bfa" opacity="0.92"><title>A1 — night premium: 57 EUR</title></rect>
+<rect x="64.2" y="67.6" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A1 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="68.9" y="230" text-anchor="middle">A1</text>
+<text class="val" x="68.9" y="61.6" text-anchor="middle">470</text>
+<rect x="78.0" y="130.1" width="9.4" height="83.9" fill="#4da3ff" opacity="0.92"><title>A2 — ordinary hours: 270 EUR</title></rect>
+<rect x="78.0" y="118.0" width="9.4" height="12.1" fill="#a78bfa" opacity="0.92"><title>A2 — night premium: 39 EUR</title></rect>
+<rect x="91.9" y="90.1" width="9.4" height="123.9" fill="#4da3ff" opacity="0.92"><title>A3 — ordinary hours: 398 EUR</title></rect>
+<rect x="91.9" y="72.4" width="9.4" height="17.7" fill="#a78bfa" opacity="0.92"><title>A3 — night premium: 57 EUR</title></rect>
+<rect x="105.7" y="106.1" width="9.4" height="107.9" fill="#4da3ff" opacity="0.92"><title>A4 — ordinary hours: 347 EUR</title></rect>
+<rect x="105.7" y="91.6" width="9.4" height="14.5" fill="#a78bfa" opacity="0.92"><title>A4 — night premium: 47 EUR</title></rect>
+<text class="ax" x="110.4" y="230" text-anchor="middle">A4</text>
+<text class="val" x="110.4" y="85.6" text-anchor="middle">393</text>
+<rect x="119.5" y="94.1" width="9.4" height="119.9" fill="#4da3ff" opacity="0.92"><title>A5 — ordinary hours: 385 EUR</title></rect>
+<rect x="119.5" y="79.6" width="9.4" height="14.5" fill="#a78bfa" opacity="0.92"><title>A5 — night premium: 47 EUR</title></rect>
+<rect x="133.3" y="74.1" width="9.4" height="139.9" fill="#4da3ff" opacity="0.92"><title>A6 — ordinary hours: 449 EUR</title></rect>
+<rect x="133.3" y="54.0" width="9.4" height="20.2" fill="#a78bfa" opacity="0.92"><title>A6 — night premium: 65 EUR</title></rect>
+<rect x="147.1" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A7 — ordinary hours: 501 EUR</title></rect>
+<rect x="147.1" y="54.1" width="9.4" height="4.0" fill="#a78bfa" opacity="0.92"><title>A7 — night premium: 13 EUR</title></rect>
+<text class="ax" x="151.8" y="230" text-anchor="middle">A7</text>
+<text class="val" x="151.8" y="48.1" text-anchor="middle">514</text>
+<rect x="161.0" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A8 — ordinary hours: 501 EUR</title></rect>
+<rect x="161.0" y="56.5" width="9.4" height="1.6" fill="#a78bfa" opacity="0.92"><title>A8 — night premium: 5 EUR</title></rect>
+<rect x="174.8" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A9 — ordinary hours: 514 EUR</title></rect>
+<rect x="174.8" y="52.5" width="9.4" height="1.6" fill="#a78bfa" opacity="0.92"><title>A9 — night premium: 5 EUR</title></rect>
+<rect x="188.6" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A10 — ordinary hours: 514 EUR</title></rect>
+<rect x="188.6" y="52.5" width="9.4" height="1.6" fill="#a78bfa" opacity="0.92"><title>A10 — night premium: 5 EUR</title></rect>
+<text class="ax" x="193.3" y="230" text-anchor="middle">A10</text>
+<text class="val" x="193.3" y="46.5" text-anchor="middle">519</text>
+<rect x="202.4" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A11 — ordinary hours: 501 EUR</title></rect>
+<rect x="202.4" y="57.3" width="9.4" height="0.8" fill="#a78bfa" opacity="0.92"><title>A11 — night premium: 3 EUR</title></rect>
+<rect x="216.2" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A12 — ordinary hours: 514 EUR</title></rect>
+<rect x="216.2" y="53.3" width="9.4" height="0.8" fill="#a78bfa" opacity="0.92"><title>A12 — night premium: 3 EUR</title></rect>
+<rect x="230.1" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A13 — ordinary hours: 501 EUR</title></rect>
+<text class="ax" x="234.8" y="230" text-anchor="middle">A13</text>
+<text class="val" x="234.8" y="52.1" text-anchor="middle">501</text>
+<rect x="243.9" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A14 — ordinary hours: 514 EUR</title></rect>
+<rect x="257.7" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A15 — ordinary hours: 514 EUR</title></rect>
+<rect x="271.5" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A16 — ordinary hours: 501 EUR</title></rect>
+<text class="ax" x="276.2" y="230" text-anchor="middle">A16</text>
+<text class="val" x="276.2" y="52.1" text-anchor="middle">501</text>
+<rect x="285.3" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A17 — ordinary hours: 514 EUR</title></rect>
+<rect x="299.2" y="74.1" width="9.4" height="139.9" fill="#4da3ff" opacity="0.92"><title>A18 — ordinary hours: 449 EUR</title></rect>
+<rect x="313.0" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A19 — ordinary hours: 514 EUR</title></rect>
+<rect x="313.0" y="50.9" width="9.4" height="3.2" fill="#a78bfa" opacity="0.92"><title>A19 — night premium: 10 EUR</title></rect>
+<rect x="313.0" y="46.1" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A19 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="317.7" y="230" text-anchor="middle">A19</text>
+<text class="val" x="317.7" y="40.1" text-anchor="middle">539</text>
+<rect x="326.8" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A20 — ordinary hours: 514 EUR</title></rect>
+<rect x="340.6" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A21 — ordinary hours: 514 EUR</title></rect>
+<rect x="354.5" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A22 — ordinary hours: 501 EUR</title></rect>
+<text class="ax" x="359.1" y="230" text-anchor="middle">A22</text>
+<text class="val" x="359.1" y="52.1" text-anchor="middle">501</text>
+<rect x="368.3" y="66.1" width="9.4" height="147.9" fill="#4da3ff" opacity="0.92"><title>A23 — ordinary hours: 475 EUR</title></rect>
+<rect x="382.1" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A24 — ordinary hours: 514 EUR</title></rect>
+<rect x="395.9" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A25 — ordinary hours: 514 EUR</title></rect>
+<text class="ax" x="400.6" y="230" text-anchor="middle">A25</text>
+<text class="val" x="400.6" y="48.1" text-anchor="middle">514</text>
+<rect x="409.7" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A26 — ordinary hours: 514 EUR</title></rect>
+<rect x="423.6" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A27 — ordinary hours: 514 EUR</title></rect>
+<rect x="437.4" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A28 — ordinary hours: 514 EUR</title></rect>
+<rect x="437.4" y="50.9" width="9.4" height="3.2" fill="#a78bfa" opacity="0.92"><title>A28 — night premium: 10 EUR</title></rect>
+<text class="ax" x="442.1" y="230" text-anchor="middle">A28</text>
+<text class="val" x="442.1" y="44.9" text-anchor="middle">524</text>
+<rect x="451.2" y="70.1" width="9.4" height="143.9" fill="#4da3ff" opacity="0.92"><title>A29 — ordinary hours: 462 EUR</title></rect>
+<rect x="451.2" y="63.7" width="9.4" height="6.5" fill="#a78bfa" opacity="0.92"><title>A29 — night premium: 21 EUR</title></rect>
+<rect x="465.0" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A30 — ordinary hours: 514 EUR</title></rect>
+<rect x="465.0" y="45.3" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A30 — night premium: 28 EUR</title></rect>
+<rect x="478.8" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A31 — ordinary hours: 501 EUR</title></rect>
+<rect x="478.8" y="49.3" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A31 — night premium: 28 EUR</title></rect>
+<text class="ax" x="483.5" y="230" text-anchor="middle">A31</text>
+<text class="val" x="483.5" y="43.3" text-anchor="middle">529</text>
+<rect x="492.7" y="70.1" width="9.4" height="143.9" fill="#4da3ff" opacity="0.92"><title>A32 — ordinary hours: 462 EUR</title></rect>
+<rect x="492.7" y="64.5" width="9.4" height="5.6" fill="#a78bfa" opacity="0.92"><title>A32 — night premium: 18 EUR</title></rect>
+<rect x="506.5" y="78.1" width="9.4" height="135.9" fill="#4da3ff" opacity="0.92"><title>A33 — ordinary hours: 437 EUR</title></rect>
+<rect x="506.5" y="70.0" width="9.4" height="8.1" fill="#a78bfa" opacity="0.92"><title>A33 — night premium: 26 EUR</title></rect>
+<rect x="520.3" y="62.1" width="9.4" height="151.9" fill="#4da3ff" opacity="0.92"><title>A34 — ordinary hours: 488 EUR</title></rect>
+<rect x="520.3" y="57.3" width="9.4" height="4.8" fill="#a78bfa" opacity="0.92"><title>A34 — night premium: 16 EUR</title></rect>
+<text class="ax" x="525.0" y="230" text-anchor="middle">A34</text>
+<text class="val" x="525.0" y="51.3" text-anchor="middle">503</text>
+<rect x="534.1" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A35 — ordinary hours: 501 EUR</title></rect>
+<rect x="534.1" y="52.5" width="9.4" height="5.6" fill="#a78bfa" opacity="0.92"><title>A35 — night premium: 18 EUR</title></rect>
+<rect x="534.1" y="47.7" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A35 — Sunday premium: 15 EUR</title></rect>
+<rect x="547.9" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A36 — ordinary hours: 514 EUR</title></rect>
+<rect x="547.9" y="47.7" width="9.4" height="6.5" fill="#a78bfa" opacity="0.92"><title>A36 — night premium: 21 EUR</title></rect>
+<rect x="547.9" y="42.9" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A36 — Sunday premium: 15 EUR</title></rect>
+<rect x="561.8" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A37 — ordinary hours: 514 EUR</title></rect>
+<rect x="561.8" y="47.7" width="9.4" height="6.5" fill="#a78bfa" opacity="0.92"><title>A37 — night premium: 21 EUR</title></rect>
+<rect x="561.8" y="42.9" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A37 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="566.5" y="230" text-anchor="middle">A37</text>
+<text class="val" x="566.5" y="36.9" text-anchor="middle">550</text>
+<rect x="575.6" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A38 — ordinary hours: 514 EUR</title></rect>
+<rect x="575.6" y="48.5" width="9.4" height="5.6" fill="#a78bfa" opacity="0.92"><title>A38 — night premium: 18 EUR</title></rect>
+<rect x="575.6" y="43.7" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A38 — Sunday premium: 15 EUR</title></rect>
+<rect x="589.4" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A39 — ordinary hours: 501 EUR</title></rect>
+<rect x="589.4" y="56.5" width="9.4" height="1.6" fill="#a78bfa" opacity="0.92"><title>A39 — night premium: 5 EUR</title></rect>
+<rect x="589.4" y="51.7" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A39 — Sunday premium: 15 EUR</title></rect>
+<rect x="603.2" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A40 — ordinary hours: 501 EUR</title></rect>
+<rect x="603.2" y="53.3" width="9.4" height="4.8" fill="#a78bfa" opacity="0.92"><title>A40 — night premium: 16 EUR</title></rect>
+<rect x="603.2" y="48.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A40 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="607.9" y="230" text-anchor="middle">A40</text>
+<text class="val" x="607.9" y="42.5" text-anchor="middle">532</text>
+<rect x="617.0" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A41 — ordinary hours: 501 EUR</title></rect>
+<rect x="617.0" y="53.3" width="9.4" height="4.8" fill="#a78bfa" opacity="0.92"><title>A41 — night premium: 16 EUR</title></rect>
+<rect x="617.0" y="48.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A41 — Sunday premium: 15 EUR</title></rect>
+<rect x="630.9" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A42 — ordinary hours: 501 EUR</title></rect>
+<rect x="630.9" y="54.9" width="9.4" height="3.2" fill="#a78bfa" opacity="0.92"><title>A42 — night premium: 10 EUR</title></rect>
+<rect x="630.9" y="50.1" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A42 — Sunday premium: 15 EUR</title></rect>
+<rect x="644.7" y="66.1" width="9.4" height="147.9" fill="#4da3ff" opacity="0.92"><title>A43 — ordinary hours: 475 EUR</title></rect>
+<rect x="644.7" y="64.5" width="9.4" height="1.6" fill="#a78bfa" opacity="0.92"><title>A43 — night premium: 5 EUR</title></rect>
+<rect x="644.7" y="59.7" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A43 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="649.4" y="230" text-anchor="middle">A43</text>
+<text class="val" x="649.4" y="53.7" text-anchor="middle">496</text>
+<rect x="658.5" y="62.1" width="9.4" height="151.9" fill="#4da3ff" opacity="0.92"><title>A44 — ordinary hours: 488 EUR</title></rect>
+<rect x="658.5" y="59.7" width="9.4" height="2.4" fill="#a78bfa" opacity="0.92"><title>A44 — night premium: 8 EUR</title></rect>
+<rect x="658.5" y="54.9" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A44 — Sunday premium: 15 EUR</title></rect>
+<rect x="672.3" y="62.1" width="9.4" height="151.9" fill="#4da3ff" opacity="0.92"><title>A45 — ordinary hours: 488 EUR</title></rect>
+<rect x="672.3" y="54.1" width="9.4" height="8.1" fill="#a78bfa" opacity="0.92"><title>A45 — night premium: 26 EUR</title></rect>
+<rect x="672.3" y="49.3" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A45 — Sunday premium: 15 EUR</title></rect>
+<rect x="686.2" y="62.1" width="9.4" height="151.9" fill="#4da3ff" opacity="0.92"><title>A46 — ordinary hours: 488 EUR</title></rect>
+<rect x="686.2" y="53.2" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A46 — night premium: 28 EUR</title></rect>
+<rect x="686.2" y="48.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A46 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="690.9" y="230" text-anchor="middle">A46</text>
+<text class="val" x="690.9" y="42.5" text-anchor="middle">532</text>
+<rect x="700.0" y="66.1" width="9.4" height="147.9" fill="#4da3ff" opacity="0.92"><title>A47 — ordinary hours: 475 EUR</title></rect>
+<rect x="700.0" y="58.9" width="9.4" height="7.3" fill="#a78bfa" opacity="0.92"><title>A47 — night premium: 23 EUR</title></rect>
+<rect x="700.0" y="54.1" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A47 — Sunday premium: 15 EUR</title></rect>
+<rect x="713.8" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A48 — ordinary hours: 501 EUR</title></rect>
+<rect x="713.8" y="49.3" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A48 — night premium: 28 EUR</title></rect>
+<rect x="713.8" y="44.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A48 — Sunday premium: 15 EUR</title></rect>
+<rect x="727.6" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A49 — ordinary hours: 501 EUR</title></rect>
+<rect x="727.6" y="49.3" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A49 — night premium: 28 EUR</title></rect>
+<rect x="727.6" y="44.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A49 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="732.3" y="230" text-anchor="middle">A49</text>
+<text class="val" x="732.3" y="38.5" text-anchor="middle">545</text>
+<rect x="741.4" y="58.1" width="9.4" height="155.9" fill="#4da3ff" opacity="0.92"><title>A50 — ordinary hours: 501 EUR</title></rect>
+<rect x="741.4" y="53.3" width="9.4" height="4.8" fill="#a78bfa" opacity="0.92"><title>A50 — night premium: 16 EUR</title></rect>
+<rect x="741.4" y="48.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A50 — Sunday premium: 15 EUR</title></rect>
+<rect x="755.3" y="62.1" width="9.4" height="151.9" fill="#4da3ff" opacity="0.92"><title>A51 — ordinary hours: 488 EUR</title></rect>
+<rect x="755.3" y="49.2" width="9.4" height="12.9" fill="#a78bfa" opacity="0.92"><title>A51 — night premium: 41 EUR</title></rect>
+<rect x="755.3" y="44.4" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A51 — Sunday premium: 15 EUR</title></rect>
+<rect x="769.1" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A52 — ordinary hours: 514 EUR</title></rect>
+<rect x="769.1" y="46.9" width="9.4" height="7.3" fill="#a78bfa" opacity="0.92"><title>A52 — night premium: 23 EUR</title></rect>
+<rect x="769.1" y="42.1" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A52 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="773.8" y="230" text-anchor="middle">A52</text>
+<text class="val" x="773.8" y="36.1" text-anchor="middle">552</text>
+<rect x="782.9" y="82.1" width="9.4" height="131.9" fill="#4da3ff" opacity="0.92"><title>A53 — ordinary hours: 424 EUR</title></rect>
+<rect x="782.9" y="73.2" width="9.4" height="8.9" fill="#a78bfa" opacity="0.92"><title>A53 — night premium: 28 EUR</title></rect>
+<rect x="782.9" y="68.5" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A53 — Sunday premium: 15 EUR</title></rect>
+<rect x="796.7" y="102.1" width="9.4" height="111.9" fill="#4da3ff" opacity="0.92"><title>A54 — ordinary hours: 360 EUR</title></rect>
+<rect x="796.7" y="94.8" width="9.4" height="7.3" fill="#a78bfa" opacity="0.92"><title>A54 — night premium: 23 EUR</title></rect>
+<rect x="796.7" y="90.1" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A54 — Sunday premium: 15 EUR</title></rect>
+<rect x="810.5" y="54.1" width="9.4" height="159.9" fill="#4da3ff" opacity="0.92"><title>A55 — ordinary hours: 514 EUR</title></rect>
+<rect x="810.5" y="34.8" width="9.4" height="19.4" fill="#a78bfa" opacity="0.92"><title>A55 — night premium: 62 EUR</title></rect>
+<rect x="810.5" y="30.0" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A55 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="815.2" y="230" text-anchor="middle">A55</text>
+<text class="val" x="815.2" y="24.0" text-anchor="middle">591</text>
+<rect x="824.4" y="106.1" width="9.4" height="107.9" fill="#4da3ff" opacity="0.92"><title>A56 — ordinary hours: 347 EUR</title></rect>
+<rect x="824.4" y="90.0" width="9.4" height="16.1" fill="#a78bfa" opacity="0.92"><title>A56 — night premium: 52 EUR</title></rect>
+<rect x="824.4" y="85.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A56 — Sunday premium: 15 EUR</title></rect>
+<rect x="838.2" y="138.1" width="9.4" height="75.9" fill="#4da3ff" opacity="0.92"><title>A57 — ordinary hours: 244 EUR</title></rect>
+<rect x="838.2" y="131.6" width="9.4" height="6.5" fill="#a78bfa" opacity="0.92"><title>A57 — night premium: 21 EUR</title></rect>
+<rect x="838.2" y="126.8" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A57 — Sunday premium: 15 EUR</title></rect>
+<rect x="852.0" y="142.1" width="9.4" height="71.9" fill="#4da3ff" opacity="0.92"><title>A58 — ordinary hours: 231 EUR</title></rect>
+<rect x="852.0" y="136.4" width="9.4" height="5.6" fill="#a78bfa" opacity="0.92"><title>A58 — night premium: 18 EUR</title></rect>
+<rect x="852.0" y="131.6" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A58 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="856.7" y="230" text-anchor="middle">A58</text>
+<text class="val" x="856.7" y="125.6" text-anchor="middle">265</text>
+<rect x="865.8" y="118.1" width="9.4" height="95.9" fill="#4da3ff" opacity="0.92"><title>A59 — ordinary hours: 308 EUR</title></rect>
+<rect x="865.8" y="106.0" width="9.4" height="12.1" fill="#a78bfa" opacity="0.92"><title>A59 — night premium: 39 EUR</title></rect>
+<rect x="865.8" y="101.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A59 — Sunday premium: 15 EUR</title></rect>
+<rect x="879.6" y="134.1" width="9.4" height="79.9" fill="#4da3ff" opacity="0.92"><title>A60 — ordinary hours: 257 EUR</title></rect>
+<rect x="879.6" y="126.0" width="9.4" height="8.1" fill="#a78bfa" opacity="0.92"><title>A60 — night premium: 26 EUR</title></rect>
+<rect x="879.6" y="121.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A60 — Sunday premium: 15 EUR</title></rect>
+<rect x="893.5" y="146.1" width="9.4" height="67.9" fill="#4da3ff" opacity="0.92"><title>A61 — ordinary hours: 218 EUR</title></rect>
+<rect x="893.5" y="138.0" width="9.4" height="8.1" fill="#a78bfa" opacity="0.92"><title>A61 — night premium: 26 EUR</title></rect>
+<rect x="893.5" y="133.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A61 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="898.2" y="230" text-anchor="middle">A61</text>
+<text class="val" x="898.2" y="127.2" text-anchor="middle">260</text>
+<rect x="907.3" y="146.1" width="9.4" height="67.9" fill="#4da3ff" opacity="0.92"><title>A62 — ordinary hours: 218 EUR</title></rect>
+<rect x="907.3" y="134.8" width="9.4" height="11.3" fill="#a78bfa" opacity="0.92"><title>A62 — night premium: 36 EUR</title></rect>
+<rect x="907.3" y="130.0" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A62 — Sunday premium: 15 EUR</title></rect>
+<rect x="921.1" y="82.1" width="9.4" height="131.9" fill="#4da3ff" opacity="0.92"><title>A63 — ordinary hours: 424 EUR</title></rect>
+<rect x="921.1" y="66.0" width="9.4" height="16.1" fill="#a78bfa" opacity="0.92"><title>A63 — night premium: 52 EUR</title></rect>
+<rect x="921.1" y="61.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A63 — Sunday premium: 15 EUR</title></rect>
+<rect x="934.9" y="134.1" width="9.4" height="79.9" fill="#4da3ff" opacity="0.92"><title>A64 — ordinary hours: 257 EUR</title></rect>
+<rect x="934.9" y="123.6" width="9.4" height="10.5" fill="#a78bfa" opacity="0.92"><title>A64 — night premium: 34 EUR</title></rect>
+<rect x="934.9" y="118.8" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A64 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="939.6" y="230" text-anchor="middle">A64</text>
+<text class="val" x="939.6" y="112.8" text-anchor="middle">306</text>
+<rect x="948.7" y="146.1" width="9.4" height="67.9" fill="#4da3ff" opacity="0.92"><title>A65 — ordinary hours: 218 EUR</title></rect>
+<rect x="948.7" y="138.0" width="9.4" height="8.1" fill="#a78bfa" opacity="0.92"><title>A65 — night premium: 26 EUR</title></rect>
+<rect x="948.7" y="133.2" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A65 — Sunday premium: 15 EUR</title></rect>
+<rect x="962.6" y="150.0" width="9.4" height="64.0" fill="#4da3ff" opacity="0.92"><title>A66 — ordinary hours: 205 EUR</title></rect>
+<rect x="962.6" y="146.0" width="9.4" height="4.0" fill="#a78bfa" opacity="0.92"><title>A66 — night premium: 13 EUR</title></rect>
+<rect x="976.4" y="150.0" width="9.4" height="64.0" fill="#4da3ff" opacity="0.92"><title>A67 — ordinary hours: 205 EUR</title></rect>
+<rect x="976.4" y="145.2" width="9.4" height="4.8" fill="#a78bfa" opacity="0.92"><title>A67 — night premium: 16 EUR</title></rect>
+<rect x="976.4" y="140.4" width="9.4" height="4.8" fill="#ffb454" opacity="0.92"><title>A67 — Sunday premium: 15 EUR</title></rect>
+<text class="ax" x="981.1" y="230" text-anchor="middle">A67</text>
+<text class="val" x="981.1" y="134.4" text-anchor="middle">236</text>
 </svg>
 <div class="legend"><span><i style="--c:#ff5ca8"></i>overtime</span> <span><i style="--c:#ffb454"></i>holiday premium</span> <span><i style="--c:#ffb454"></i>Sunday premium</span> <span><i style="--c:#a78bfa"></i>night premium</span> <span><i style="--c:#4da3ff"></i>ordinary hours</span></div></figure>
-<div class="note">Everyone here is on the same grade, so the blue is identical work at an identical rate and every band above it is a scheduling decision. <b>52 agents carry night hours</b> (&euro;1,337 across the week), <b>33 work a Sunday</b> (&euro;506), and <b>nobody goes into overtime</b>, which is why there is no pink: the solver prices an overtime hour at a hundred times an ordinary one and will restructure the whole week to avoid a single one. The gap between the cheapest agent at &euro;128 and the dearest at &euro;586 is entirely those bands.</div>
+<div class="note">Everyone here is on the same grade, so the blue is identical work at an identical rate and every band above it is a scheduling decision. <b>53 agents carry night hours</b> (&euro;1,326 across the week), <b>34 work a Sunday</b> (&euro;521), and <b>nobody goes into overtime</b>, which is why there is no pink: the solver prices an overtime hour at a hundred times an ordinary one and will restructure the whole week to avoid a single one. The gap between the cheapest agent at &euro;218 and the dearest at &euro;591 is entirely those bands.</div>
 <h2><span class="num">08</span>Where every number came from</h2><p class="sub">Including the two that were looked for and not found.</p>
 <figure class="tb">
-<figcaption><b>Every number that came from outside this repository</b><span>Sorted as declared. 'assumed' means no published figure was found.</span></figcaption>
+<figcaption><b>Every number that came from outside this repository</b><span>Sorted as declared. 'assumed' means no published figure was found. Every source with a published page links straight to it.</span></figcaption>
 <table><thead><tr>
 <th>what</th>
+<th>confidence</th>
+<th>source</th>
 <th class="r">value</th>
-<th class="r">confidence</th>
-<th class="r">source</th>
 </tr></thead><tbody>
 <tr>
 <td>average handle time on a general-purpose municipal 311 phone line</td>
+<td>published</td>
+<td><a href="https://www.toronto.ca/legdocs/mmis/2026/se/bgrd/backgroundfile-285323.pdf" target="_blank" rel="noopener noreferrer">City of Toronto, 311 Toronto Annual Report 2025 — 4:50 over ~1.01M calls ↗</a></td>
 <td class="r">290.00 seconds</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.toronto.ca/legdocs/mmis/2026/se/bgrd/backgroundfile-285323.pdf&quot; rel=&quot;noopener&quot;&gt;City of Toronto, 311 Toronto Annual Report 2025 — 4:50 over ~1.01M calls&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>share of calls NYC 311 commits to answering within the target</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025 — target 80%, actual 80% ↗</a></td>
 <td class="r">0.80 share</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025 — target 80%, actual 80%&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>the answer threshold NYC 311 commits to</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025. Toronto commits to 75s, San Francisco to 60s ↗</a></td>
 <td class="r">30.00 seconds</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025. Toronto commits to 75s, San Francisco to 60s&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>average wait before reaching a tier-1 agent, NYC 311, FY2025</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025 — 0:25 against a 0:30 target ↗</a></td>
 <td class="r">25.00 seconds</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025 — 0:25 against a 0:30 target&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>calls to NYC 311 in Fiscal 2025</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025, '311 calls (000)' = 17,377 ↗</a></td>
 <td class="r">17,377,000 calls/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025, '311 calls (000)' = 17,377&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>calls to NYC 311's Spanish-language line in Fiscal 2025</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025, '311 Spanish language calls (000)' = 484 ↗</a></td>
 <td class="r">484,000 calls/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025, '311 Spanish language calls (000)' = 484&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>service requests completed by NYC 311 in Fiscal 2025</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025, 'Completed service requests (000)' = 3,766 ↗</a></td>
 <td class="r">3,766,000 requests/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025, 'Completed service requests (000)' = 3,766&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>311-NYC text message contacts in Fiscal 2025</td>
+<td>published</td>
+<td><a href="https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf" target="_blank" rel="noopener noreferrer">NYC Mayor's Management Report FY2025, '311-NYC (text) contacts (000)' = 270 ↗</a></td>
 <td class="r">270,000 contacts/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf&quot; rel=&quot;noopener&quot;&gt;NYC Mayor's Management Report FY2025, '311-NYC (text) contacts (000)' = 270&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>handling time for one deferred service request</td>
+<td>assumed</td>
+<td>No public-sector figure found. Eight minutes is an assumption, exposed as a parameter</td>
 <td class="r">480.00 seconds</td>
-<td class="r">assumed</td>
-<td class="r">No public-sector figure found. Eight minutes is an assumption, exposed as a parameter</td>
 </tr>
 <tr>
 <td>share of deferred transactions processed within the targeted cycle time</td>
+<td>published</td>
+<td><a href="https://cx.copc.com/hubfs/PDF/COPC_2021_CX_Standard_for_Customer_Operations_Release_7.0.pdf" target="_blank" rel="noopener noreferrer">COPC CX Standard Release 7.0 (2021), Exhibit 1, 'Human Assisted Deferred Transactions' — best-practice target for the 'On Time' metric ↗</a></td>
 <td class="r">0.95 share</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://cx.copc.com/hubfs/PDF/COPC_2021_CX_Standard_for_Customer_Operations_Release_7.0.pdf&quot; rel=&quot;noopener&quot;&gt;COPC CX Standard Release 7.0 (2021), Exhibit 1, 'Human Assisted Deferred Transactions' — best-practice target for the 'On Time' metric&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>customer compose time divided by agent compose time, the one input the chat concurrency model needs</td>
+<td>derived</td>
+<td><a href="https://patents.google.com/patent/US8064589B2/en" target="_blank" rel="noopener noreferrer">US 8,064,589 B2 (Lewis &amp; Beshears, 2011), 'Estimating number of agents for multiple chat channels' ↗</a></td>
 <td class="r">1.00 ratio</td>
-<td class="r">derived</td>
-<td class="r">&lt;a href=&quot;https://patents.google.com/patent/US8064589B2/en&quot; rel=&quot;noopener&quot;&gt;US 8,064,589 B2 (Lewis &amp;amp; Beshears, 2011), 'Estimating number of agents for multiple chat channels'&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>gross annual salary, Nivel 10 (Teleoperador/a), 2026 table</td>
+<td>published</td>
+<td><a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center, 2026 salary tables — BOE-A-2026-5300 ↗</a></td>
 <td class="r">17,140 EUR/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center, 2026 salary tables — BOE-A-2026-5300&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>maximum ordinary annual working time</td>
+<td>published</td>
+<td><a href="https://www.boe.es/buscar/doc.php?id=BOE-A-2023-13741" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center, art. 22 (Jornada) — 1,764 h/year, 39 h/week of effective work ↗</a></td>
 <td class="r">1,764 hours/year</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/buscar/doc.php?id=BOE-A-2023-13741&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center, art. 22 (Jornada) — 1,764 h/year, 39 h/week of effective work&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>employer social security contribution in Spain</td>
+<td>published</td>
+<td><a href="https://www.seg-social.es/" target="_blank" rel="noopener noreferrer">23.60% common contingencies + 5.50% unemployment + 1.50% AT/EP + 0.75% MEI + 0.60% vocational training + 0.20% FOGASA ↗</a></td>
 <td class="r">0.32 share of gross</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.seg-social.es/&quot; rel=&quot;noopener&quot;&gt;23.60% common contingencies + 5.50% unemployment + 1.50% AT/EP + 0.75% MEI + 0.60% vocational training + 0.20% FOGASA&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>night work premium, flat per hour worked between 22:00 and 06:00</td>
+<td>published</td>
+<td><a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center, plus de nocturnidad (2026 table) ↗</a></td>
 <td class="r">1.96 EUR/hour</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center, plus de nocturnidad (2026 table)&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>premium for a shift worked on a Sunday</td>
+<td>published</td>
+<td><a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center, plus de domingo (2026 table) ↗</a></td>
 <td class="r">15.33 EUR/day</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center, plus de domingo (2026 table)&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>premium for a shift worked on a normal public holiday</td>
+<td>published</td>
+<td><a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center, plus de festivo (2026 table). Special holidays carry €94.39 ↗</a></td>
 <td class="r">44.51 EUR/day</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center, plus de festivo (2026 table). Special holidays carry €94.39&lt;/a&gt;</td>
 </tr>
 <tr>
 <td>uplift on the ordinary hour for daytime overtime</td>
+<td>published</td>
+<td><a href="https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300" target="_blank" rel="noopener noreferrer">III Convenio colectivo estatal del sector de contact center. Night overtime +60%, holiday +60%, holiday night +80% ↗</a></td>
 <td class="r">0.25 share</td>
-<td class="r">published</td>
-<td class="r">&lt;a href=&quot;https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-5300&quot; rel=&quot;noopener&quot;&gt;III Convenio colectivo estatal del sector de contact center. Night overtime +60%, holiday +60%, holiday night +80%&lt;/a&gt;</td>
 </tr>
 </tbody></table></figure>
 <div class="note"><b>The weakest input is handling time for one deferred service request.</b> There is no published handle time for email or ticket work in a public-sector contact centre, so eight minutes is an assumption and the whole deferred-work column moves with it. New York publishes no handle time either, which is why the voice figure is Toronto's.</div>
-<footer>Built by <a href="https://github.com/mathieutellene/shiftmesh">shiftmesh</a> from <a href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9">NYC 311 open data</a>. Roster solved with CP-SAT in 121s. No operational data from any employer appears anywhere in this project.</footer>
+<footer>Built by <a href="https://github.com/mathieutellene/shiftmesh">shiftmesh</a> from <a href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9">NYC 311 open data</a>. Roster solved with CP-SAT in 61s. No operational data from any employer appears anywhere in this project.</footer>
 </div>
 <script>/* The staffing pipeline, in the browser.
  *

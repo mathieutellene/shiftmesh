@@ -68,6 +68,7 @@ from shiftmesh.viz import (  # noqa: E402
     SUNDAY,
     bar_chart,
     convergence_chart,
+    learning_curve_chart,
     stacked_bars,
 )
 from shiftmesh.sources import (  # noqa: E402
@@ -311,6 +312,18 @@ wait for an agent to be awake.</p>""")
                         "A ridge regression on a seasonal basis, scored the way the "
                         "operation feels it rather than the way a paper would."))
     err = float(np.mean(np.abs(predicted - actual)))
+    # A mean absolute error in calls says nothing on its own: 5 calls an hour is
+    # excellent against a mean of 300 and useless against a mean of 8. Three
+    # percentages, because they answer three different questions.
+    mean_hour = float(actual.mean())
+    err_pct = err / mean_hour * 100 if mean_hour else 0.0
+    busy = actual >= 1.0
+    smape = float(100 * np.mean(
+        2 * np.abs(predicted[busy] - actual[busy])
+        / (np.abs(actual[busy]) + np.abs(predicted[busy])))) if busy.any() else 0.0
+    plain_err = float(np.mean(np.abs(plain - actual)))
+    plain_pct = plain_err / mean_hour * 100 if mean_hour else 0.0
+    volume_pct = (predicted.sum() - actual.sum()) / actual.sum() * 100 if actual.sum() else 0.0
     body.append(line_chart(
         [Series(list(actual), "what actually arrived", ACCENT_2, fill=True),
          Series(list(plain), "forecast, unbiased", WARM, dashed=True),
@@ -322,19 +335,84 @@ wait for an agent to be awake.</p>""")
         stat("Trained on", f"{f['rows']:,}", f"hourly observations, {f['weeks']:.0f} weeks", "key"),
         stat("Features", f"{f['features']}", "columns in the design matrix"),
         stat("R² in log space", f"{f['r2_log']:.3f}", f"residual sd {f['residual_sd']:.3f}"),
-        stat("Forecast", f"{predicted.sum():,.0f}", f"vs {actual.sum():,.0f} actual"),
-        stat("Mean error", f"{err:,.1f}", "calls per hour"),
+        stat("Hourly error", f"{plain_pct:.1f}%",
+             f"{plain_err:,.1f} calls/hour on a mean of {mean_hour:,.0f}", "good"),
+        stat("sMAPE", f"{smape:.1f}%", "symmetric, over hours with traffic"),
+        stat("Week total", f"{volume_pct:+.1f}%",
+             f"{predicted.sum():,.0f} staffed vs {actual.sum():,.0f} arrived"),
         stat("Uplift", f"+{uplift:.0%}", "chosen from the history", "warn"),
     ]))
+    body.append(note(
+        f"Three percentages because they answer three questions. <b>{plain_pct:.1f}%</b> "
+        f"is how far the unbiased forecast sits from a typical hour — that is the "
+        f"model's accuracy, and the number to compare against anyone else's. "
+        f"<b>{smape:.1f}%</b> is the same thing scored symmetrically over hours that "
+        f"actually had traffic, so a quiet 3am hour cannot flatter or wreck it. "
+        f"<b>{volume_pct:+.1f}%</b> is the week's total once the uplift is added, and it "
+        f"is deliberately positive: that is the cushion being bought, not an error. "
+        f"Read the first as quality and the third as policy.", "key"))
+
+    body.append(f"""<h3>The model, written out</h3>
+<p>It is one equation. <code>h</code> is the hour of the day, <code>w</code> the
+hour of the week, <code>t</code> the hour index since the history starts:</p>
+<div class="eq">
+log1p(calls<sub>t</sub>) &nbsp;=&nbsp; β<sub>0</sub>
+<br>&nbsp;&nbsp;+ Σ<sub>k=1..4</sub> [ a<sub>k</sub> sin(2πk·h/24) + b<sub>k</sub> cos(2πk·h/24) ]
+&nbsp;&nbsp;<span class="cm">— the shape of a day, four harmonics</span>
+<br>&nbsp;&nbsp;+ weekend<sub>t</sub> · Σ<sub>k=1..4</sub> [ c<sub>k</sub> sin(2πk·h/24) + d<sub>k</sub> cos(2πk·h/24) ]
+&nbsp;&nbsp;<span class="cm">— Saturday is a different shape, not a smaller one</span>
+<br>&nbsp;&nbsp;+ Σ<sub>k=1..3</sub> [ e<sub>k</sub> sin(2πk·w/168) + f<sub>k</sub> cos(2πk·w/168) ]
+&nbsp;&nbsp;<span class="cm">— the slide from Monday to Friday</span>
+<br>&nbsp;&nbsp;+ Σ<sub>d=Tue..Sun</sub> g<sub>d</sub>·1[dow<sub>t</sub>=d]
+&nbsp;&nbsp;<span class="cm">— six day levels, against Monday</span>
+<br>&nbsp;&nbsp;+ τ·(t/168)
+&nbsp;&nbsp;<span class="cm">— trend, read as growth per week</span>
+<br>&nbsp;&nbsp;+ λ<sub>1</sub> log1p(calls<sub>t−168</sub>) + λ<sub>2</sub> log1p(calls<sub>t−336</sub>)
+&nbsp;&nbsp;<span class="cm">— same hour one and two weeks ago</span>
+<br><br>calls<sub>t</sub> &nbsp;=&nbsp; (exp(fit) − 1) &nbsp;×&nbsp; {f['smearing']:.4f}
+&nbsp;<span class="cm">smearing</span>&nbsp; ×&nbsp; {1 + uplift:.2f}
+&nbsp;<span class="cm">uplift</span>
+</div>
+<p>{f['features']} coefficients, fitted in closed form by ridge — one
+<code>np.linalg.solve</code>, no iteration, no gradient descent, no random seed.
+Given the same history it returns the same numbers every time.</p>
+
+<h3>Is it "pure ML"?</h3>
+<p>No, and the distinction is worth being honest about. Nothing here
+<em>discovers</em> that call volume has a daily rhythm: the sines and cosines are
+written into the design matrix by hand, and so are the weekend interaction, the
+day dummies and the two lags. What is learned is {f['features']} numbers — the
+weights on features somebody already decided were the right ones.</p>
+<p>A gradient-boosted tree or a neural net would be handed raw timestamps and
+expected to find the structure itself. On {f['weeks']:.0f} weeks of one queue
+that trade is a bad one: there are {f['rows']:,} rows, the structure is
+genuinely sinusoidal, and a model that finds seasonality on its own needs far
+more data to match a model that was told. The payoff for the small model is that
+every coefficient is inspectable — the table below is not a feature-importance
+approximation, it is the actual parameters — and that it cannot invent a pattern
+that was never encoded.</p>
+
+<h3>What it does not know</h3>
+<p>There are no external regressors. No public-holiday flag, no weather, no
+marketing calendar, no outage feed. The model sees its own past and the clock,
+nothing else. That is a real limit and it shows up in a specific place: a day
+that is anomalous for a reason outside the data is absorbed into the lag terms
+and then echoes for two weeks, because <code>calls<sub>t−168</sub></code> and
+<code>calls<sub>t−336</sub></code> are inputs. A holiday is forecast as if it
+were an ordinary Tuesday, and the two Tuesdays after it inherit the dent.</p>
+<p>Adding a holiday dummy is the cheapest real improvement available here, and it
+is not done: the calendar is jurisdiction-specific and this report is built from
+one city's data, so a flag fitted on it would not transfer. Worth stating plainly
+rather than leaving a reader to assume the model handles days it has never been
+told about.</p>""")
 
     body.append('<div class="split">')
-    body.append(f"""<div><h3>What the model is</h3>
-<p>A ridge regression on a seasonal basis, fitted on <code>log1p</code> so the
-seasonality is multiplicative and a prediction can never come out negative.
-{f['features']} columns: four harmonics of the daily cycle and the same four
-again interacted with a weekend flag, because Saturday has a different shape and
-not merely a smaller one; three harmonics of the weekly cycle; six day-of-week
-levels; a linear trend in weeks; and the same hour one and two weeks back.</p>
+    body.append(f"""<div><h3>Why it is this small</h3>
+<p>The fit happens on <code>log1p</code> rather than on calls, which buys two
+things: the seasonality becomes multiplicative — a Monday peak is a
+<em>ratio</em> above the week's level, not a fixed number of calls — and a
+prediction can never come out negative, which an additive fit on a queue that
+idles near zero will happily do.</p>
 <p>It is deliberately small. {f['rows']:,} observations against
 {f['features']} parameters is about {f['rows'] // f['features']} rows per
 column, and anything heavier would be fitting the noise in the shoulders of the
@@ -377,11 +455,11 @@ clean {f['smearing']:.4f} rather than something that has absorbed a bias.</p></d
 
     curve_pts = learning_curve(calls)
     if curve_pts:
-        body.append(bar_chart(
-            [f"{n}w" for n, _ in curve_pts], [e for _, e in curve_pts],
-            "Would more history help?",
-            "test error against weeks of training data, scored on the same final weeks",
-            colour=ACCENT_2, unit=" calls/hour"))
+        body.append(learning_curve_chart(
+            curve_pts, "Would more history help?",
+            "test error against weeks of training data, each model refit on only "
+            "that much history and every one scored on the same final weeks",
+            unit=" calls/hour"))
         best = min(curve_pts, key=lambda kv: kv[1])
         body.append(note(
             f"It stops helping. Error bottoms out around {best[0]} weeks of history and "
@@ -620,7 +698,9 @@ top."""))
              f"vs €{pay.loaded_hour:,.2f} base"),
     ]))
 
-    n_show = min(32, len(money.per_agent))
+    # Every agent, not the first 32. Truncating hid half the roster, and the
+    # half it hid is where the overtime and night bands actually cluster.
+    n_show = len(money.per_agent)
     body.append(stacked_bars(
         [f"A{i+1}" for i in range(n_show)],
         [("ordinary hours", ACCENT, money.per_agent_base[:n_show]),
@@ -629,7 +709,7 @@ top."""))
          ("holiday premium", WARM, money.per_agent_holiday[:n_show]),
          ("overtime", PINK, money.per_agent_overtime[:n_show])],
         "Cost per agent, this week",
-        f"first {n_show} agents — every bar is the same grade, so the colour on top "
+        f"all {n_show} rostered agents — every bar is the same grade, so the colour "
         "is the whole story",
         unit=" EUR"))
 

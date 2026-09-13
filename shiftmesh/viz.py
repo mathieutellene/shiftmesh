@@ -278,11 +278,103 @@ def bar_chart(labels: list[str], values: list[float], title: str,
     return "\n".join(out)
 
 
+def learning_curve_chart(points: list[tuple[int, float]], title: str,
+                         subtitle: str = "", unit: str = "",
+                         width: int = 1000, height: int = 260) -> str:
+    """Test error against how much history the model was given.
+
+    Bars were the wrong encoding and got this chart published saying nothing.
+    Bar *length* means magnitude, so the axis has to start at zero, and against
+    a zero baseline a spread of a few percent is six identical rectangles —
+    which is exactly what shipped. A learning curve is read for its shape, not
+    its level, so this plots position instead: dots on a zoomed axis, where a
+    non-zero baseline is legitimate because nothing here encodes length.
+
+    The axis range is printed in the corner so nobody has to assume it starts
+    at zero, the best point is marked, and the labels carry two decimals —
+    the published version rounded to whole calls per hour and turned a real
+    spread into six copies of "13".
+    """
+    if not points:
+        return ""
+
+    left, right, top, bottom = 62, 16, 34, 46
+    plot_w, plot_h = width - left - right, height - top - bottom
+    xs = [n for n, _ in points]
+    ys = [e for _, e in points]
+
+    lo, hi = min(ys), max(ys)
+    span = hi - lo
+    if span < 1e-9:                      # genuinely flat: fall back to a real zero
+        lo, hi = 0.0, hi * 1.25 or 1.0
+    else:
+        lo -= span * 0.45
+        hi += span * 0.30
+
+    px = lambda i: left + plot_w * (i / max(1, len(points) - 1))
+    py = lambda v: top + plot_h * (1 - (v - lo) / (hi - lo))
+
+    best_i = min(range(len(ys)), key=lambda i: ys[i])
+
+    out = [
+        f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
+        + (f"<span>{escape(subtitle)}</span>" if subtitle else "")
+        + "</figcaption>",
+        f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">',
+    ]
+
+    for k in range(5):
+        gy = top + plot_h * k / 4
+        out.append(f'<line class="grid" x1="{left}" y1="{gy:.1f}" '
+                   f'x2="{width - right}" y2="{gy:.1f}"/>')
+        out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" text-anchor="end">'
+                   f"{hi - (hi - lo) * k / 4:.2f}</text>")
+
+    # the best score, as a line to read the others against
+    by = py(ys[best_i])
+    out.append(f'<line x1="{left}" y1="{by:.1f}" x2="{width - right}" y2="{by:.1f}" '
+               f'stroke="{ACCENT_2}" stroke-width="1" stroke-dasharray="3 4" opacity=".55"/>')
+
+    path = " ".join(f"{'M' if i == 0 else 'L'}{px(i):.1f},{py(v):.1f}"
+                    for i, v in enumerate(ys))
+    out.append(f'<path d="{path}" fill="none" stroke="{ACCENT}" stroke-width="2.2" '
+               'stroke-linejoin="round"/>')
+
+    for i, (n, v) in enumerate(points):
+        best = i == best_i
+        out.append(
+            f'<circle cx="{px(i):.1f}" cy="{py(v):.1f}" r="{6.5 if best else 4.5}" '
+            f'fill="{ACCENT_2 if best else ACCENT}" stroke="var(--bg)" stroke-width="2">'
+            f"<title>{n} weeks of history: {v:.3f}{escape(unit)}</title></circle>")
+        out.append(f'<text class="val" x="{px(i):.1f}" y="{py(v) - 13:.1f}" '
+                   f'text-anchor="middle">{v:.2f}</text>')
+        out.append(f'<text class="ax" x="{px(i):.1f}" y="{top + plot_h + 19:.0f}" '
+                   f'text-anchor="middle">{n}w</text>')
+
+    worst = max(ys)
+    gain = (worst - ys[best_i]) / worst * 100 if worst else 0.0
+    out.append(f'<text class="ax" x="{left}" y="{height - 10:.0f}">'
+               f"axis spans {lo:.2f}–{hi:.2f}{escape(unit)}, not zero — "
+               f"best is {gain:.1f}% under the worst</text>")
+    out.append("</svg></figure>")
+    return "\n".join(out)
+
+
 # ── tables ───────────────────────────────────────────────────────────────
 
 def table(headers: list[str], rows: list[list[object]], title: str = "",
           subtitle: str = "", align_right_from: int = 1,
-          emphasise_last_row: bool = False) -> str:
+          emphasise_last_row: bool = False,
+          raw_columns: tuple[int, ...] = ()) -> str:
+    """A table. Every cell is escaped unless its column is named in ``raw_columns``.
+
+    Escaping by default is the right way round — these cells carry source names
+    and rule text that came from data files. But it silently defeated the one
+    column that was already building links: ``sources_table`` emitted a correct
+    ``<a href>`` and the page showed the angle brackets to the reader. A column
+    has to opt in, and the caller opting in is then responsible for escaping
+    what goes inside its own markup.
+    """
     out = ['<figure class="tb">']
     if title:
         out.append(f'<figcaption><b>{escape(title)}</b>'
@@ -298,7 +390,8 @@ def table(headers: list[str], rows: list[list[object]], title: str = "",
         out.append('<tr class="tot">' if last else "<tr>")
         for i, cell in enumerate(row):
             cls = ' class="r"' if i >= align_right_from else ""
-            out.append(f"<td{cls}>{escape(cell)}</td>")
+            body = str(cell) if i in raw_columns else escape(cell)
+            out.append(f"<td{cls}>{body}</td>")
         out.append("</tr>")
     out.append("</tbody></table></figure>")
     return "\n".join(out)
@@ -350,6 +443,9 @@ def stacked_bars(labels: list[str], parts: list[tuple[str, str, list[float]]],
         out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" text-anchor="end">'
                    f"{peak * (1 - k / 4):,.0f}</text>")
 
+    # roughly 28 labelled bars, whatever n is: 1 at 28, 2 at 56, 3 at 84
+    step = max(1, -(-n // 28))
+
     for i, label in enumerate(labels):
         cx = left + slot * (i + 0.5)
         y = top + plot_h
@@ -364,11 +460,14 @@ def stacked_bars(labels: list[str], parts: list[tuple[str, str, list[float]]],
                 f'height="{max(0.8, h):.1f}" fill="{colour}" opacity="0.92">'
                 f"<title>{escape(label)} — {escape(name)}: {v:,.0f}{escape(unit)}</title></rect>"
             )
-        if n <= 34:
+        # Labels thin out rather than vanish. Dropping them entirely past 34
+        # bars left a chart of anonymous columns; printing all 67 totals stacks
+        # them into a grey smear. Every `step`-th bar keeps both.
+        if i % step == 0:
             out.append(f'<text class="ax" x="{cx:.1f}" y="{top + plot_h + 16:.0f}" '
                        f'text-anchor="middle">{escape(label)}</text>')
-        out.append(f'<text class="val" x="{cx:.1f}" y="{y - 6:.1f}" text-anchor="middle">'
-                   f"{totals[i]:,.0f}</text>")
+            out.append(f'<text class="val" x="{cx:.1f}" y="{y - 6:.1f}" '
+                       f'text-anchor="middle">{totals[i]:,.0f}</text>')
 
     out.append("</svg>")
     legend = " ".join(

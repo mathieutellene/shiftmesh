@@ -9,6 +9,8 @@ disk and still opens in five years.
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -41,7 +43,7 @@ html{-webkit-text-size-adjust:100%}
    viewport so scrolling moves the content across it rather than dragging it
    along. It costs one painted layer and no script. */
 body{margin:0;color:var(--text);
-  font:15.5px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font:clamp(15.5px,0.34vw + 10.6px,19px)/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-feature-settings:"tnum" 1;
   background:var(--ink)}
 body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
@@ -67,15 +69,15 @@ h1{margin:0 0 12px;font-size:clamp(30px,3.4vw,46px);letter-spacing:-.024em;
 h2{margin:60px 0 6px;font-size:clamp(20px,1.7vw,25px);letter-spacing:-.016em;font-weight:620}
 h2 .num{color:var(--muted);font-weight:500;margin-right:10px;font-variant-numeric:tabular-nums}
 h3{margin:30px 0 8px;font-size:16.5px;font-weight:600;color:var(--text)}
-p{margin:11px 0;max-width:90ch;color:#cdd7e6}
-.lede{font-size:clamp(16px,1.25vw,19px);color:var(--muted);max-width:80ch;margin:0;line-height:1.55}
-.sub{color:var(--muted);margin:2px 0 18px;max-width:88ch}
+p{margin:11px 0;color:#cdd7e6}
+.lede{font-size:clamp(16px,1.25vw,21px);color:var(--muted);max-width:min(100%,86ch);margin:0;line-height:1.55}
+.sub{color:var(--muted);margin:2px 0 18px}
 
 /* Prose that should sit beside something rather than above it. */
 .split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
   gap:26px 40px;align-items:start;margin:18px 0}
 .split > * {min-width:0}
-.split p{max-width:62ch}
+.split p{max-width:none}
 @media (max-width:900px){ .split{grid-template-columns:1fr} }
 
 /* Filling the width without stretching the line.
@@ -88,15 +90,16 @@ p{margin:11px 0;max-width:90ch;color:#cdd7e6}
 .prose{margin:12px 0}
 .prose p{max-width:none;margin:0 0 12px}
 .prose p:last-child{margin-bottom:0}
-@media (min-width:1180px){
-  .prose{columns:2;column-gap:46px}
-  .prose p{break-inside:avoid}
-}
-@media (min-width:1680px){ .prose.wide{columns:3;column-gap:44px} }
+/* column-width, not column-count: the browser picks how many fit at the size the
+   window actually is, and re-picks as it is dragged. A fixed `columns:2` above
+   one breakpoint gave two columns at 1200px and two at 2560px. */
+.prose{column-width:33rem;column-gap:46px}
+.prose p{break-inside:avoid}
+.prose.wide{column-width:27rem;column-gap:44px}
 
 /* A lead paragraph that should stay one column and carry the section. */
 .prose.single{columns:1}
-.prose.single p{max-width:92ch}
+.prose.single p{max-width:none}
 a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.3)}
 a:hover{border-bottom-color:var(--accent)}
 code{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -139,6 +142,13 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 .note.key{border-color:var(--accent);background:rgba(77,163,255,.05)}
 .note.key b{color:var(--accent)}
 .note.warn{border-color:var(--short);background:rgba(255,92,122,.06)}
+.eq{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+  line-height:1.85;background:#0c1220;border:1px solid var(--line);border-radius:10px;
+  padding:16px 18px;margin:14px 0;overflow-x:auto;color:var(--text);max-width:none}
+.eq .cm{color:var(--muted);font-style:italic}
+.tb td a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.35)}
+.tb td a:hover{border-bottom-color:var(--accent);color:#8cc4ff}
+.eq sub{font-size:9.5px}
 .note.warn b{color:var(--short)}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
   color:var(--muted);font-size:13px}
@@ -172,12 +182,29 @@ def page(title: str, lede: str, body: str, footer: str,
 </div>{scripts}</body></html>"""
 
 
-def prose(*paragraphs: str, wide: bool = False, single: bool = False) -> str:
-    """Several paragraphs that should fill the page in columns rather than
-    running half its width and leaving the rest empty."""
-    cls = "prose" + (" wide" if wide else "") + (" single" if single else "")
+# Below this, a block is too short to survive being split: two columns of two
+# lines each read as two half-lines with a gutter down the middle, which is the
+# thing columns were supposed to prevent.
+COLUMN_THRESHOLD = 700
+
+
+def prose(*paragraphs: str, wide: bool = False, single: bool | None = None) -> str:
+    """Several paragraphs, in columns only when there is enough text to fill them.
+
+    Length decides, not the viewport. The previous rule split anything above a
+    1180px breakpoint, so a four-line block became two two-line columns — the
+    reader's eye jumping sideways for two lines — while the CSS still capped the
+    measure and left the right half of a wide screen empty either way.
+
+    ``single`` still overrides when a caller knows better; left alone it is
+    inferred from how much text there actually is.
+    """
     body = "".join(p if p.lstrip().startswith("<p") else f"<p>{p}</p>"
                    for p in paragraphs)
+    if single is None:
+        text = re.sub(r"<[^>]+>", "", body)
+        single = len(text) < COLUMN_THRESHOLD
+    cls = "prose" + (" wide" if wide else "") + (" single" if single else "")
     return f'<div class="{cls}">{body}</div>'
 
 
@@ -202,15 +229,22 @@ def sources_table() -> str:
     rows = []
     for b in B.ALL:
         value = (f"{b.value:,.2f}" if b.value < 1000 else f"{b.value:,.0f}") + f" {b.unit}"
-        link = (f'<a href="{escape(b.url)}" rel="noopener">{escape(b.source)}</a>'
+        # Opens in a new tab so a reader checking a citation does not lose the
+        # report; noreferrer as well as noopener, since these are outside sites.
+        link = (f'<a href="{escape(b.url)}" target="_blank" rel="noopener noreferrer">'
+                f'{escape(b.source)} ↗</a>'
                 if b.url else escape(b.source))
-        rows.append([b.what, value, b.confidence, link])
+        rows.append([b.what, b.confidence, link, value])
     return table(
-        ["what", "value", "confidence", "source"],
+        ["what", "confidence", "source", "value"],
         rows,
         "Every number that came from outside this repository",
-        "Sorted as declared. 'assumed' means no published figure was found.",
-        align_right_from=1,
+        "Sorted as declared. 'assumed' means no published figure was found. "
+        "Every source with a published page links straight to it.",
+        # only the value column is numeric, so only it is right-aligned; the
+        # source column carries markup the table must not escape
+        align_right_from=3,
+        raw_columns=(2,),
     )
 
 
@@ -235,14 +269,17 @@ SIMULATOR_CSS = """
 .ctl .box{position:relative;display:flex;align-items:center}
 .ctl .box input[type=number]{width:100%;font:inherit;font-size:19px;font-weight:640;
   font-variant-numeric:tabular-nums;color:var(--text);background:#0c1220;
-  border:1px solid var(--line);border-radius:9px;padding:10px 12px;padding-right:76px;
-  -moz-appearance:textfield}
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;padding-right:54px;
+  -moz-appearance:textfield;appearance:textfield}
+/* No steppers: you change a parameter by typing the number you want, not by
+   clicking twenty times. The padding above and the unit label below were both
+   sized around the arrows, so both come in now that the arrows are gone. */
 .ctl .box input[type=number]::-webkit-outer-spin-button,
-.ctl .box input[type=number]::-webkit-inner-spin-button{opacity:.4;height:30px}
+.ctl .box input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ctl .box input:hover{border-color:#35425c}
 .ctl .box input:focus,.ctl .box select:focus{border-color:var(--accent);outline:none;
   box-shadow:0 0 0 3px rgba(77,163,255,.16)}
-.ctl .box .u{position:absolute;right:32px;font-size:11.5px;color:var(--muted);
+.ctl .box .u{position:absolute;right:13px;font-size:11.5px;color:var(--muted);
   pointer-events:none;letter-spacing:.02em}
 .ctl select{width:100%;background:#0c1220;color:var(--text);border:1px solid var(--line);
   border-radius:9px;padding:12px 11px;font:inherit;font-size:14px}

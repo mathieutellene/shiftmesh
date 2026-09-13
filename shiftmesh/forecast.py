@@ -195,9 +195,17 @@ class Forecaster:
     smear_: float = 1.0
     fit_: dict = field(default_factory=dict)
 
-    def fit(self, y: np.ndarray, upto: int) -> "Forecaster":
-        """Fit on ``y[:upto]``, using only hours that have two weeks behind them."""
-        t = np.arange(2 * HOURS_PER_WEEK, upto)
+    def fit(self, y: np.ndarray, upto: int, since: int = 0) -> "Forecaster":
+        """Fit on ``y[since:upto]``, using only hours that have two weeks behind them.
+
+        ``since`` is what lets a caller ask how much history actually matters:
+        without it every model sees everything up to ``upto``, and a learning
+        curve drawn from that is six copies of the same number.
+
+        The floor of two weeks is not negotiable — the design matrix reads lags
+        a week and two weeks back, so an hour any earlier has no features.
+        """
+        t = np.arange(max(2 * HOURS_PER_WEEK, since), upto)
         X = _design(t, y)
         target = np.log1p(y[t])
 
@@ -524,7 +532,8 @@ def learning_curve(
             window = y[first * HOURS_PER_WEEK:start]
             if len(window) < 3 * HOURS_PER_WEEK:
                 continue
-            model = Forecaster(ridge=ridge).fit(y, upto=start)
+            model = Forecaster(ridge=ridge).fit(
+                y, upto=start, since=first * HOURS_PER_WEEK)
             model.fit_ = {}
             errors.append(float(np.mean(np.abs(model.predict(y, start) - actual))))
         if errors:

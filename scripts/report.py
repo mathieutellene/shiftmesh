@@ -38,10 +38,12 @@ from shiftmesh.forecast import (  # noqa: E402
     learning_curve,
     tune_uplift,
 )
+from shiftmesh.demand import save_requirement_csv  # noqa: E402
 from shiftmesh.metrics import recompute_coverage  # noqa: E402
 from shiftmesh.report import (  # noqa: E402
     ACCENT,
     ACCENT_2,
+    escape,
     Heatmap,
     Series,
     WARM,
@@ -51,6 +53,7 @@ from shiftmesh.report import (  # noqa: E402
     prose,
     section,
     RULE_NOTES,
+    rule_prices_table,
     rules_table,
     simulator,
     sources_table,
@@ -147,6 +150,9 @@ def main() -> int:
     p.add_argument("--shrinkage", type=float, default=0.30)
     p.add_argument("--rules", choices=sorted(PRESETS), default="spain")
     p.add_argument("--out", type=Path, default=Path("docs/index.html"))
+    p.add_argument("--save-requirement", type=Path,
+                   help="write the combined requirement grid, so the rule pricing "
+                        "can be measured against the same week the page shows")
     args = p.parse_args()
 
     window = Window(args.start, args.weeks)
@@ -213,6 +219,10 @@ def main() -> int:
     print(f"requirement: {total_hours:,} agent-hours "
           f"(voice {sum(sum(r) for r in need_voice):,}, "
           f"tickets {sum(sum(r) for r in need_tickets):,})", flush=True)
+
+    if args.save_requirement:
+        save_requirement_csv(need_total, args.save_requirement)
+        print(f"requirement written to {args.save_requirement}", flush=True)
 
     # ── 4. the roster ────────────────────────────────────────────────────
     rules = PRESETS[args.rules]
@@ -456,6 +466,35 @@ has to keep them."""))
         "forty-hour limit does: it is what stops a late finish being followed by an "
         "early start, which is exactly the pattern a naive optimiser reaches for "
         "when demand peaks twice a day."))
+
+    prices = []
+    price_file = Path("data/rule-prices.json")
+    if price_file.exists():
+        import json as _json
+        try:
+            prices = _json.loads(price_file.read_text(encoding="utf-8"))
+        except ValueError:
+            prices = []
+
+    if prices:
+        body.append(rule_prices_table(prices, agents))
+        savings = [r for r in prices[1:]
+                   if r.get("d_cost", 0) < -1 and not (
+                       r.get("relaxation") and r.get("d_cost", 0) > 1)]
+        free = [r for r in prices[1:] if abs(r.get("d_cost", 0)) <= 1]
+        body.append(note(
+            (f"<b>{len(free)} of these rules cost nothing at all.</b> Relaxing them "
+             "buys no coverage and saves no money on this week, which means they are "
+             "constraints you can defend for free — the roster was never pressed "
+             "against them. "
+             if free else "")
+            + (f"The ones that do bite are worth the argument: "
+               f"{', '.join(escape(r['rule']) for r in savings[:3])}. "
+               if savings else "None of them is currently binding at this headcount. ")
+            + "Read it as a question about today, not about hiring: this is one solve "
+              f"per row at {agents} agents. The other question — the smallest team "
+              "that could still cover the week — is what "
+              "<code>scripts/price_rules.py</code> answers, and it takes about an hour."))
 
     shift_counts = {name: len(enumerate_shifts(r)) for name, r in PRESETS.items()}
     body.append(stats([

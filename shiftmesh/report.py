@@ -138,6 +138,8 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 .note b{color:var(--warm)}
 .note.key{border-color:var(--accent);background:rgba(77,163,255,.05)}
 .note.key b{color:var(--accent)}
+.note.warn{border-color:var(--short);background:rgba(255,92,122,.06)}
+.note.warn b{color:var(--short)}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
   color:var(--muted);font-size:13px}
 @media print{body{background:#fff;color:#111}figure{break-inside:avoid}}
@@ -427,3 +429,143 @@ def rules_table(presets: dict) -> str:
     return ('<figure class="tb"><figcaption><b>Every rule the roster obeys</b>'
             '<span>and whether it is law, bargaining, or a decision somebody made'
             '</span></figcaption><table>' + "".join(body) + "</table></figure>")
+
+
+def _convergence_warning(rows: list[dict], broken_rows: list[dict]) -> str:
+    """State how far from proved this table is, in the table's own words.
+
+    The temptation is to suppress a measurement this loose. Printing it with
+    the gap attached is better: the gap is the finding. A reader who knows the
+    optimum could be anywhere between the bound and the incumbent can see for
+    themselves that a hundred-euro difference between two rows is noise, and
+    that is a more useful thing to have learned than a clean table would have
+    taught them.
+    """
+    import math
+
+    gaps = [r["gap"] for r in rows
+            if isinstance(r.get("gap"), (int, float)) and not math.isnan(r["gap"])]
+    worst = max(gaps) if gaps else 0.0
+    proved = [r for r in rows if r.get("gap") == 0.0]
+
+    if worst < 0.05 and not broken_rows:
+        return ""
+
+    bits = []
+    if worst >= 0.05:
+        bits.append(
+            f"<b>The search never got close enough for these to be prices.</b> "
+            f"The worst row here stopped with a {worst * 100:.0f}% optimality gap: "
+            f"the solver had a roster in hand and a proof that no roster could be "
+            f"better than a bound {worst * 100:.0f}% away from it, and exhausted its "
+            f"budget in between. Only {len(proved)} of {len(rows)} rows were proved "
+            f"optimal. A difference of a few hundred euros between two rows is far "
+            f"inside that, so it says nothing about the rules.")
+    if broken_rows:
+        names = ", ".join(escape(r["rule"]) for r in broken_rows)
+        bits.append(
+            f"{'It also shows' if bits else '<b>These are not converged.</b> This shows'} "
+            f"in the ordering: {names} moved the wrong way against the baseline. A "
+            f"relaxation only ever adds legal rosters and a tightening only ever "
+            f"removes them, so at optimality neither can cross the baseline in that "
+            f"direction. One that did means the baseline — the row every other row is "
+            f"measured against — is itself the weaker solve.")
+    bits.append(
+        "What is exact here is the shift count: how many legal shift patterns each "
+        "rule admits is enumerated, not searched, so that column is the one to read.")
+    return '<p class="note warn">' + " ".join(bits) + "</p>"
+
+
+def rule_prices_table(rows: list[dict], agents: int) -> str:
+    """What relaxing each rule buys you at the headcount you already have.
+
+    The instinct is to read this as a price list — loosen the rule, save the
+    money. At a fixed headcount it does not work that way, and the table is
+    built to stop that reading.
+
+    The solver here is minimising uncovered demand, not payroll. Relaxing a
+    rule enlarges the set of legal rosters, so it can cover more of the curve
+    with the same people — and covering more means rostering more hours, which
+    costs more. A relaxation coming out dearer is the expected result, not an
+    anomaly. What it bought is in the coverage column; what it wasted is in
+    the spare column.
+
+    So the invariant worth policing is not about money. A relaxation can never
+    cover *less* than the baseline, and a tightening can never cover *more*:
+    the feasible sets are a superset and a subset. When either happens anyway,
+    the search ran out of time and that row says nothing about its rule.
+    """
+    if not rows:
+        return ""
+
+    base = rows[0]
+
+    def moved_the_wrong_way(r: dict) -> bool:
+        """Did this row cross the baseline in a direction its rule forbids?
+
+        A relaxation adds legal rosters, so it can never cover less. A
+        tightening removes them, so it can never cover more. Either crossing
+        means the search, not the rule, decided this row.
+        """
+        if r is base:
+            return False
+        d = r["coverage"] - base["coverage"]
+        return d < -1e-9 if r.get("relaxation") else d > 1e-9
+
+    # One inversion anywhere condemns the whole column, not just its own row.
+    # Every number here is a difference *against the baseline*, so a row that
+    # beat a baseline it cannot legally beat has proved the baseline is the
+    # worse-converged solve — and then no difference in the table is safe to
+    # read. Marking only the offending row would leave the others looking sound.
+    broken_rows = [r for r in rows[1:] if moved_the_wrong_way(r)]
+    body = ["<thead><tr>",
+            "<th>If this rule were relaxed</th>",
+            '<th class="r">Legal shifts</th>',
+            '<th class="r">Coverage</th>',
+            '<th class="r">vs baseline</th>',
+            '<th class="r">Spare hours</th>',
+            '<th class="r">Week costs</th>',
+            "<th>What it means</th></tr></thead><tbody>"]
+
+    for i, r in enumerate(rows):
+        first = i == 0
+        d_cov = r["coverage"] - base["coverage"]
+        broken = moved_the_wrong_way(r)
+
+        if first:
+            shown, tone = "—", ""
+        elif broken:
+            shown, tone = "?", "color:var(--muted)"
+        elif abs(d_cov) < 5e-3:
+            shown, tone = "nothing", "color:var(--muted)"
+        else:
+            shown = f"+{d_cov:.2f}pp" if d_cov > 0 else f"−{abs(d_cov):.2f}pp"
+            tone = "color:var(--accent2)" if d_cov > 0 else "color:var(--short)"
+
+        meaning = escape(r["note"])
+        if broken:
+            meaning = ("covered the wrong way against the baseline, which the "
+                       "feasible set forbids — the search ran out of time here, "
+                       "so this row says nothing about its rule")
+
+        body.append("<tr>")
+        body.append(f"<td>{'<b>' if first else ''}{escape(r['rule'])}"
+                    f"{'</b>' if first else ''}</td>")
+        # Enumerated, not searched: the one number on this row that is exact.
+        body.append(f'<td class="r">{r.get("shifts", 0):,}</td>')
+        body.append(f'<td class="r">{r["coverage"]:.2f}%</td>')
+        body.append(f'<td class="r" style="{tone}">{shown}</td>')
+        body.append(f'<td class="r">{r["spare_hours"]:,}h</td>')
+        body.append(f'<td class="r">€{r["cost"]:,.0f}</td>')
+        body.append(f"<td>{meaning}</td>")
+        body.append("</tr>")
+    body.append("</tbody>")
+
+    warning = _convergence_warning(rows, broken_rows)
+
+    return (warning + '<figure class="tb"><figcaption><b>What each rule buys, not what it '
+            'costs</b><span>one solve per row at ' + str(agents) + ' agents. The '
+            'solver spends freedom on coverage, not on savings — so a looser rule '
+            'reads as a dearer week that covers more of the curve'
+            '</span></figcaption><table>'
+            + "".join(body) + "</table></figure>")

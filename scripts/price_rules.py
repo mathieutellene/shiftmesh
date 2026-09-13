@@ -40,7 +40,7 @@ from shiftmesh import (  # noqa: E402
     summarise,
     synthetic_arrivals,
 )
-from shiftmesh.rules import WorkRules  # noqa: E402
+from shiftmesh.rules import WorkRules, enumerate_shifts  # noqa: E402
 
 BASE = PRESETS["spain"]
 
@@ -116,6 +116,124 @@ def cheapest_headcount(requirement, rules: WorkRules, start: int, lo: int, hi: i
     return None, best_cov
 
 
+def price_at_fixed_headcount(requirement, agents: int, seconds: float,
+                             pay=None) -> list[dict]:
+    """What each rule costs when the headcount is what it is.
+
+    The headcount search above answers "how few people could do this", which is
+    the right question when you are hiring and the wrong one at half past four
+    on a Tuesday. Most of the time the team is the size it is, and the question
+    is what a rule is costing you *today* — in coverage, in hours you pay for
+    and cannot use, and in money.
+
+    One solve per rule, so the whole table is minutes rather than hours.
+    """
+    from shiftmesh.cost import PayRules, price_roster
+    from shiftmesh.metrics import summarise as _summarise
+
+    pay = pay or PayRules()
+    out = []
+    baseline = None
+
+    for name, changes, note_, relaxation in SCENARIOS:
+        rules = BASE.relaxed(**changes) if changes else BASE
+        roster = solve(requirement, agents, rules, Weights(), time_limit=seconds)
+        s = _summarise(roster)
+        if s.violations:
+            raise AssertionError(f"{name}: {len(s.violations)} rule violations")
+        money = price_roster(roster, pay)
+
+        row = {
+            "rule": name,
+            "note": note_,
+            "relaxation": relaxation,
+            "shifts": len(enumerate_shifts(rules)),
+            "coverage": round(s.coverage_pct, 2),
+            "short_hours": s.understaffed_hours,
+            "spare_hours": s.overstaffed_hours,
+            "rostered_hours": round(money.rostered_hours, 1),
+            "cost": round(money.total, 2),
+            "night_hours": round(money.night_hours, 1),
+            "sunday_shifts": money.sunday_shifts,
+            "status": roster.status,
+            "objective": round(roster.objective, 2),
+            "best_bound": round(roster.best_bound, 2),
+            "gap": round(roster.optimality_gap, 4),
+        }
+        if baseline is None:
+            baseline = row
+            row["d_cost"] = 0.0
+            row["d_short"] = 0
+            row["d_spare"] = 0
+        else:
+            row["d_cost"] = round(row["cost"] - baseline["cost"], 2)
+            row["d_short"] = row["short_hours"] - baseline["short_hours"]
+            row["d_spare"] = row["spare_hours"] - baseline["spare_hours"]
+        out.append(row)
+        print(f"  {name:<30} {row['status']:<9} gap {row['gap']*100:5.1f}%  "
+              f"cover {row['coverage']:6.2f}%  spare {row['spare_hours']:>4}h  "
+              f"EUR {row['cost']:>9,.0f}  ({row['d_cost']:+,.0f})", flush=True)
+
+    _report_inversions(out)
+    return out
+
+
+def _report_inversions(rows: list[dict]) -> None:
+    """Say out loud when the table cannot mean what it looks like it means.
+
+    Two things in this table are not opinions. A tightening removes legal
+    rosters, so at optimality it can never beat the baseline. A relaxation adds
+    them, so at optimality it can never do worse. When either happens anyway,
+    the search budget is talking and not the rule — and since every row is
+    measured *against* the baseline, one bad baseline poisons the whole column.
+
+    The size of the largest inversion is the floor below which no difference in
+    this table can be read, so it gets printed as a number rather than a
+    caveat nobody applies.
+    """
+    base = rows[0]
+    bad = []
+    for r in rows[1:]:
+        if not r["relaxation"] and r["coverage"] > base["coverage"]:
+            bad.append((r["rule"], "a tightening covered more than the baseline",
+                        r["coverage"] - base["coverage"], base["cost"] - r["cost"]))
+        if r["relaxation"] and r["coverage"] < base["coverage"] - 1e-9:
+            bad.append((r["rule"], "a relaxation covered less than the baseline",
+                        base["coverage"] - r["coverage"], 0.0))
+
+    # A greedy fallback has no bound at all, so its gap is nan. Every ordered
+    # comparison against nan is False, which would quietly file the one row we
+    # know is not optimal under "proved optimal" — the exact opposite of true.
+    import math
+    proved = [r for r in rows if r["gap"] == 0.0]
+    blind = [r for r in rows if math.isnan(r["gap"])]
+    measured = [r["gap"] for r in rows if not math.isnan(r["gap"])]
+
+    print(f"\n  {len(proved)}/{len(rows)} rows proved optimal", end="")
+    if measured:
+        print(f"; largest measured gap {max(measured) * 100:.1f}%", end="")
+    if blind:
+        print(f"; {len(blind)} fell back to greedy and have no bound to judge by",
+              end="")
+    print()
+
+    if not bad:
+        print("  no ordering inversions: the table is at least self-consistent")
+        return
+
+    floor = max(abs(e) for *_, e in bad) if any(e for *_, e in bad) else 0.0
+    print(f"\n  !! {len(bad)} ordering inversion(s) — these cannot happen at optimality:")
+    for rule, why, dcov, dcost in bad:
+        money = f", worth EUR {abs(dcost):,.0f}" if dcost else ""
+        print(f"     {rule}: {why} (+{dcov:.2f}pp{money})")
+    print("\n     The baseline every other row is measured against is therefore not")
+    print("     converged, and it is not even the best-converged row in the table.")
+    if floor:
+        print(f"     No cost difference below about EUR {floor:,.0f} can be read as a")
+        print("     rule's effect rather than as search noise. Re-run with a larger")
+        print("     --time before quoting any of these as prices.")
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -131,6 +249,10 @@ def main() -> int:
                    help="agent-hours of shortfall still counted as covered")
     p.add_argument("--headroom", type=int, default=10,
                    help="how far above the theoretical floor to search")
+    p.add_argument("--fixed", type=int,
+                   help="measure at this headcount instead of searching for the "
+                        "smallest one — one solve per rule, minutes not hours")
+    p.add_argument("--json", type=Path, help="write the fixed-headcount table as JSON")
     p.add_argument("--start", type=int,
                    help="headcount to try first for the baseline row; the walk goes "
                         "out from here, so a good guess saves whole attempts")
@@ -145,6 +267,17 @@ def main() -> int:
             synthetic_arrivals(args.calls, seed=args.seed), target
         )
         source = f"synthetic, {args.calls:,} calls/week, seed {args.seed}"
+
+    if args.fixed:
+        import json as _json
+        print(f"demand     {source}")
+        print(f"headcount  {args.fixed} agents, fixed")
+        print(f"budget     {args.time:.0f}s per rule\n")
+        rows = price_at_fixed_headcount(requirement, args.fixed, args.time)
+        if args.json:
+            args.json.write_text(_json.dumps(rows, indent=1), encoding="utf-8")
+            print(f"\nwrote {args.json}")
+        return 0
 
     floor = minimum_agents(requirement, BASE.max_weekly_hours)
     print(f"demand     {source}")

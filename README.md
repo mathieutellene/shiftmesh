@@ -37,8 +37,12 @@ forecasts a week, sizes each channel, solves a roster and writes
 python scripts/solve.py --agents 24 --time 45     # just the roster, in the terminal
 python scripts/forecast.py                        # just the forecast, and its backtest
 python scripts/price_rules.py --time 60           # what each working-time rule costs
-python -m pytest tests/ -q                        # 178 tests
+python -m pytest tests/ -q                        # 192 tests
 ```
+
+The page is not a screenshot. **Move the agent count and the matrix rebuilds**,
+along with the coverage grid, the service level and the cost — the whole pipeline
+runs in the browser, in about sixty milliseconds a week.
 
 ---
 
@@ -108,7 +112,37 @@ No queueing formula appears, and that is the point.
 
 ---
 
-## 3. The roster
+## 3. Move it yourself
+
+`shiftmesh/simulator.js` is Erlang C, the shift catalogue, the rules audit and
+the cost model ported to the browser, so the page can answer *what if we were
+four people short* without a terminal. Change the headcount, the handle time, the
+service promise, the shrinkage or the jurisdiction, and everything downstream
+rebuilds: the distribution matrix, the coverage grid, the cost, and a curve of
+every headcount in range with the trade-off drawn out.
+
+It reports the number people actually want, which is not coverage:
+
+> **Covered**, and it takes 62 people to do it — 11 more than the 51 the raw
+> hours suggest, which is what the rest rules and the shift shapes cost.
+> Dropping to 61 would save €72 a week without losing a point of coverage.
+
+What runs in the browser is the **greedy** roster, not CP-SAT — a solver does not
+fit in a page. That is stated on the panel rather than glossed: the greedy is
+instant and legal, the audit runs live beside it, and it leaves more spare hours
+than the solver does. The gap between them is what the sixty seconds of search
+buys.
+
+Two things were checked rather than assumed. The JavaScript Erlang C returns a
+requirement grid **identical to the Python one, cell for cell**, and that grid is
+pinned in `tests/test_simulator.py` so a change on one side fails the build. And
+because there is no Node here to run a real cross-check, the tests instead scan
+the JavaScript for every field it reads and fail if Python does not send it —
+which is how these two actually drift.
+
+---
+
+## 4. The roster
 
 Weekly rostering is the nurse-rostering problem: for each of *n* agents and each
 of 7 days, choose one shift out of 145 such that hourly coverage meets demand and
@@ -161,7 +195,7 @@ roster, which is the honest trade.
 
 ---
 
-## 4. What it costs
+## 5. What it costs
 
 An hour of rostered agent time in Spain costs **€12.84**:
 
@@ -183,7 +217,7 @@ and both are things the solver would trade away if the objective priced them.
 
 ---
 
-## 5. Every number, and where it came from
+## 6. Every number, and where it came from
 
 `shiftmesh/benchmarks.py` holds each externally sourced figure with a citation and
 a confidence, and the report renders it as a table. Two entries were looked for
@@ -220,6 +254,7 @@ assumed, because no public-sector figure exists. The report says so on the page.
 | `benchmarks.py` | every outside number, with its source |
 | `viz.py` | heatmaps, charts and tables as plain SVG |
 | `report.py` | the page they all assemble into |
+| `simulator.js` | the same pipeline, ported to the browser |
 
 ### The audit is not the model
 
@@ -243,7 +278,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-178 tests across ten files, about two minutes. The ones worth reading:
+192 tests across twelve files, about four minutes. The ones worth reading:
 
 - **Erlang C** against the textbook form written with real factorials, at six
   loads to nine significant figures — and then at a load where that form
@@ -258,6 +293,8 @@ python -m pytest tests/ -q
 - **The palette** is checked for lightness separation, because red and blue at the
   same luminance are one colour to a red-green colour blind reader. The first
   version of this palette failed that test.
+- **The browser port** is checked for drift by scanning it for every field it
+  reads and failing if Python does not send it.
 - Several tests exist because the version before them could not fail.
 
 ---

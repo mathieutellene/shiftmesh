@@ -65,6 +65,24 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
   color:var(--muted);font-size:13px}
 @media print{body{background:#fff;color:#111}figure{break-inside:avoid}}
+
+.sim{background:var(--panel2);border:1px solid var(--line);border-radius:14px;
+  padding:20px 20px 8px;margin:22px 0}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:16px 22px;margin-bottom:20px}
+.ctl{display:flex;flex-direction:column;gap:7px}
+.ctl label{color:var(--muted);font-size:12px;text-transform:uppercase;
+  letter-spacing:.07em;display:flex;justify-content:space-between;align-items:baseline}
+.ctl label b{color:var(--accent);font-size:15px;font-variant-numeric:tabular-nums;
+  text-transform:none;letter-spacing:0}
+.ctl input[type=range]{width:100%;accent-color:var(--accent);height:22px;margin:0}
+.ctl select{background:var(--panel);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:7px 9px;font:inherit;font-size:13.5px}
+.verdict{border-left:2.5px solid var(--accent);background:rgba(77,163,255,.05);
+  padding:13px 17px;border-radius:0 10px 10px 0;margin:4px 0 20px;color:#cdd7e6}
+.verdict b{color:var(--accent)}
+.sim figure{background:var(--panel);margin:16px 0}
+@media (max-width:620px){.controls{grid-template-columns:1fr}}
 </style></head>
 <body><div class="wrap">
 <header><h1>Staffing a contact centre from public data</h1><p class="lede">New York's 311 line receives 17.4 million calls a year. This page takes its Spanish-language desk — 484,000 calls a year, 2.8% of the line and reported separately by the city, forecasts a week of them, works out how many people that needs, builds a roster that obeys Spanish working-time law, and puts a price on it.</p></header>
@@ -1972,63 +1990,66 @@ service level in seconds.</p>
 <text x="28" y="36" text-anchor="end">A1</text>
 <rect x="34.0" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Tue 00:00</title></rect>
+<rect x="331.6" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Wed 00:00</title></rect>
 <rect x="480.4" y="27" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 9h from Thu 00:00</title></rect>
-<rect x="629.2" y="27" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 5h from Fri 00:00</title></rect>
-<text x="1080" y="36">32h</text>
+<rect x="629.2" y="27" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A1: 4h from Fri 00:00</title></rect>
+<text x="1080" y="36">40h</text>
 <text x="28" y="49" text-anchor="end">A2</text>
 <rect x="34.0" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Mon 00:00</title></rect>
+<rect x="182.8" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Wed 00:00</title></rect>
-<rect x="492.8" y="40" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 7h from Thu 02:00</title></rect>
+<rect x="480.4" y="40" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="40" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A2: 4h from Fri 00:00</title></rect>
-<text x="1080" y="49">29h</text>
+<text x="1080" y="49">40h</text>
 <text x="28" y="62" text-anchor="end">A3</text>
-<rect x="34.0" y="53" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 7h from Mon 00:00</title></rect>
+<rect x="34.0" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Wed 00:00</title></rect>
-<rect x="480.4" y="53" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 8h from Thu 00:00</title></rect>
+<rect x="480.4" y="53" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="53" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A3: 4h from Fri 00:00</title></rect>
-<text x="1080" y="62">37h</text>
+<text x="1080" y="62">40h</text>
 <text x="28" y="75" text-anchor="end">A4</text>
 <rect x="34.0" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Mon 00:00</title></rect>
+<rect x="182.8" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Wed 00:00</title></rect>
 <rect x="480.4" y="66" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="66" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A4: 4h from Fri 00:00</title></rect>
-<text x="1080" y="75">31h</text>
+<text x="1080" y="75">40h</text>
 <text x="28" y="88" text-anchor="end">A5</text>
 <rect x="34.0" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Mon 00:00</title></rect>
 <rect x="182.8" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Wed 00:00</title></rect>
-<rect x="480.4" y="79" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 8h from Thu 00:00</title></rect>
+<rect x="480.4" y="79" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="79" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A5: 4h from Fri 00:00</title></rect>
-<text x="1080" y="88">39h</text>
+<text x="1080" y="88">40h</text>
 <text x="28" y="101" text-anchor="end">A6</text>
 <rect x="34.0" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Mon 00:00</title></rect>
-<rect x="182.8" y="92" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 4h from Tue 00:00</title></rect>
+<rect x="182.8" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Tue 00:00</title></rect>
 <rect x="331.6" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Wed 00:00</title></rect>
+<rect x="480.4" y="92" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 9h from Thu 00:00</title></rect>
 <rect x="629.2" y="92" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 4h from Fri 00:00</title></rect>
-<rect x="920.6" y="92" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A6: 4h from Sat 23:00</title></rect>
-<text x="1080" y="101">30h</text>
+<text x="1080" y="101">40h</text>
 <text x="28" y="114" text-anchor="end">A7</text>
-<rect x="65.0" y="105" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 8h from Mon 05:00</title></rect>
+<rect x="65.0" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Mon 05:00</title></rect>
 <rect x="213.8" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Tue 05:00</title></rect>
-<rect x="362.6" y="105" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 7h from Wed 05:00</title></rect>
+<rect x="362.6" y="105" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 9h from Wed 05:00</title></rect>
 <rect x="517.6" y="105" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A7: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="105" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A7: 4h from Fri 04:00</title></rect>
-<text x="1080" y="114">37h</text>
+<text x="1080" y="114">40h</text>
 <text x="28" y="127" text-anchor="end">A8</text>
 <rect x="71.2" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Mon 06:00</title></rect>
 <rect x="220.0" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Tue 06:00</title></rect>
-<rect x="368.8" y="118" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 8h from Wed 06:00</title></rect>
+<rect x="368.8" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Wed 06:00</title></rect>
 <rect x="517.6" y="118" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A8: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="118" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A8: 4h from Fri 04:00</title></rect>
-<text x="1080" y="127">39h</text>
+<text x="1080" y="127">40h</text>
 <text x="28" y="140" text-anchor="end">A9</text>
 <rect x="71.2" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Mon 06:00</title></rect>
-<rect x="220.0" y="131" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 4h from Tue 06:00</title></rect>
+<rect x="220.0" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Tue 06:00</title></rect>
 <rect x="368.8" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Wed 06:00</title></rect>
 <rect x="517.6" y="131" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A9: 9h from Thu 06:00</title></rect>
 <rect x="654.0" y="131" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A9: 4h from Fri 04:00</title></rect>
-<text x="1080" y="140">35h</text>
+<text x="1080" y="140">40h</text>
 <text x="28" y="153" text-anchor="end">A10</text>
 <rect x="77.4" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Mon 07:00</title></rect>
 <rect x="226.2" y="144" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A10: 9h from Tue 07:00</title></rect>
@@ -2044,12 +2065,12 @@ service level in seconds.</p>
 <rect x="654.0" y="157" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A11: 4h from Fri 04:00</title></rect>
 <text x="1080" y="166">40h</text>
 <text x="28" y="179" text-anchor="end">A12</text>
-<rect x="77.4" y="170" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 8h from Mon 07:00</title></rect>
+<rect x="77.4" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Mon 07:00</title></rect>
 <rect x="226.2" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Tue 07:00</title></rect>
 <rect x="381.2" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="170" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A12: 9h from Thu 08:00</title></rect>
-<rect x="926.8" y="170" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A12: 4h from Sun 00:00</title></rect>
-<text x="1080" y="179">39h</text>
+<rect x="660.2" y="170" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A12: 4h from Fri 05:00</title></rect>
+<text x="1080" y="179">40h</text>
 <text x="28" y="192" text-anchor="end">A13</text>
 <rect x="77.4" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Mon 07:00</title></rect>
 <rect x="226.2" y="183" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A13: 9h from Tue 07:00</title></rect>
@@ -2062,29 +2083,29 @@ service level in seconds.</p>
 <rect x="232.4" y="196" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A14: 9h from Tue 08:00</title></rect>
 <rect x="381.2" y="196" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A14: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="196" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A14: 9h from Thu 08:00</title></rect>
-<rect x="926.8" y="196" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A14: 4h from Sun 00:00</title></rect>
+<rect x="666.4" y="196" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A14: 4h from Fri 06:00</title></rect>
 <text x="1080" y="205">40h</text>
 <text x="28" y="218" text-anchor="end">A15</text>
 <rect x="83.6" y="209" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 9h from Mon 08:00</title></rect>
 <rect x="232.4" y="209" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 9h from Tue 08:00</title></rect>
 <rect x="381.2" y="209" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="209" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 9h from Thu 08:00</title></rect>
-<rect x="678.8" y="209" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 4h from Fri 08:00</title></rect>
+<rect x="666.4" y="209" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A15: 4h from Fri 06:00</title></rect>
 <text x="1080" y="218">40h</text>
 <text x="28" y="231" text-anchor="end">A16</text>
 <rect x="83.6" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Mon 08:00</title></rect>
-<rect x="232.4" y="222" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 7h from Tue 08:00</title></rect>
+<rect x="232.4" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Tue 08:00</title></rect>
 <rect x="381.2" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="222" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 9h from Thu 08:00</title></rect>
-<rect x="672.6" y="222" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 5h from Fri 07:00</title></rect>
-<text x="1080" y="231">39h</text>
+<rect x="672.6" y="222" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A16: 4h from Fri 07:00</title></rect>
+<text x="1080" y="231">40h</text>
 <text x="28" y="244" text-anchor="end">A17</text>
 <rect x="83.6" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Mon 08:00</title></rect>
 <rect x="232.4" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Tue 08:00</title></rect>
-<rect x="381.2" y="235" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 7h from Wed 08:00</title></rect>
+<rect x="381.2" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Wed 08:00</title></rect>
 <rect x="530.0" y="235" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 9h from Thu 08:00</title></rect>
 <rect x="672.6" y="235" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A17: 4h from Fri 07:00</title></rect>
-<text x="1080" y="244">38h</text>
+<text x="1080" y="244">40h</text>
 <text x="28" y="257" text-anchor="end">A18</text>
 <rect x="89.8" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="248" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A18: 9h from Tue 09:00</title></rect>
@@ -2094,7 +2115,7 @@ service level in seconds.</p>
 <text x="1080" y="257">40h</text>
 <text x="28" y="270" text-anchor="end">A19</text>
 <rect x="89.8" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Mon 09:00</title></rect>
-<rect x="232.4" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Tue 08:00</title></rect>
+<rect x="238.6" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="261" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 9h from Thu 09:00</title></rect>
 <rect x="678.8" y="261" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A19: 4h from Fri 08:00</title></rect>
@@ -2107,12 +2128,12 @@ service level in seconds.</p>
 <rect x="678.8" y="274" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A20: 4h from Fri 08:00</title></rect>
 <text x="1080" y="283">40h</text>
 <text x="28" y="296" text-anchor="end">A21</text>
-<rect x="89.8" y="287" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 5h from Mon 09:00</title></rect>
+<rect x="89.8" y="287" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="287" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="287" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="287" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 9h from Thu 09:00</title></rect>
-<rect x="678.8" y="287" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 5h from Fri 08:00</title></rect>
-<text x="1080" y="296">37h</text>
+<rect x="678.8" y="287" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A21: 4h from Fri 08:00</title></rect>
+<text x="1080" y="296">40h</text>
 <text x="28" y="309" text-anchor="end">A22</text>
 <rect x="89.8" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="300" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 9h from Tue 09:00</title></rect>
@@ -2121,18 +2142,19 @@ service level in seconds.</p>
 <rect x="678.8" y="300" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A22: 4h from Fri 08:00</title></rect>
 <text x="1080" y="309">40h</text>
 <text x="28" y="322" text-anchor="end">A23</text>
+<rect x="89.8" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Tue 09:00</title></rect>
 <rect x="387.4" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="313" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 9h from Thu 09:00</title></rect>
-<rect x="666.4" y="313" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 7h from Fri 06:00</title></rect>
-<text x="1080" y="322">34h</text>
+<rect x="678.8" y="313" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A23: 4h from Fri 08:00</title></rect>
+<text x="1080" y="322">40h</text>
 <text x="28" y="335" text-anchor="end">A24</text>
 <rect x="89.8" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Tue 09:00</title></rect>
-<rect x="393.6" y="326" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 7h from Wed 10:00</title></rect>
+<rect x="387.4" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Wed 09:00</title></rect>
 <rect x="536.2" y="326" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 9h from Thu 09:00</title></rect>
 <rect x="678.8" y="326" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A24: 4h from Fri 08:00</title></rect>
-<text x="1080" y="335">38h</text>
+<text x="1080" y="335">40h</text>
 <text x="28" y="348" text-anchor="end">A25</text>
 <rect x="89.8" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Mon 09:00</title></rect>
 <rect x="238.6" y="339" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A25: 9h from Tue 09:00</title></rect>
@@ -2170,17 +2192,18 @@ service level in seconds.</p>
 <text x="1080" y="400">40h</text>
 <text x="28" y="413" text-anchor="end">A30</text>
 <rect x="127.0" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Mon 15:00</title></rect>
-<rect x="282.0" y="404" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 8h from Tue 16:00</title></rect>
+<rect x="282.0" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Tue 16:00</title></rect>
 <rect x="424.6" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Wed 15:00</title></rect>
-<rect x="585.8" y="404" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 7h from Thu 17:00</title></rect>
+<rect x="585.8" y="404" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A30: 9h from Thu 17:00</title></rect>
 <rect x="716.0" y="404" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A30: 4h from Fri 14:00</title></rect>
-<text x="1080" y="413">37h</text>
+<text x="1080" y="413">40h</text>
 <text x="28" y="426" text-anchor="end">A31</text>
 <rect x="133.2" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Mon 16:00</title></rect>
-<rect x="282.0" y="417" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 8h from Tue 16:00</title></rect>
+<rect x="282.0" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Tue 16:00</title></rect>
 <rect x="430.8" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Wed 16:00</title></rect>
+<rect x="585.8" y="417" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A31: 9h from Thu 17:00</title></rect>
 <rect x="716.0" y="417" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A31: 4h from Fri 14:00</title></rect>
-<text x="1080" y="426">30h</text>
+<text x="1080" y="426">40h</text>
 <text x="28" y="439" text-anchor="end">A32</text>
 <rect x="133.2" y="430" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A32: 9h from Mon 16:00</title></rect>
 <rect x="282.0" y="430" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A32: 9h from Tue 16:00</title></rect>
@@ -2196,12 +2219,12 @@ service level in seconds.</p>
 <rect x="685.0" y="443" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A33: 9h from Fri 09:00</title></rect>
 <text x="1080" y="452">40h</text>
 <text x="28" y="465" text-anchor="end">A34</text>
-<rect x="139.4" y="456" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 7h from Mon 17:00</title></rect>
+<rect x="139.4" y="456" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 9h from Mon 17:00</title></rect>
 <rect x="288.2" y="456" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 4h from Tue 17:00</title></rect>
 <rect x="437.0" y="456" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A34: 9h from Wed 17:00</title></rect>
 <rect x="685.0" y="456" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 9h from Fri 09:00</title></rect>
 <rect x="815.2" y="456" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A34: 9h from Sat 06:00</title></rect>
-<text x="1080" y="465">38h</text>
+<text x="1080" y="465">40h</text>
 <text x="28" y="478" text-anchor="end">A35</text>
 <rect x="145.6" y="469" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A35: 9h from Mon 18:00</title></rect>
 <rect x="294.4" y="469" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A35: 4h from Tue 18:00</title></rect>
@@ -2210,59 +2233,61 @@ service level in seconds.</p>
 <rect x="945.4" y="469" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A35: 9h from Sun 03:00</title></rect>
 <text x="1080" y="478">40h</text>
 <text x="28" y="491" text-anchor="end">A36</text>
-<rect x="89.8" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Mon 09:00</title></rect>
+<rect x="89.8" y="482" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 4h from Mon 09:00</title></rect>
 <rect x="294.4" y="482" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A36: 9h from Tue 18:00</title></rect>
+<rect x="685.0" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Fri 09:00</title></rect>
 <rect x="815.2" y="482" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A36: 9h from Sat 06:00</title></rect>
 <rect x="945.4" y="482" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A36: 9h from Sun 03:00</title></rect>
-<text x="1080" y="491">36h</text>
+<text x="1080" y="491">40h</text>
 <text x="28" y="504" text-anchor="end">A37</text>
-<rect x="145.6" y="495" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 4h from Mon 18:00</title></rect>
+<rect x="145.6" y="495" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 5h from Mon 18:00</title></rect>
 <rect x="294.4" y="495" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 8h from Tue 18:00</title></rect>
-<rect x="709.8" y="495" width="36.0" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 6h from Fri 13:00</title></rect>
+<rect x="691.2" y="495" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 9h from Fri 10:00</title></rect>
 <rect x="821.4" y="495" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A37: 9h from Sat 07:00</title></rect>
-<rect x="951.6" y="495" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 8h from Sun 04:00</title></rect>
-<text x="1080" y="504">35h</text>
+<rect x="951.6" y="495" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A37: 9h from Sun 04:00</title></rect>
+<text x="1080" y="504">40h</text>
 <text x="28" y="517" text-anchor="end">A38</text>
 <rect x="145.6" y="508" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 4h from Mon 18:00</title></rect>
 <rect x="443.2" y="508" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 9h from Wed 18:00</title></rect>
 <rect x="691.2" y="508" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 9h from Fri 10:00</title></rect>
-<rect x="833.8" y="508" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 7h from Sat 09:00</title></rect>
+<rect x="821.4" y="508" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A38: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="508" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A38: 9h from Sun 04:00</title></rect>
-<text x="1080" y="517">38h</text>
+<text x="1080" y="517">40h</text>
 <text x="28" y="530" text-anchor="end">A39</text>
 <rect x="145.6" y="521" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 4h from Mon 18:00</title></rect>
 <rect x="548.6" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Thu 11:00</title></rect>
 <rect x="691.2" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Fri 10:00</title></rect>
-<rect x="821.4" y="521" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 8h from Sat 07:00</title></rect>
+<rect x="821.4" y="521" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A39: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="521" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A39: 9h from Sun 04:00</title></rect>
-<text x="1080" y="530">39h</text>
+<text x="1080" y="530">40h</text>
 <text x="28" y="543" text-anchor="end">A40</text>
 <rect x="145.6" y="534" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 6h from Mon 18:00</title></rect>
 <rect x="294.4" y="534" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 6h from Tue 18:00</title></rect>
 <rect x="691.2" y="534" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 9h from Fri 10:00</title></rect>
-<rect x="833.8" y="534" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 7h from Sat 09:00</title></rect>
+<rect x="821.4" y="534" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A40: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="534" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A40: 9h from Sun 04:00</title></rect>
-<text x="1080" y="543">37h</text>
+<text x="1080" y="543">39h</text>
 <text x="28" y="556" text-anchor="end">A41</text>
+<rect x="294.4" y="547" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A41: 6h from Tue 18:00</title></rect>
 <rect x="443.2" y="547" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A41: 6h from Wed 18:00</title></rect>
 <rect x="691.2" y="547" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A41: 9h from Fri 10:00</title></rect>
 <rect x="821.4" y="547" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A41: 9h from Sat 07:00</title></rect>
 <rect x="951.6" y="547" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A41: 9h from Sun 04:00</title></rect>
-<text x="1080" y="556">33h</text>
+<text x="1080" y="556">39h</text>
 <text x="28" y="569" text-anchor="end">A42</text>
 <rect x="443.2" y="560" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A42: 6h from Wed 18:00</title></rect>
-<rect x="592.0" y="560" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 4h from Thu 18:00</title></rect>
+<rect x="592.0" y="560" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A42: 5h from Thu 18:00</title></rect>
 <rect x="697.4" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Fri 11:00</title></rect>
 <rect x="827.6" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Sat 08:00</title></rect>
 <rect x="970.2" y="560" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A42: 9h from Sun 07:00</title></rect>
-<text x="1080" y="569">37h</text>
+<text x="1080" y="569">38h</text>
 <text x="28" y="582" text-anchor="end">A43</text>
 <rect x="443.2" y="573" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A43: 6h from Wed 18:00</title></rect>
-<rect x="592.0" y="573" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 4h from Thu 18:00</title></rect>
+<rect x="592.0" y="573" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A43: 5h from Thu 18:00</title></rect>
 <rect x="697.4" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Fri 11:00</title></rect>
 <rect x="827.6" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Sat 08:00</title></rect>
-<rect x="970.2" y="573" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 8h from Sun 07:00</title></rect>
-<text x="1080" y="582">36h</text>
+<rect x="970.2" y="573" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A43: 9h from Sun 07:00</title></rect>
+<text x="1080" y="582">38h</text>
 <text x="28" y="595" text-anchor="end">A44</text>
 <rect x="443.2" y="586" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A44: 6h from Wed 18:00</title></rect>
 <rect x="592.0" y="586" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A44: 6h from Thu 18:00</title></rect>
@@ -2271,19 +2296,19 @@ service level in seconds.</p>
 <rect x="976.4" y="586" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A44: 9h from Sun 08:00</title></rect>
 <text x="1080" y="595">39h</text>
 <text x="28" y="608" text-anchor="end">A45</text>
-<rect x="96.0" y="599" width="36.0" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A45: 6h from Mon 10:00</title></rect>
-<rect x="592.0" y="599" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 6h from Thu 18:00</title></rect>
+<rect x="96.0" y="599" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A45: 4h from Mon 10:00</title></rect>
+<rect x="592.0" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Thu 18:00</title></rect>
 <rect x="740.8" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="599" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A45: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="599" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A45: 9h from Sun 12:00</title></rect>
-<text x="1080" y="608">39h</text>
+<text x="1080" y="608">40h</text>
 <text x="28" y="621" text-anchor="end">A46</text>
 <rect x="294.4" y="612" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 6h from Tue 18:00</title></rect>
 <rect x="592.0" y="612" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 6h from Thu 18:00</title></rect>
 <rect x="740.8" y="612" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="612" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A46: 9h from Sat 15:00</title></rect>
-<rect x="1001.2" y="612" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A46: 8h from Sun 12:00</title></rect>
-<text x="1080" y="621">38h</text>
+<rect x="1001.2" y="612" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A46: 9h from Sun 12:00</title></rect>
+<text x="1080" y="621">39h</text>
 <text x="28" y="634" text-anchor="end">A47</text>
 <rect x="443.2" y="625" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 6h from Wed 18:00</title></rect>
 <rect x="592.0" y="625" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A47: 6h from Thu 18:00</title></rect>
@@ -2293,59 +2318,58 @@ service level in seconds.</p>
 <text x="1080" y="634">39h</text>
 <text x="28" y="647" text-anchor="end">A48</text>
 <rect x="145.6" y="638" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 6h from Mon 18:00</title></rect>
-<rect x="592.0" y="638" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 9h from Thu 18:00</title></rect>
-<rect x="740.8" y="638" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 7h from Fri 18:00</title></rect>
+<rect x="592.0" y="638" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 6h from Thu 18:00</title></rect>
+<rect x="740.8" y="638" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="638" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A48: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="638" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A48: 9h from Sun 12:00</title></rect>
-<text x="1080" y="647">40h</text>
+<text x="1080" y="647">39h</text>
 <text x="28" y="660" text-anchor="end">A49</text>
-<rect x="145.6" y="651" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 8h from Mon 18:00</title></rect>
+<rect x="145.6" y="651" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 6h from Mon 18:00</title></rect>
 <rect x="387.4" y="651" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A49: 4h from Wed 09:00</title></rect>
 <rect x="740.8" y="651" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="651" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A49: 9h from Sat 15:00</title></rect>
 <rect x="1001.2" y="651" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A49: 9h from Sun 12:00</title></rect>
-<text x="1080" y="660">39h</text>
+<text x="1080" y="660">37h</text>
 <text x="28" y="673" text-anchor="end">A50</text>
 <rect x="244.8" y="664" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 9h from Tue 10:00</title></rect>
-<rect x="585.8" y="664" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 8h from Thu 17:00</title></rect>
-<rect x="740.8" y="664" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 7h from Fri 18:00</title></rect>
+<rect x="387.4" y="664" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 4h from Wed 09:00</title></rect>
+<rect x="740.8" y="664" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 9h from Fri 18:00</title></rect>
 <rect x="871.0" y="664" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A50: 9h from Sat 15:00</title></rect>
-<text x="1080" y="673">33h</text>
+<rect x="1001.2" y="664" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A50: 9h from Sun 12:00</title></rect>
+<text x="1080" y="673">40h</text>
 <text x="28" y="686" text-anchor="end">A51</text>
 <rect x="238.6" y="677" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A51: 4h from Tue 09:00</title></rect>
-<rect x="610.6" y="677" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 5h from Thu 21:00</title></rect>
+<rect x="610.6" y="677" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 8h from Thu 21:00</title></rect>
 <rect x="747.0" y="677" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 9h from Fri 19:00</title></rect>
-<rect x="889.6" y="677" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 7h from Sat 18:00</title></rect>
+<rect x="877.2" y="677" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A51: 9h from Sat 16:00</title></rect>
 <rect x="1007.4" y="677" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A51: 9h from Sun 13:00</title></rect>
-<text x="1080" y="686">34h</text>
+<text x="1080" y="686">39h</text>
 <text x="28" y="699" text-anchor="end">A52</text>
 <rect x="127.0" y="690" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A52: 4h from Mon 15:00</title></rect>
 <rect x="393.6" y="690" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A52: 9h from Wed 10:00</title></rect>
-<rect x="747.0" y="690" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A52: 8h from Fri 19:00</title></rect>
+<rect x="747.0" y="690" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A52: 9h from Fri 19:00</title></rect>
 <rect x="877.2" y="690" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A52: 9h from Sat 16:00</title></rect>
 <rect x="1007.4" y="690" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A52: 9h from Sun 13:00</title></rect>
-<text x="1080" y="699">39h</text>
+<text x="1080" y="699">40h</text>
 <text x="28" y="712" text-anchor="end">A53</text>
 <rect x="158.0" y="703" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 4h from Mon 20:00</title></rect>
 <rect x="306.8" y="703" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 4h from Tue 20:00</title></rect>
-<rect x="747.0" y="703" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 8h from Fri 19:00</title></rect>
+<rect x="747.0" y="703" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 9h from Fri 19:00</title></rect>
 <rect x="877.2" y="703" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A53: 9h from Sat 16:00</title></rect>
 <rect x="1007.4" y="703" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A53: 9h from Sun 13:00</title></rect>
-<text x="1080" y="712">34h</text>
+<text x="1080" y="712">35h</text>
 <text x="28" y="725" text-anchor="end">A54</text>
-<rect x="244.8" y="716" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A54: 4h from Tue 10:00</title></rect>
 <rect x="530.0" y="716" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A54: 4h from Thu 08:00</title></rect>
-<rect x="753.2" y="716" width="48.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 8h from Fri 20:00</title></rect>
+<rect x="753.2" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Fri 20:00</title></rect>
 <rect x="883.4" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Sat 17:00</title></rect>
 <rect x="1013.6" y="716" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A54: 9h from Sun 14:00</title></rect>
-<text x="1080" y="725">34h</text>
+<text x="1080" y="725">31h</text>
 <text x="28" y="738" text-anchor="end">A55</text>
-<rect x="294.4" y="729" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 6h from Tue 18:00</title></rect>
 <rect x="530.0" y="729" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A55: 4h from Thu 08:00</title></rect>
 <rect x="753.2" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Fri 20:00</title></rect>
 <rect x="889.6" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Sat 18:00</title></rect>
 <rect x="1019.8" y="729" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A55: 9h from Sun 15:00</title></rect>
-<text x="1080" y="738">37h</text>
+<text x="1080" y="738">31h</text>
 <text x="28" y="751" text-anchor="end">A56</text>
 <rect x="34.0" y="742" width="11.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 2h from Mon 00:00</title></rect>
 <rect x="604.4" y="742" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A56: 4h from Thu 20:00</title></rect>
@@ -2355,11 +2379,10 @@ service level in seconds.</p>
 <text x="1080" y="751">29h</text>
 <text x="28" y="764" text-anchor="end">A57</text>
 <rect x="34.0" y="755" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 3h from Mon 00:00</title></rect>
-<rect x="182.8" y="755" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 9h from Tue 00:00</title></rect>
 <rect x="697.4" y="755" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A57: 4h from Fri 11:00</title></rect>
 <rect x="796.6" y="755" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 9h from Sat 03:00</title></rect>
 <rect x="1057.0" y="755" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A57: 3h from Sun 21:00</title></rect>
-<text x="1080" y="764">28h</text>
+<text x="1080" y="764">19h</text>
 <text x="28" y="777" text-anchor="end">A58</text>
 <rect x="34.0" y="768" width="11.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A58: 2h from Mon 00:00</title></rect>
 <rect x="697.4" y="768" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A58: 4h from Fri 11:00</title></rect>
@@ -2368,53 +2391,47 @@ service level in seconds.</p>
 <text x="1080" y="777">18h</text>
 <text x="28" y="790" text-anchor="end">A59</text>
 <rect x="34.0" y="781" width="5.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 1h from Mon 00:00</title></rect>
-<rect x="331.6" y="781" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 9h from Wed 00:00</title></rect>
 <rect x="604.4" y="781" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 4h from Thu 20:00</title></rect>
 <rect x="703.6" y="781" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A59: 5h from Fri 12:00</title></rect>
 <rect x="920.6" y="781" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 5h from Sat 23:00</title></rect>
 <rect x="1057.0" y="781" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A59: 3h from Sun 21:00</title></rect>
-<text x="1080" y="790">27h</text>
+<text x="1080" y="790">18h</text>
 <text x="28" y="803" text-anchor="end">A60</text>
 <rect x="34.0" y="794" width="5.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 1h from Mon 00:00</title></rect>
-<rect x="387.4" y="794" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A60: 4h from Wed 09:00</title></rect>
 <rect x="703.6" y="794" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A60: 5h from Fri 12:00</title></rect>
 <rect x="920.6" y="794" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 5h from Sat 23:00</title></rect>
 <rect x="1057.0" y="794" width="17.4" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A60: 3h from Sun 21:00</title></rect>
-<text x="1080" y="803">18h</text>
+<text x="1080" y="803">14h</text>
 <text x="28" y="816" text-anchor="end">A61</text>
-<rect x="778.0" y="807" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A61: 6h from Sat 00:00</title></rect>
-<rect x="982.6" y="807" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A61: 7h from Sun 09:00</title></rect>
+<rect x="778.0" y="807" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A61: 7h from Sat 00:00</title></rect>
+<rect x="982.6" y="807" width="36.0" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A61: 6h from Sun 09:00</title></rect>
 <text x="1080" y="816">13h</text>
 <text x="28" y="829" text-anchor="end">A62</text>
-<rect x="778.0" y="820" width="42.2" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 7h from Sat 00:00</title></rect>
-<rect x="1001.2" y="820" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A62: 9h from Sun 12:00</title></rect>
-<text x="1080" y="829">16h</text>
+<rect x="778.0" y="820" width="36.0" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 6h from Sat 00:00</title></rect>
+<rect x="926.8" y="820" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A62: 4h from Sun 00:00</title></rect>
+<text x="1080" y="829">10h</text>
 <text x="28" y="842" text-anchor="end">A63</text>
-<rect x="480.4" y="833" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 9h from Thu 00:00</title></rect>
-<rect x="685.0" y="833" width="29.8" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A63: 5h from Fri 09:00</title></rect>
+<rect x="691.2" y="833" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A63: 4h from Fri 10:00</title></rect>
 <rect x="790.4" y="833" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 4h from Sat 02:00</title></rect>
-<text x="1080" y="842">18h</text>
+<rect x="926.8" y="833" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A63: 4h from Sun 00:00</title></rect>
+<text x="1080" y="842">12h</text>
 <text x="28" y="855" text-anchor="end">A64</text>
-<rect x="77.4" y="846" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A64: 7h from Mon 07:00</title></rect>
-<rect x="201.4" y="846" width="29.8" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 5h from Tue 03:00</title></rect>
-<rect x="666.4" y="846" width="48.4" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A64: 8h from Fri 06:00</title></rect>
+<rect x="691.2" y="846" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A64: 4h from Fri 10:00</title></rect>
 <rect x="790.4" y="846" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 4h from Sat 02:00</title></rect>
 <rect x="926.8" y="846" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A64: 4h from Sun 00:00</title></rect>
-<text x="1080" y="855">28h</text>
+<text x="1080" y="855">12h</text>
 <text x="28" y="868" text-anchor="end">A65</text>
-<rect x="182.8" y="859" width="54.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A65: 9h from Tue 00:00</title></rect>
 <rect x="691.2" y="859" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A65: 4h from Fri 10:00</title></rect>
 <rect x="926.8" y="859" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A65: 4h from Sun 00:00</title></rect>
-<text x="1080" y="868">17h</text>
+<text x="1080" y="868">8h</text>
 <text x="28" y="881" text-anchor="end">A66</text>
-<rect x="685.0" y="872" width="54.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A66: 9h from Fri 09:00</title></rect>
+<rect x="685.0" y="872" width="23.6" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A66: 4h from Fri 09:00</title></rect>
 <rect x="926.8" y="872" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A66: 4h from Sun 00:00</title></rect>
-<text x="1080" y="881">13h</text>
+<text x="1080" y="881">8h</text>
 <text x="28" y="894" text-anchor="end">A67</text>
-<rect x="660.2" y="885" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A67: 4h from Fri 05:00</title></rect>
 <rect x="852.4" y="885" width="42.2" height="10" rx="2.5" fill="#4da3ff" opacity="0.8"><title>A67: 7h from Sat 12:00</title></rect>
 <rect x="1050.8" y="885" width="23.6" height="10" rx="2.5" fill="#ffb454" opacity="0.9"><title>A67: 4h from Sun 20:00</title></rect>
-<text x="1080" y="894">15h</text>
+<text x="1080" y="894">11h</text>
 </svg>
 <div class="legend"><span><i style="--c:#4da3ff"></i>day</span><span><i style="--c:#ffb454"></i>includes night hours</span></div>
 </figure>
@@ -2432,30 +2449,30 @@ service level in seconds.</p>
 <text class="cell" x="74" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="98" y="34" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 00:00 — 11 vs 10 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="144" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
-<rect x="190" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
-<rect x="236" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 00:00 — 10 vs 10 needed (+0, exact)</title></rect>
-<text class="cell" x="258" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="144" y="34" width="44" height="20" rx="3" fill="#2c4f7b"><title>Wed 00:00 — 12 vs 10 needed (+2, spare)</title></rect>
+<text class="cell" x="166" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="190" y="34" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 00:00 — 11 vs 10 needed (+1, spare)</title></rect>
+<text class="cell" x="212" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="236" y="34" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 00:00 — 11 vs 10 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="282" y="34" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 00:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="328" y="34" width="44" height="20" rx="3" fill="#8d5f72"><title>Sun 00:00 — 14 vs 15 needed (-1, short)</title></rect>
-<text class="cell" x="350" y="48" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
+<rect x="328" y="34" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sun 00:00 — 13 vs 15 needed (-2, short)</title></rect>
+<text class="cell" x="350" y="48" text-anchor="middle" fill="rgba(10,14,22,.85)">13</text>
 <rect x="52" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="98" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="144" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="190" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="236" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 01:00 — 9 vs 9 needed (+0, exact)</title></rect>
-<text class="cell" x="258" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
-<rect x="282" y="56" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 01:00 — 12 vs 12 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="328" y="56" width="44" height="20" rx="3" fill="#c27589"><title>Sun 01:00 — 11 vs 14 needed (-3, short)</title></rect>
-<text class="cell" x="350" y="70" text-anchor="middle" fill="rgba(10,14,22,.85)">11</text>
+<rect x="190" y="56" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 01:00 — 10 vs 9 needed (+1, spare)</title></rect>
+<text class="cell" x="212" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="236" y="56" width="44" height="20" rx="3" fill="#2c4f7b"><title>Fri 01:00 — 11 vs 9 needed (+2, spare)</title></rect>
+<text class="cell" x="258" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="282" y="56" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 01:00 — 14 vs 12 needed (+2, spare)</title></rect>
+<text class="cell" x="304" y="70" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
+<rect x="328" y="56" width="44" height="20" rx="3" fill="#d87f92"><title>Sun 01:00 — 10 vs 14 needed (-4, short)</title></rect>
+<text class="cell" x="350" y="70" text-anchor="middle" fill="rgba(10,14,22,.85)">10</text>
 <rect x="52" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
 <rect x="98" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
@@ -2464,25 +2481,25 @@ service level in seconds.</p>
 <text class="cell" x="166" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
 <rect x="190" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
-<rect x="236" y="78" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 02:00 — 7 vs 7 needed (+0, exact)</title></rect>
-<text class="cell" x="258" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
-<rect x="282" y="78" width="44" height="20" rx="3" fill="#2c5385"><title>Sat 02:00 — 14 vs 11 needed (+3, spare)</title></rect>
-<text class="cell" x="304" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="328" y="78" width="44" height="20" rx="3" fill="#8d5f72"><title>Sun 02:00 — 10 vs 11 needed (-1, short)</title></rect>
-<text class="cell" x="350" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="236" y="78" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 02:00 — 8 vs 7 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
+<rect x="282" y="78" width="44" height="20" rx="3" fill="#2d5b96"><title>Sat 02:00 — 16 vs 11 needed (+5, spare)</title></rect>
+<text class="cell" x="304" y="92" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
+<rect x="328" y="78" width="44" height="20" rx="3" fill="#aa6b7e"><title>Sun 02:00 — 9 vs 11 needed (-2, short)</title></rect>
+<text class="cell" x="350" y="92" text-anchor="middle" fill="rgba(10,14,22,.85)">9</text>
 <text class="ax" x="44" y="115" text-anchor="end">03</text>
 <rect x="52" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="98" y="100" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 03:00 — 7 vs 6 needed (+1, spare)</title></rect>
-<text class="cell" x="120" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
+<rect x="98" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
+<text class="cell" x="120" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="144" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="190" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="236" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 03:00 — 6 vs 6 needed (+0, exact)</title></rect>
-<text class="cell" x="258" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="282" y="100" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 03:00 — 10 vs 9 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="236" y="100" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 03:00 — 7 vs 6 needed (+1, spare)</title></rect>
+<text class="cell" x="258" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">7</text>
+<rect x="282" y="100" width="44" height="20" rx="3" fill="#2c5385"><title>Sat 03:00 — 12 vs 9 needed (+3, spare)</title></rect>
+<text class="cell" x="304" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="100" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 03:00 — 10 vs 10 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="114" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
 <rect x="52" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 04:00 — 6 vs 6 needed (+0, exact)</title></rect>
@@ -2495,8 +2512,8 @@ service level in seconds.</p>
 <text class="cell" x="212" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
 <rect x="236" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 04:00 — 6 vs 6 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">6</text>
-<rect x="282" y="122" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 04:00 — 8 vs 7 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
+<rect x="282" y="122" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 04:00 — 9 vs 7 needed (+2, spare)</title></rect>
+<text class="cell" x="304" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="328" y="122" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 04:00 — 8 vs 8 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="136" text-anchor="middle" fill="rgba(255,255,255,.78)">8</text>
 <rect x="52" y="144" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 05:00 — 7 vs 7 needed (+0, exact)</title></rect>
@@ -2538,8 +2555,8 @@ service level in seconds.</p>
 <text class="cell" x="212" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="236" y="188" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 07:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="282" y="188" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 07:00 — 9 vs 9 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
+<rect x="282" y="188" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 07:00 — 11 vs 9 needed (+2, spare)</title></rect>
+<text class="cell" x="304" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="328" y="188" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 07:00 — 9 vs 9 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="202" text-anchor="middle" fill="rgba(255,255,255,.78)">9</text>
 <rect x="52" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 08:00 — 17 vs 17 needed (+0, exact)</title></rect>
@@ -2548,12 +2565,12 @@ service level in seconds.</p>
 <text class="cell" x="120" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
 <rect x="144" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 08:00 — 17 vs 17 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
-<rect x="190" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 08:00 — 17 vs 17 needed (+0, exact)</title></rect>
-<text class="cell" x="212" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
+<rect x="190" y="210" width="44" height="20" rx="3" fill="#2c4f7b"><title>Thu 08:00 — 19 vs 17 needed (+2, spare)</title></rect>
+<text class="cell" x="212" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
 <rect x="236" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 08:00 — 16 vs 16 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
-<rect x="282" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 08:00 — 10 vs 10 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
+<rect x="282" y="210" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sat 08:00 — 12 vs 10 needed (+2, spare)</title></rect>
+<text class="cell" x="304" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="210" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 08:00 — 10 vs 10 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="224" text-anchor="middle" fill="rgba(255,255,255,.78)">10</text>
 <text class="ax" x="44" y="247" text-anchor="end">09</text>
@@ -2561,8 +2578,8 @@ service level in seconds.</p>
 <text class="cell" x="74" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="98" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 09:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="144" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 09:00 — 21 vs 20 needed (+1, spare)</title></rect>
-<text class="cell" x="166" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="144" y="232" width="44" height="20" rx="3" fill="#2c4f7b"><title>Wed 09:00 — 22 vs 20 needed (+2, spare)</title></rect>
+<text class="cell" x="166" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="190" y="232" width="44" height="20" rx="3" fill="#2c4f7b"><title>Thu 09:00 — 22 vs 20 needed (+2, spare)</title></rect>
 <text class="cell" x="212" y="246" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="232" width="44" height="20" rx="3" fill="#2c4970"><title>Fri 09:00 — 21 vs 20 needed (+1, spare)</title></rect>
@@ -2579,8 +2596,8 @@ service level in seconds.</p>
 <text class="cell" x="166" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
 <rect x="190" y="254" width="44" height="20" rx="3" fill="#2c4f7b"><title>Thu 10:00 — 23 vs 21 needed (+2, spare)</title></rect>
 <text class="cell" x="212" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
-<rect x="236" y="254" width="44" height="20" rx="3" fill="#2c5385"><title>Fri 10:00 — 25 vs 22 needed (+3, spare)</title></rect>
-<text class="cell" x="258" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">25</text>
+<rect x="236" y="254" width="44" height="20" rx="3" fill="#2d578e"><title>Fri 10:00 — 26 vs 22 needed (+4, spare)</title></rect>
+<text class="cell" x="258" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">26</text>
 <rect x="282" y="254" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 10:00 — 13 vs 13 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="268" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="328" y="254" width="44" height="20" rx="3" fill="#c27589"><title>Sun 10:00 — 11 vs 14 needed (-3, short)</title></rect>
@@ -2604,22 +2621,22 @@ service level in seconds.</p>
 <text class="cell" x="74" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
 <rect x="98" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 12:00 — 23 vs 23 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
-<rect x="144" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 12:00 — 24 vs 24 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">24</text>
+<rect x="144" y="298" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 12:00 — 25 vs 24 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">25</text>
 <rect x="190" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 12:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 12:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="282" y="298" width="44" height="20" rx="3" fill="#8d5f72"><title>Sat 12:00 — 12 vs 13 needed (-1, short)</title></rect>
 <text class="cell" x="304" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="328" y="298" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 12:00 — 14 vs 14 needed (+0, exact)</title></rect>
-<text class="cell" x="350" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
+<rect x="328" y="298" width="44" height="20" rx="3" fill="#2c4970"><title>Sun 12:00 — 15 vs 14 needed (+1, spare)</title></rect>
+<text class="cell" x="350" y="312" text-anchor="middle" fill="rgba(255,255,255,.78)">15</text>
 <rect x="52" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 13:00 — 23 vs 23 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="98" y="320" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 13:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="120" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
-<rect x="144" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 13:00 — 22 vs 22 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
+<rect x="144" y="320" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 13:00 — 23 vs 22 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">23</text>
 <rect x="190" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 13:00 — 22 vs 22 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="320" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 13:00 — 21 vs 21 needed (+0, exact)</title></rect>
@@ -2630,10 +2647,10 @@ service level in seconds.</p>
 <text class="cell" x="350" y="334" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="52" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
 <text class="cell" x="74" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="98" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 14:00 — 20 vs 20 needed (+0, exact)</title></rect>
-<text class="cell" x="120" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="144" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="98" y="342" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 14:00 — 21 vs 20 needed (+1, spare)</title></rect>
+<text class="cell" x="120" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="144" y="342" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 14:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="190" y="342" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 14:00 — 22 vs 21 needed (+1, spare)</title></rect>
 <text class="cell" x="212" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="236" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 14:00 — 21 vs 21 needed (+0, exact)</title></rect>
@@ -2643,46 +2660,46 @@ service level in seconds.</p>
 <rect x="328" y="342" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 14:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="356" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <text class="ax" x="44" y="379" text-anchor="end">15</text>
-<rect x="52" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 15:00 — 21 vs 21 needed (+0, exact)</title></rect>
-<text class="cell" x="74" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
-<rect x="98" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 15:00 — 20 vs 20 needed (+0, exact)</title></rect>
-<text class="cell" x="120" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
-<rect x="144" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 15:00 — 21 vs 21 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="52" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 15:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<text class="cell" x="74" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
+<rect x="98" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 15:00 — 21 vs 20 needed (+1, spare)</title></rect>
+<text class="cell" x="120" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
+<rect x="144" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 15:00 — 22 vs 21 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">22</text>
 <rect x="190" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 15:00 — 20 vs 20 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
 <rect x="236" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 15:00 — 19 vs 19 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
-<rect x="282" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 15:00 — 14 vs 14 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
+<rect x="282" y="364" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 15:00 — 15 vs 14 needed (+1, spare)</title></rect>
+<text class="cell" x="304" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">15</text>
 <rect x="328" y="364" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 15:00 — 14 vs 14 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="378" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
-<rect x="52" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 16:00 — 19 vs 19 needed (+0, exact)</title></rect>
-<text class="cell" x="74" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
-<rect x="98" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 16:00 — 19 vs 19 needed (+0, exact)</title></rect>
-<text class="cell" x="120" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">19</text>
-<rect x="144" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 16:00 — 20 vs 20 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="52" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 16:00 — 20 vs 19 needed (+1, spare)</title></rect>
+<text class="cell" x="74" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="98" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 16:00 — 20 vs 19 needed (+1, spare)</title></rect>
+<text class="cell" x="120" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">20</text>
+<rect x="144" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 16:00 — 21 vs 20 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">21</text>
 <rect x="190" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 16:00 — 18 vs 17 needed (+1, spare)</title></rect>
 <text class="cell" x="212" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
 <rect x="236" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 16:00 — 18 vs 18 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
-<rect x="282" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 16:00 — 12 vs 12 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="282" y="386" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 16:00 — 13 vs 12 needed (+1, spare)</title></rect>
+<text class="cell" x="304" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <rect x="328" y="386" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 16:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="400" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="52" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
-<text class="cell" x="74" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
-<rect x="98" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
-<text class="cell" x="120" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
-<rect x="144" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
-<text class="cell" x="166" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
+<rect x="52" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
+<text class="cell" x="74" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
+<rect x="98" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Tue 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
+<text class="cell" x="120" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
+<rect x="144" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Wed 17:00 — 18 vs 17 needed (+1, spare)</title></rect>
+<text class="cell" x="166" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">18</text>
 <rect x="190" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Thu 17:00 — 17 vs 17 needed (+0, exact)</title></rect>
 <text class="cell" x="212" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">17</text>
 <rect x="236" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 17:00 — 16 vs 16 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">16</text>
-<rect x="282" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 17:00 — 11 vs 11 needed (+0, exact)</title></rect>
-<text class="cell" x="304" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="282" y="408" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 17:00 — 12 vs 11 needed (+1, spare)</title></rect>
+<text class="cell" x="304" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="328" y="408" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 17:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="422" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <text class="ax" x="44" y="445" text-anchor="end">18</text>
@@ -2726,8 +2743,8 @@ service level in seconds.</p>
 <text class="cell" x="258" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="282" y="474" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 20:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="304" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="328" y="474" width="44" height="20" rx="3" fill="#2c4970"><title>Sun 20:00 — 12 vs 11 needed (+1, spare)</title></rect>
-<text class="cell" x="350" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="328" y="474" width="44" height="20" rx="3" fill="#2c4f7b"><title>Sun 20:00 — 13 vs 11 needed (+2, spare)</title></rect>
+<text class="cell" x="350" y="488" text-anchor="middle" fill="rgba(255,255,255,.78)">13</text>
 <text class="ax" x="44" y="511" text-anchor="end">21</text>
 <rect x="52" y="496" width="44" height="20" rx="3" fill="#2c5385"><title>Mon 21:00 — 14 vs 11 needed (+3, spare)</title></rect>
 <text class="cell" x="74" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
@@ -2743,14 +2760,14 @@ service level in seconds.</p>
 <text class="cell" x="304" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="328" y="496" width="44" height="20" rx="3" fill="#2b3648"><title>Sun 21:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="350" y="510" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
-<rect x="52" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Mon 22:00 — 11 vs 11 needed (+0, exact)</title></rect>
-<text class="cell" x="74" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
+<rect x="52" y="518" width="44" height="20" rx="3" fill="#2c4970"><title>Mon 22:00 — 12 vs 11 needed (+1, spare)</title></rect>
+<text class="cell" x="74" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="98" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Tue 22:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="120" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="144" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Wed 22:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="166" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="190" y="518" width="44" height="20" rx="3" fill="#2c4970"><title>Thu 22:00 — 12 vs 11 needed (+1, spare)</title></rect>
-<text class="cell" x="212" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
+<rect x="190" y="518" width="44" height="20" rx="3" fill="#2c5385"><title>Thu 22:00 — 14 vs 11 needed (+3, spare)</title></rect>
+<text class="cell" x="212" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="236" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 22:00 — 11 vs 11 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="532" text-anchor="middle" fill="rgba(255,255,255,.78)">11</text>
 <rect x="282" y="518" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 22:00 — 12 vs 12 needed (+0, exact)</title></rect>
@@ -2767,13 +2784,74 @@ service level in seconds.</p>
 <text class="cell" x="212" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
 <rect x="236" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Fri 23:00 — 12 vs 12 needed (+0, exact)</title></rect>
 <text class="cell" x="258" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">12</text>
-<rect x="282" y="540" width="44" height="20" rx="3" fill="#2c4970"><title>Sat 23:00 — 15 vs 14 needed (+1, spare)</title></rect>
-<text class="cell" x="304" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">15</text>
+<rect x="282" y="540" width="44" height="20" rx="3" fill="#2b3648"><title>Sat 23:00 — 14 vs 14 needed (+0, exact)</title></rect>
+<text class="cell" x="304" y="554" text-anchor="middle" fill="rgba(255,255,255,.78)">14</text>
 <rect x="328" y="540" width="44" height="20" rx="3" fill="#ec879b"><title>Sun 23:00 — 7 vs 12 needed (-5, short)</title></rect>
 <text class="cell" x="350" y="554" text-anchor="middle" fill="rgba(10,14,22,.85)">7</text>
 </svg></figure>
-<div class="stats"><div class="stat"><span class="k">Agents</span><span class="v">67</span><span class="n">spain rules</span></div><div class="stat warn"><span class="k">Coverage</span><span class="v">98.9%</span><span class="n">24h short</span></div><div class="stat"><span class="k">Spare</span><span class="v">49h</span><span class="n">paid and not needed</span></div><div class="stat good"><span class="k">Rules</span><span class="v">all respected</span><span class="n">audited from the assignment</span></div></div>
-<h2><span class="num">05</span>What it costs</h2><p class="sub">Priced against the Spanish sector agreement, premium by premium.</p>
+<div class="stats"><div class="stat"><span class="k">Agents</span><span class="v">67</span><span class="n">spain rules</span></div><div class="stat warn"><span class="k">Coverage</span><span class="v">98.8%</span><span class="n">27h short</span></div><div class="stat"><span class="k">Spare</span><span class="v">92h</span><span class="n">paid and not needed</span></div><div class="stat good"><span class="k">Rules</span><span class="v">all respected</span><span class="n">audited from the assignment</span></div></div>
+<h2><span class="num">05</span>Move the numbers yourself</h2><p class="sub">The same pipeline, running in your browser. Change how many people you have, or what you promise them, and watch the matrix rebuild.</p>
+<p>Everything above is one scenario. The panel below is the
+whole thing — Erlang C, the shift catalogue, the rules audit and the cost model
+— ported to JavaScript and running on the page, so the question "what if we were
+four people short" takes a few milliseconds instead of a terminal.</p>
+<div class="note"><b>This is the greedy roster, not the solver.</b> CP-SAT does not run in a browser, so the panel builds each week the way the warm start does: hand every agent the shift that closes the biggest remaining hole, if the rules still hold. That is instant and it is legal — the audit runs live and will say so if it ever is not — but it leaves more spare hours than the solver. On this week the solver reached 92h spare; the greedy alone lands higher, and the difference is what the sixty seconds of search above bought.</div>
+
+<div class="sim">
+  <div class="controls">
+    <div class="ctl">
+      <label for="sm-agents">Agents available <b id="sm-agents-out">67</b></label>
+      <input type="range" id="sm-agents" min="36" max="90" value="67" step="1">
+    </div>
+    <div class="ctl">
+      <label for="sm-aht">Handle time <b id="sm-aht-out">4:50</b></label>
+      <input type="range" id="sm-aht" min="120" max="600" value="290" step="10">
+    </div>
+    <div class="ctl">
+      <label for="sm-sla">Service target <b id="sm-sla-out">80%</b></label>
+      <input type="range" id="sm-sla" min="50" max="95" value="80" step="5">
+    </div>
+    <div class="ctl">
+      <label for="sm-shrink">Shrinkage <b id="sm-shrink-out">30%</b></label>
+      <input type="range" id="sm-shrink" min="0" max="45" value="30" step="1">
+    </div>
+    <div class="ctl">
+      <label for="sm-rules">Working-time rules</label>
+      <select id="sm-rules">
+        <option value="spain">Spain — statutory floor</option>
+        <option value="spain-callcentre">Spain — contact centre agreement</option>
+        <option value="eu-minimum">EU Working Time Directive floor</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats" id="sm-stats"></div>
+  <div class="verdict" id="sm-verdict"></div>
+
+  <figure><figcaption><b>The distribution matrix</b><span>one column per hour,
+    Monday 00:00 on the left — blue is daytime, amber includes night hours</span></figcaption>
+    <div id="sm-roster"></div>
+    <div class="legend"><span><i style="--c:#4da3ff"></i>day</span>
+      <span><i style="--c:#ffb454"></i>includes night hours</span></div>
+  </figure>
+
+  <div class="grid2">
+    <figure><figcaption><b>Agents needed</b><span>Erlang C on the forecast</span></figcaption>
+      <div id="sm-required"></div></figure>
+    <figure><figcaption><b>On the floor against needed</b><span>red short, blue spare</span></figcaption>
+      <div id="sm-coverage"></div></figure>
+  </div>
+
+  <figure><figcaption><b>Every headcount from 36 to 90</b><span>coverage in green,
+    weekly cost in amber — the line marks where the slider is</span></figcaption>
+    <div id="sm-curve"></div>
+    <div class="legend"><span><i style="--c:#22d3a6"></i>coverage</span>
+      <span><i style="--c:#ffb454"></i>cost per week</span></div>
+  </figure>
+</div>
+<script>window.SHIFTMESH_DATA = {"arrivals":[[47.88,35.15,24.1,17.49,15.91,21.36,32.95,62.16,96.38,138.27,146.1,151.81,140.61,135.59,129.12,124.69,107.19,92.6,78.72,62.61,55.67,53.47,53.74,55.21],[43.8,31.57,19.94,14.62,14.57,21.08,33.54,59.3,95.46,128.07,143.72,140.56,137.83,133.15,122.97,116.64,106.81,91.42,76.43,61.03,57.41,52.43,50.45,54.25],[41.91,29.3,20.71,15.05,16.04,20.03,34.31,55.32,93.28,115.6,137.06,136.34,135.78,128.46,125.07,115.28,105.2,93.26,75.95,60.31,53.22,50.11,50.36,55.45],[44.05,31.66,21.12,15.43,14.45,18.31,32.25,53.76,91.45,118.52,130.94,135.46,123.3,125.12,115.67,111.29,96.51,87.61,73.25,58.62,51.68,49.14,44.45,57.42],[46.89,33.85,22.25,14.96,14.58,18.41,30.81,54.79,87.6,117.3,129.97,130.8,125.9,120.7,112.3,110.99,96.21,79.76,68.01,55.44,49.36,46.02,45.87,51.62],[62.9,53.64,41.99,29.95,22.88,20.49,21.12,28.12,40.06,52.94,60.02,61.35,63.59,65.64,60.81,59.05,56.09,51.91,51.29,48.8,44.7,46.43,50.5,62.03],[72.12,63.67,45.96,33.45,26.15,22.1,24.26,30.63,40.71,52.77,59.59,62.02,65.29,62.76,59.18,58.9,51.82,52.0,48.11,44.13,40.9,41.03,40.82,53.94]],"targetSeconds":30.0,"rules":{"spain":{"minShift":4,"maxShift":9,"maxWeekly":40,"maxOvertime":4,"maxDays":5,"minRest":12,"minWeeklyRest":36,"maxStartSpread":24},"spain-callcentre":{"minShift":4,"maxShift":10,"maxWeekly":39,"maxOvertime":5,"maxDays":5,"minRest":12,"minWeeklyRest":36,"maxStartSpread":24},"eu-minimum":{"minShift":4,"maxShift":12,"maxWeekly":48,"maxOvertime":0,"maxDays":6,"minRest":11,"minWeeklyRest":24,"maxStartSpread":24}},"pay":{"grossAnnual":17139.58,"annualHours":1764.0,"socialSecurity":0.3215,"nightPremium":1.96,"sundayPremium":15.33,"overtimeUplift":0.25}};</script>
+
+<h2><span class="num">06</span>What it costs</h2><p class="sub">Priced against the Spanish sector agreement, premium by premium.</p>
 <p>An hour of rostered agent time costs
 <b>&euro;12.84</b>: &euro;17,139.58 a year over
 1,764 rostered hours is &euro;9.72 gross,
@@ -2789,13 +2867,13 @@ them.</p>
 </tr></thead><tbody>
 <tr>
 <td>Ordinary hours</td>
-<td class="r">2,295 h</td>
-<td class="r">€29,468</td>
+<td class="r">2,335 h</td>
+<td class="r">€29,982</td>
 </tr>
 <tr>
 <td>Night premium</td>
-<td class="r">510 h</td>
-<td class="r">€1,321</td>
+<td class="r">524 h</td>
+<td class="r">€1,357</td>
 </tr>
 <tr>
 <td>Sunday premium</td>
@@ -2814,116 +2892,116 @@ them.</p>
 </tr>
 <tr class="tot">
 <td>Total</td>
-<td class="r">2,295 h</td>
-<td class="r">€31,295</td>
+<td class="r">2,335 h</td>
+<td class="r">€31,845</td>
 </tr>
 </tbody></table></figure>
-<div class="stats"><div class="stat key"><span class="k">Week</span><span class="v">€31,295</span><span class="n">all premiums in</span></div><div class="stat"><span class="k">Year</span><span class="v">€1.63M</span><span class="n">at 52 weeks</span></div><div class="stat"><span class="k">Per contact</span><span class="v">€3.191</span><span class="n">over 9,807 contacts</span></div><div class="stat"><span class="k">Blended hour</span><span class="v">€13.64</span><span class="n">vs €12.84 base</span></div></div>
+<div class="stats"><div class="stat key"><span class="k">Week</span><span class="v">€31,845</span><span class="n">all premiums in</span></div><div class="stat"><span class="k">Year</span><span class="v">€1.66M</span><span class="n">at 52 weeks</span></div><div class="stat"><span class="k">Per contact</span><span class="v">€3.247</span><span class="n">over 9,807 contacts</span></div><div class="stat"><span class="k">Blended hour</span><span class="v">€13.64</span><span class="n">vs €12.84 base</span></div></div>
 <figure class="ch"><figcaption><b>Cost per agent, this week</b><span>first 30 agents — the spread is night and Sunday work, not different pay</span></figcaption>
 <svg viewBox="0 0 1000 230" role="img" aria-label="Cost per agent, this week">
 <line class="grid" x1="56" y1="30.0" x2="988" y2="30.0"/>
-<text class="ax" x="48" y="34.0" text-anchor="end">573</text>
+<text class="ax" x="48" y="34.0" text-anchor="end">586</text>
 <line class="grid" x1="56" y1="69.0" x2="988" y2="69.0"/>
-<text class="ax" x="48" y="73.0" text-anchor="end">430</text>
+<text class="ax" x="48" y="73.0" text-anchor="end">440</text>
 <line class="grid" x1="56" y1="108.0" x2="988" y2="108.0"/>
-<text class="ax" x="48" y="112.0" text-anchor="end">287</text>
+<text class="ax" x="48" y="112.0" text-anchor="end">293</text>
 <line class="grid" x1="56" y1="147.0" x2="988" y2="147.0"/>
-<text class="ax" x="48" y="151.0" text-anchor="end">143</text>
+<text class="ax" x="48" y="151.0" text-anchor="end">147</text>
 <line class="grid" x1="56" y1="186.0" x2="988" y2="186.0"/>
 <text class="ax" x="48" y="190.0" text-anchor="end">0</text>
-<rect x="61.9" y="58.0" width="19.3" height="128.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A1: 470 EUR</title></rect>
+<rect x="61.9" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A1: 586 EUR</title></rect>
 <text class="ax" x="71.5" y="203" text-anchor="middle">A1</text>
-<text class="val" x="71.5" y="52.0" text-anchor="middle">470</text>
-<rect x="93.0" y="70.6" width="19.3" height="115.4" rx="4" fill="#4da3ff" opacity="0.85"><title>A2: 424 EUR</title></rect>
+<text class="val" x="71.5" y="24.0" text-anchor="middle">586</text>
+<rect x="93.0" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A2: 586 EUR</title></rect>
 <text class="ax" x="102.6" y="203" text-anchor="middle">A2</text>
-<text class="val" x="102.6" y="64.6" text-anchor="middle">424</text>
-<rect x="124.0" y="37.0" width="19.3" height="149.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A3: 548 EUR</title></rect>
+<text class="val" x="102.6" y="24.0" text-anchor="middle">586</text>
+<rect x="124.0" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A3: 586 EUR</title></rect>
 <text class="ax" x="133.7" y="203" text-anchor="middle">A3</text>
-<text class="val" x="133.7" y="31.0" text-anchor="middle">548</text>
-<rect x="155.1" y="62.2" width="19.3" height="123.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A4: 455 EUR</title></rect>
+<text class="val" x="133.7" y="24.0" text-anchor="middle">586</text>
+<rect x="155.1" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A4: 586 EUR</title></rect>
 <text class="ax" x="164.7" y="203" text-anchor="middle">A4</text>
-<text class="val" x="164.7" y="56.2" text-anchor="middle">455</text>
-<rect x="186.2" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A5: 573 EUR</title></rect>
+<text class="val" x="164.7" y="24.0" text-anchor="middle">586</text>
+<rect x="186.2" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A5: 586 EUR</title></rect>
 <text class="ax" x="195.8" y="203" text-anchor="middle">A5</text>
-<text class="val" x="195.8" y="24.0" text-anchor="middle">573</text>
-<rect x="217.2" y="64.3" width="19.3" height="121.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A6: 447 EUR</title></rect>
+<text class="val" x="195.8" y="24.0" text-anchor="middle">586</text>
+<rect x="217.2" y="30.0" width="19.3" height="156.0" rx="4" fill="#4da3ff" opacity="0.85"><title>A6: 586 EUR</title></rect>
 <text class="ax" x="226.9" y="203" text-anchor="middle">A6</text>
-<text class="val" x="226.9" y="58.3" text-anchor="middle">447</text>
-<rect x="248.3" y="53.2" width="19.3" height="132.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A7: 488 EUR</title></rect>
+<text class="val" x="226.9" y="24.0" text-anchor="middle">586</text>
+<rect x="248.3" y="45.9" width="19.3" height="140.1" rx="4" fill="#4da3ff" opacity="0.85"><title>A7: 527 EUR</title></rect>
 <text class="ax" x="257.9" y="203" text-anchor="middle">A7</text>
-<text class="val" x="257.9" y="47.2" text-anchor="middle">488</text>
-<rect x="279.4" y="48.3" width="19.3" height="137.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A8: 506 EUR</title></rect>
+<text class="val" x="257.9" y="39.9" text-anchor="middle">527</text>
+<rect x="279.4" y="47.9" width="19.3" height="138.1" rx="4" fill="#4da3ff" opacity="0.85"><title>A8: 519 EUR</title></rect>
 <text class="ax" x="289.0" y="203" text-anchor="middle">A8</text>
-<text class="val" x="289.0" y="42.3" text-anchor="middle">506</text>
-<rect x="310.4" y="62.3" width="19.3" height="123.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A9: 455 EUR</title></rect>
+<text class="val" x="289.0" y="41.9" text-anchor="middle">519</text>
+<rect x="310.4" y="47.9" width="19.3" height="138.1" rx="4" fill="#4da3ff" opacity="0.85"><title>A9: 519 EUR</title></rect>
 <text class="ax" x="320.1" y="203" text-anchor="middle">A9</text>
-<text class="val" x="320.1" y="56.3" text-anchor="middle">455</text>
-<rect x="341.5" y="44.8" width="19.3" height="141.2" rx="4" fill="#4da3ff" opacity="0.85"><title>A10: 519 EUR</title></rect>
+<text class="val" x="320.1" y="41.9" text-anchor="middle">519</text>
+<rect x="341.5" y="47.9" width="19.3" height="138.1" rx="4" fill="#4da3ff" opacity="0.85"><title>A10: 519 EUR</title></rect>
 <text class="ax" x="351.1" y="203" text-anchor="middle">A10</text>
-<text class="val" x="351.1" y="38.8" text-anchor="middle">519</text>
-<rect x="372.6" y="44.8" width="19.3" height="141.2" rx="4" fill="#4da3ff" opacity="0.85"><title>A11: 519 EUR</title></rect>
+<text class="val" x="351.1" y="41.9" text-anchor="middle">519</text>
+<rect x="372.6" y="47.9" width="19.3" height="138.1" rx="4" fill="#4da3ff" opacity="0.85"><title>A11: 519 EUR</title></rect>
 <text class="ax" x="382.2" y="203" text-anchor="middle">A11</text>
-<text class="val" x="382.2" y="38.8" text-anchor="middle">519</text>
-<rect x="403.6" y="42.7" width="19.3" height="143.3" rx="4" fill="#4da3ff" opacity="0.85"><title>A12: 526 EUR</title></rect>
+<text class="val" x="382.2" y="41.9" text-anchor="middle">519</text>
+<rect x="403.6" y="48.6" width="19.3" height="137.4" rx="4" fill="#4da3ff" opacity="0.85"><title>A12: 516 EUR</title></rect>
 <text class="ax" x="413.3" y="203" text-anchor="middle">A12</text>
-<text class="val" x="413.3" y="36.7" text-anchor="middle">526</text>
-<rect x="434.7" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A13: 514 EUR</title></rect>
+<text class="val" x="413.3" y="42.6" text-anchor="middle">516</text>
+<rect x="434.7" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A13: 514 EUR</title></rect>
 <text class="ax" x="444.3" y="203" text-anchor="middle">A13</text>
-<text class="val" x="444.3" y="40.2" text-anchor="middle">514</text>
-<rect x="465.8" y="39.3" width="19.3" height="146.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A14: 539 EUR</title></rect>
+<text class="val" x="444.3" y="43.3" text-anchor="middle">514</text>
+<rect x="465.8" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A14: 514 EUR</title></rect>
 <text class="ax" x="475.4" y="203" text-anchor="middle">A14</text>
-<text class="val" x="475.4" y="33.3" text-anchor="middle">539</text>
-<rect x="496.8" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A15: 514 EUR</title></rect>
+<text class="val" x="475.4" y="43.3" text-anchor="middle">514</text>
+<rect x="496.8" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A15: 514 EUR</title></rect>
 <text class="ax" x="506.5" y="203" text-anchor="middle">A15</text>
-<text class="val" x="506.5" y="40.2" text-anchor="middle">514</text>
-<rect x="527.9" y="49.7" width="19.3" height="136.3" rx="4" fill="#4da3ff" opacity="0.85"><title>A16: 501 EUR</title></rect>
+<text class="val" x="506.5" y="43.3" text-anchor="middle">514</text>
+<rect x="527.9" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A16: 514 EUR</title></rect>
 <text class="ax" x="537.5" y="203" text-anchor="middle">A16</text>
-<text class="val" x="537.5" y="43.7" text-anchor="middle">501</text>
-<rect x="559.0" y="53.2" width="19.3" height="132.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A17: 488 EUR</title></rect>
+<text class="val" x="537.5" y="43.3" text-anchor="middle">514</text>
+<rect x="559.0" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A17: 514 EUR</title></rect>
 <text class="ax" x="568.6" y="203" text-anchor="middle">A17</text>
-<text class="val" x="568.6" y="47.2" text-anchor="middle">488</text>
-<rect x="590.0" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A18: 514 EUR</title></rect>
+<text class="val" x="568.6" y="43.3" text-anchor="middle">514</text>
+<rect x="590.0" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A18: 514 EUR</title></rect>
 <text class="ax" x="599.7" y="203" text-anchor="middle">A18</text>
-<text class="val" x="599.7" y="40.2" text-anchor="middle">514</text>
-<rect x="621.1" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A19: 514 EUR</title></rect>
+<text class="val" x="599.7" y="43.3" text-anchor="middle">514</text>
+<rect x="621.1" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A19: 514 EUR</title></rect>
 <text class="ax" x="630.7" y="203" text-anchor="middle">A19</text>
-<text class="val" x="630.7" y="40.2" text-anchor="middle">514</text>
-<rect x="652.2" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A20: 514 EUR</title></rect>
+<text class="val" x="630.7" y="43.3" text-anchor="middle">514</text>
+<rect x="652.2" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A20: 514 EUR</title></rect>
 <text class="ax" x="661.8" y="203" text-anchor="middle">A20</text>
-<text class="val" x="661.8" y="40.2" text-anchor="middle">514</text>
-<rect x="683.2" y="56.7" width="19.3" height="129.3" rx="4" fill="#4da3ff" opacity="0.85"><title>A21: 475 EUR</title></rect>
+<text class="val" x="661.8" y="43.3" text-anchor="middle">514</text>
+<rect x="683.2" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A21: 514 EUR</title></rect>
 <text class="ax" x="692.9" y="203" text-anchor="middle">A21</text>
-<text class="val" x="692.9" y="50.7" text-anchor="middle">475</text>
-<rect x="714.3" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A22: 514 EUR</title></rect>
+<text class="val" x="692.9" y="43.3" text-anchor="middle">514</text>
+<rect x="714.3" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A22: 514 EUR</title></rect>
 <text class="ax" x="723.9" y="203" text-anchor="middle">A22</text>
-<text class="val" x="723.9" y="40.2" text-anchor="middle">514</text>
-<rect x="745.4" y="67.2" width="19.3" height="118.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A23: 437 EUR</title></rect>
+<text class="val" x="723.9" y="43.3" text-anchor="middle">514</text>
+<rect x="745.4" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A23: 514 EUR</title></rect>
 <text class="ax" x="755.0" y="203" text-anchor="middle">A23</text>
-<text class="val" x="755.0" y="61.2" text-anchor="middle">437</text>
-<rect x="776.4" y="53.2" width="19.3" height="132.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A24: 488 EUR</title></rect>
+<text class="val" x="755.0" y="43.3" text-anchor="middle">514</text>
+<rect x="776.4" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A24: 514 EUR</title></rect>
 <text class="ax" x="786.1" y="203" text-anchor="middle">A24</text>
-<text class="val" x="786.1" y="47.2" text-anchor="middle">488</text>
-<rect x="807.5" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A25: 514 EUR</title></rect>
+<text class="val" x="786.1" y="43.3" text-anchor="middle">514</text>
+<rect x="807.5" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A25: 514 EUR</title></rect>
 <text class="ax" x="817.1" y="203" text-anchor="middle">A25</text>
-<text class="val" x="817.1" y="40.2" text-anchor="middle">514</text>
-<rect x="838.6" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A26: 514 EUR</title></rect>
+<text class="val" x="817.1" y="43.3" text-anchor="middle">514</text>
+<rect x="838.6" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A26: 514 EUR</title></rect>
 <text class="ax" x="848.2" y="203" text-anchor="middle">A26</text>
-<text class="val" x="848.2" y="40.2" text-anchor="middle">514</text>
-<rect x="869.6" y="46.2" width="19.3" height="139.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A27: 514 EUR</title></rect>
+<text class="val" x="848.2" y="43.3" text-anchor="middle">514</text>
+<rect x="869.6" y="49.3" width="19.3" height="136.7" rx="4" fill="#4da3ff" opacity="0.85"><title>A27: 514 EUR</title></rect>
 <text class="ax" x="879.3" y="203" text-anchor="middle">A27</text>
-<text class="val" x="879.3" y="40.2" text-anchor="middle">514</text>
-<rect x="900.7" y="43.4" width="19.3" height="142.6" rx="4" fill="#4da3ff" opacity="0.85"><title>A28: 524 EUR</title></rect>
+<text class="val" x="879.3" y="43.3" text-anchor="middle">514</text>
+<rect x="900.7" y="46.5" width="19.3" height="139.5" rx="4" fill="#4da3ff" opacity="0.85"><title>A28: 524 EUR</title></rect>
 <text class="ax" x="910.3" y="203" text-anchor="middle">A28</text>
-<text class="val" x="910.3" y="37.4" text-anchor="middle">524</text>
-<rect x="931.8" y="39.2" width="19.3" height="146.8" rx="4" fill="#4da3ff" opacity="0.85"><title>A29: 540 EUR</title></rect>
+<text class="val" x="910.3" y="40.5" text-anchor="middle">524</text>
+<rect x="931.8" y="42.4" width="19.3" height="143.6" rx="4" fill="#4da3ff" opacity="0.85"><title>A29: 540 EUR</title></rect>
 <text class="ax" x="941.4" y="203" text-anchor="middle">A29</text>
-<text class="val" x="941.4" y="33.2" text-anchor="middle">540</text>
-<rect x="962.8" y="51.1" width="19.3" height="134.9" rx="4" fill="#4da3ff" opacity="0.85"><title>A30: 496 EUR</title></rect>
+<text class="val" x="941.4" y="36.4" text-anchor="middle">540</text>
+<rect x="962.8" y="41.7" width="19.3" height="144.3" rx="4" fill="#4da3ff" opacity="0.85"><title>A30: 542 EUR</title></rect>
 <text class="ax" x="972.5" y="203" text-anchor="middle">A30</text>
-<text class="val" x="972.5" y="45.1" text-anchor="middle">496</text>
+<text class="val" x="972.5" y="35.7" text-anchor="middle">542</text>
 </svg></figure>
-<div class="note">The spread is worth reading. Every agent is on the same grade, so the difference between the cheapest (&euro;193) and the dearest (&euro;573) is entirely night hours and Sunday shifts. 510 hours of this roster fall between 22:00 and 06:00 and 33 shifts land on a Sunday — both are scheduling choices with a price, and both are things the solver would trade away if the objective priced them.</div>
-<h2><span class="num">06</span>Where every number came from</h2><p class="sub">Including the two that were looked for and not found.</p>
+<div class="note">The spread is worth reading. Every agent is on the same grade, so the difference between the cheapest (&euro;128) and the dearest (&euro;586) is entirely night hours and Sunday shifts. 524 hours of this roster fall between 22:00 and 06:00 and 33 shifts land on a Sunday — both are scheduling choices with a price, and both are things the solver would trade away if the objective priced them.</div>
+<h2><span class="num">07</span>Where every number came from</h2><p class="sub">Including the two that were looked for and not found.</p>
 <figure class="tb">
 <figcaption><b>Every number that came from outside this repository</b><span>Sorted as declared. 'assumed' means no published figure was found.</span></figcaption>
 <table><thead><tr>
@@ -3042,5 +3120,631 @@ them.</p>
 </tr>
 </tbody></table></figure>
 <div class="note"><b>The weakest input is handling time for one deferred service request.</b> There is no published handle time for email or ticket work in a public-sector contact centre, so eight minutes is an assumption and the whole deferred-work column moves with it. New York publishes no handle time either, which is why the voice figure is Toronto's.</div>
-<footer>Built by <a href="https://github.com/mathieutellene/shiftmesh">shiftmesh</a> from <a href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9">NYC 311 open data</a>. Roster solved with CP-SAT in 61s. No operational data from any employer appears anywhere in this project.</footer>
-</div></body></html>
+<footer>Built by <a href="https://github.com/mathieutellene/shiftmesh">shiftmesh</a> from <a href="https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9">NYC 311 open data</a>. Roster solved with CP-SAT in 91s. No operational data from any employer appears anywhere in this project.</footer>
+</div>
+<script>/* The staffing pipeline, in the browser.
+ *
+ * A port of erlang.py, rules.py, heuristic.py, metrics.py and cost.py, close
+ * enough that the Python tests are the specification for both. It exists so the
+ * page can answer "what if we had four fewer people" in a few milliseconds
+ * rather than in a terminal, and so the trade-offs are something you move a
+ * slider through instead of something you take on trust.
+ *
+ * What it does NOT do is run CP-SAT. This is the greedy constructive roster:
+ * hand each agent the shift that closes the biggest remaining hole, provided
+ * the rules still hold afterwards. It is instant and it is legal, and it is
+ * measurably worse than the solver — which is why the page shows both, with the
+ * gap between them named rather than hidden.
+ */
+(function () {
+  "use strict";
+
+  const HOURS = 24, DAYS = 7, WEEK = HOURS * DAYS;
+  const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // ── Erlang B recursion → Erlang C ──────────────────────────────────────
+  // Never builds a number larger than its own answer, so it holds at any scale.
+  function blocking(agents, intensity) {
+    if (agents <= 0) return 1;
+    if (intensity <= 0) return 0;
+    let inverse = 1;
+    for (let n = 1; n <= agents; n++) inverse = 1 + (inverse * n) / intensity;
+    return 1 / inverse;
+  }
+
+  function probabilityWait(agents, intensity) {
+    if (agents <= 0) return 1;
+    if (intensity <= 0) return 0;
+    if (agents <= intensity) return 1;
+    const b = blocking(agents, intensity);
+    const denom = 1 - (intensity / agents) * (1 - b);
+    return denom <= 0 ? 1 : Math.min(1, b / denom);
+  }
+
+  function serviceLevel(agents, callsPerHour, aht, targetSeconds) {
+    if (callsPerHour <= 0) return 1;
+    if (agents <= 0) return 0;
+    const intensity = (callsPerHour * aht) / 3600;
+    if (agents <= intensity) return 0;
+    const decay = Math.exp(-(agents - intensity) * (targetSeconds / aht));
+    return Math.max(0, Math.min(1, 1 - probabilityWait(agents, intensity) * decay));
+  }
+
+  function agentsRequired(callsPerHour, aht, targetSla, targetSeconds, shrinkage) {
+    if (callsPerHour <= 0) return 0;
+    const intensity = (callsPerHour * aht) / 3600;
+    let n = Math.max(1, Math.floor(intensity) + 1);
+    while (n < 5000 && serviceLevel(n, callsPerHour, aht, targetSeconds) < targetSla) n++;
+    return Math.ceil(n / (1 - shrinkage));
+  }
+
+  function achievedSla(agents, callsPerHour, aht, targetSeconds, shrinkage) {
+    const productive = Math.floor(agents * (1 - shrinkage) + 1e-9);
+    return serviceLevel(productive, callsPerHour, aht, targetSeconds);
+  }
+
+  // ── shifts ─────────────────────────────────────────────────────────────
+  function enumerateShifts(rules) {
+    const latestEnd = 2 * HOURS - rules.minRest;
+    const out = [[]];                      // the empty shift is index 0
+    for (let d = rules.minShift; d <= rules.maxShift; d++) {
+      for (let s = 0; s < HOURS; s++) {
+        if (s + d <= latestEnd) out.push([[s, d]]);
+      }
+    }
+    return out;
+  }
+
+  const shiftHours = (s) => s.reduce((t, b) => t + b[1], 0);
+  const shiftStart = (s) => s[0][0];
+  const shiftEnd = (s) => s[s.length - 1][0] + s[s.length - 1][1];
+
+  function coveredHours(shift) {
+    const out = [];
+    for (const [start, dur] of shift) for (let k = 0; k < dur; k++) out.push(start + k);
+    return out;
+  }
+
+  // ── the rules, audited from the assignment ─────────────────────────────
+  function restOk(days, rules) {
+    for (let d = 0; d < DAYS; d++) {
+      const here = days[d];
+      if (!here || !here.length) continue;
+      for (let offset = 1; offset < DAYS; offset++) {
+        const next = days[(d + offset) % DAYS];
+        if (!next || !next.length) continue;
+        if (offset * HOURS + shiftStart(next) - shiftEnd(here) < rules.minRest) return false;
+        break;                              // only the next worked day can bind
+      }
+    }
+    return true;
+  }
+
+  function weeklyRestOk(days, rules) {
+    if (rules.minWeeklyRest <= 0) return true;
+    for (let d = 0; d < DAYS; d++) {
+      if (days[d] && days[d].length) continue;
+      const before = days[(d - 1 + DAYS) % DAYS], after = days[(d + 1) % DAYS];
+      const end = before && before.length ? shiftEnd(before) : 0;
+      const start = after && after.length ? shiftStart(after) : HOURS;
+      if (2 * HOURS + start - end >= rules.minWeeklyRest) return true;
+    }
+    return false;
+  }
+
+  function violations(assignment, rules) {
+    const out = [];
+    assignment.forEach((days, agent) => {
+      let week = 0, worked = 0;
+      days.forEach((shift, d) => {
+        if (!shift || !shift.length) return;
+        worked++;
+        const h = shiftHours(shift);
+        week += h;
+        if (h < rules.minShift || h > rules.maxShift) {
+          out.push({ agent, rule: "shift length", detail: `${DAY_NAMES[d]}: ${h}h` });
+        }
+      });
+      if (week > rules.maxWeekly + rules.maxOvertime) {
+        out.push({ agent, rule: "weekly hours", detail: `${week}h` });
+      }
+      if (worked > rules.maxDays) {
+        out.push({ agent, rule: "work days", detail: `${worked} days` });
+      }
+      if (!restOk(days, rules)) out.push({ agent, rule: "rest", detail: "under the minimum" });
+      if (!weeklyRestOk(days, rules)) {
+        out.push({ agent, rule: "weekly rest", detail: "no long enough break" });
+      }
+    });
+    return out;
+  }
+
+  // ── the greedy roster ──────────────────────────────────────────────────
+  function greedyRoster(required, nAgents, rules) {
+    const shifts = enumerateShifts(rules);
+    const slots = shifts.map(coveredHours);
+    const lengths = shifts.map(shiftHours);
+    const starts = shifts.map((s) => (s.length ? shiftStart(s) : 0));
+    const spread = rules.maxStartSpread;
+
+    const residual = required.map((row) => row.slice());
+    const assignment = [];
+
+    for (let a = 0; a < nAgents; a++) {
+      const days = new Array(DAYS).fill(null).map(() => []);
+      let workedHours = 0, anchor = null, picked = 0;
+
+      while (picked < rules.maxDays) {
+        let best = null, bestGain = 0, bestLen = 0;
+
+        for (let d = 0; d < DAYS; d++) {
+          if (days[d].length) continue;
+          for (let si = 1; si < shifts.length; si++) {
+            if (workedHours + lengths[si] > rules.maxWeekly) continue;
+            if (anchor !== null && spread < HOURS) {
+              const drift = Math.abs(starts[si] - anchor);
+              if (Math.min(drift, HOURS - drift) > spread) continue;
+            }
+
+            let gain = 0;
+            for (const h of slots[si]) {
+              if (residual[(d + Math.floor(h / HOURS)) % DAYS][h % HOURS] > 0) gain++;
+            }
+            if (gain === 0) continue;
+            if (gain < bestGain || (gain === bestGain && lengths[si] >= bestLen)) continue;
+
+            days[d] = shifts[si];
+            const legal = restOk(days, rules) && weeklyRestOk(days, rules);
+            days[d] = [];
+            if (!legal) continue;
+
+            best = [d, si];
+            bestGain = gain;
+            bestLen = lengths[si];
+          }
+        }
+
+        if (!best) break;
+        const [d, si] = best;
+        days[d] = shifts[si];
+        workedHours += lengths[si];
+        if (anchor === null) anchor = starts[si];
+        for (const h of slots[si]) {
+          const day = (d + Math.floor(h / HOURS)) % DAYS;
+          residual[day][h % HOURS] = Math.max(0, residual[day][h % HOURS] - 1);
+        }
+        picked++;
+      }
+      assignment.push(days);
+    }
+    return assignment;
+  }
+
+  // ── scoring ────────────────────────────────────────────────────────────
+  function coverage(assignment) {
+    const grid = Array.from({ length: DAYS }, () => new Array(HOURS).fill(0));
+    assignment.forEach((days) => {
+      days.forEach((shift, d) => {
+        if (!shift || !shift.length) return;
+        for (const h of coveredHours(shift)) {
+          grid[(d + Math.floor(h / HOURS)) % DAYS][h % HOURS]++;
+        }
+      });
+    });
+    return grid;
+  }
+
+  const isNight = (h) => h % HOURS >= 22 || h % HOURS < 6;
+
+  function price(assignment, rules, pay) {
+    const ordinary = pay.grossAnnual / pay.annualHours;
+    const loaded = ordinary * (1 + pay.socialSecurity);
+    const out = {
+      base: 0, night: 0, overtime: 0, sunday: 0,
+      baseHours: 0, nightHours: 0, overtimeHours: 0, sundayShifts: 0,
+      perAgent: [],
+    };
+
+    assignment.forEach((days) => {
+      let agentCost = 0, week = 0;
+      days.forEach((shift, d) => {
+        if (!shift || !shift.length) return;
+        const hours = shiftHours(shift);
+        week += hours;
+        const nights = coveredHours(shift).filter(isNight).length;
+        out.baseHours += hours;
+        out.nightHours += nights;
+        out.base += hours * loaded;
+        out.night += nights * pay.nightPremium * (1 + pay.socialSecurity);
+        agentCost += hours * loaded + nights * pay.nightPremium * (1 + pay.socialSecurity);
+        if (d === 6) {
+          out.sundayShifts++;
+          out.sunday += pay.sundayPremium;
+          agentCost += pay.sundayPremium;
+        }
+      });
+      const extra = Math.max(0, week - rules.maxWeekly);
+      if (extra) {
+        const uplift = extra * ordinary * pay.overtimeUplift * (1 + pay.socialSecurity);
+        out.overtimeHours += extra;
+        out.overtime += uplift;
+        out.baseHours -= extra;
+        agentCost += uplift;
+      }
+      out.perAgent.push(agentCost);
+    });
+
+    out.total = out.base + out.night + out.overtime + out.sunday;
+    out.rosteredHours = out.baseHours + out.overtimeHours;
+    return out;
+  }
+
+  function summarise(assignment, required, arrivals, service) {
+    const grid = coverage(assignment);
+    let short = 0, spare = 0, worst = 0, slotsShort = 0, need = 0;
+    let weighted = 0, calls = 0;
+
+    for (let d = 0; d < DAYS; d++) {
+      for (let h = 0; h < HOURS; h++) {
+        const delta = grid[d][h] - required[d][h];
+        need += required[d][h];
+        if (delta < 0) { short -= delta; slotsShort++; worst = Math.max(worst, -delta); }
+        else spare += delta;
+
+        const c = arrivals[d][h];
+        if (c > 0) {
+          calls += c;
+          weighted += c * achievedSla(grid[d][h], c, service.aht,
+                                      service.targetSeconds, service.shrinkage);
+        }
+      }
+    }
+
+    const hours = assignment.map((days) =>
+      days.reduce((t, s) => t + (s && s.length ? shiftHours(s) : 0), 0));
+
+    return {
+      grid,
+      required,
+      short, spare, worst, slotsShort,
+      coveragePct: need ? (100 * (need - short)) / need : 100,
+      serviceLevel: calls ? weighted / calls : 1,
+      hours,
+      minHours: hours.length ? Math.min(...hours) : 0,
+      maxHours: hours.length ? Math.max(...hours) : 0,
+      totalHours: hours.reduce((a, b) => a + b, 0),
+      idle: assignment.filter((d) => d.every((s) => !s || !s.length)).length,
+    };
+  }
+
+  function requirementFrom(arrivals, service) {
+    return arrivals.map((day) =>
+      day.map((calls) =>
+        agentsRequired(calls, service.aht, service.targetSla,
+                       service.targetSeconds, service.shrinkage)));
+  }
+
+  window.Shiftmesh = {
+    HOURS, DAYS, WEEK, DAY_NAMES,
+    blocking, probabilityWait, serviceLevel, agentsRequired, achievedSla,
+    enumerateShifts, shiftHours, shiftStart, shiftEnd, coveredHours,
+    greedyRoster, coverage, violations, price, summarise, requirementFrom,
+    isNight,
+  };
+})();
+</script>
+<script>/* The controls, and everything that redraws when you move one. */
+(function () {
+  "use strict";
+  const S = window.Shiftmesh;
+  const DATA = window.SHIFTMESH_DATA;
+  const { HOURS, DAYS, DAY_NAMES } = S;
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n, d = 0) =>
+    n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  // ── colour, matching viz.py so the live grids read like the static ones ──
+  function lerp(a, b, t) {
+    t = Math.max(0, Math.min(1, t));
+    const p = (h, i) => parseInt(h.slice(i, i + 2), 16);
+    const to = (v) => v.toString(16).padStart(2, "0");
+    return "#" + [0, 2, 4].map((i) =>
+      to(Math.round(p(a, i + 1) + (p(b, i + 1) - p(a, i + 1)) * t))).join("");
+  }
+  const EXACT = "#2b3648", SHORT = "#ff8fa3", SPARE = "#2d5f9e", ACCENT = "#4da3ff";
+  const volumeColour = (v, peak) =>
+    peak <= 0 ? "#131a26" : lerp("#101826", ACCENT, Math.pow(v / peak, 0.65));
+  const balanceColour = (delta, worst) =>
+    delta === 0 ? EXACT
+      : lerp(EXACT, delta < 0 ? SHORT : SPARE,
+             0.25 + 0.75 * Math.pow(Math.min(1, Math.abs(delta) / Math.max(1, worst)), 0.7));
+  function luminance(hex) {
+    const p = (i) => parseInt(hex.slice(i, i + 2), 16) / 255;
+    return 0.2126 * p(1) + 0.7152 * p(3) + 0.0722 * p(5);
+  }
+  const inkFor = (bg) => (luminance(bg) > 0.45 ? "rgba(10,14,22,.85)" : "rgba(255,255,255,.78)");
+
+  // ── drawing ─────────────────────────────────────────────────────────────
+  function heatmap(grid, opts) {
+    const cw = 46, ch = 22, left = 52, top = 34;
+    const width = left + 7 * cw + 8, height = top + 24 * ch + 14;
+    const peak = Math.max(1, ...grid.flat());
+    const worst = opts.reference
+      ? Math.max(1, ...grid.flatMap((row, d) =>
+          row.map((v, h) => Math.abs(Math.round(v - opts.reference[d][h])))))
+      : 1;
+
+    let out = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${opts.label}">`;
+    DAY_NAMES.forEach((name, d) => {
+      out += `<text class="ax" x="${left + d * cw + cw / 2}" y="22" text-anchor="middle">${name}</text>`;
+    });
+    for (let h = 0; h < HOURS; h++) {
+      const y = top + h * ch;
+      if (h % 3 === 0) {
+        out += `<text class="ax" x="${left - 8}" y="${y + ch / 2 + 4}" text-anchor="end">${String(h).padStart(2, "0")}</text>`;
+      }
+      for (let d = 0; d < DAYS; d++) {
+        const v = grid[d][h];
+        const fill = opts.reference
+          ? balanceColour(Math.round(v - opts.reference[d][h]), worst)
+          : volumeColour(v, peak);
+        const title = opts.reference
+          ? `${DAY_NAMES[d]} ${String(h).padStart(2, "0")}:00 — ${v} on the floor vs ${opts.reference[d][h]} needed`
+          : `${DAY_NAMES[d]} ${String(h).padStart(2, "0")}:00 — ${fmt(v)}${opts.unit || ""}`;
+        out += `<rect x="${left + d * cw}" y="${y}" width="${cw - 2}" height="${ch - 2}" rx="3" fill="${fill}"><title>${title}</title></rect>`;
+        if (v || opts.reference) {
+          out += `<text class="cell" x="${left + d * cw + (cw - 2) / 2}" y="${y + ch / 2 + 3.5}" text-anchor="middle" fill="${inkFor(fill)}">${fmt(v)}</text>`;
+        }
+      }
+    }
+    return out + "</svg>";
+  }
+
+  function gantt(assignment) {
+    const n = assignment.length, cw = 6.2, ch = 13, left = 34, top = 26;
+    const width = left + 168 * cw + 34, height = top + n * ch + 16;
+    let out = `<svg viewBox="0 0 ${width.toFixed(0)} ${height.toFixed(0)}" role="img" aria-label="roster">`;
+    for (let d = 0; d < DAYS; d++) {
+      const x = left + d * 24 * cw;
+      out += `<line class="grid v" x1="${x}" y1="${top - 6}" x2="${x}" y2="${top + n * ch}"/>`;
+      out += `<text x="${x + 3}" y="${top - 11}">${DAY_NAMES[d]}</text>`;
+    }
+    assignment.forEach((days, a) => {
+      const y = top + a * ch;
+      out += `<text x="${left - 6}" y="${y + ch - 3}" text-anchor="end">A${a + 1}</text>`;
+      const cells = new Array(168).fill(0);
+      let worked = 0;
+      days.forEach((shift, d) => {
+        if (!shift || !shift.length) return;
+        worked += S.shiftHours(shift);
+        for (const h of S.coveredHours(shift)) {
+          cells[((d + Math.floor(h / HOURS)) % DAYS) * 24 + (h % HOURS)] = 1;
+        }
+      });
+      let run = 0;
+      for (let i = 0; i <= 168; i++) {
+        if (i < 168 && cells[i]) { run++; continue; }
+        if (run) {
+          const from = i - run;
+          let night = false;
+          for (let k = 0; k < run; k++) if (S.isNight((from + k) % 24)) night = true;
+          out += `<rect x="${(left + from * cw).toFixed(1)}" y="${y + 1}" width="${(run * cw - 1.2).toFixed(1)}" height="${ch - 3}" rx="2.5" fill="${night ? "#ffb454" : ACCENT}" opacity="${night ? 0.9 : 0.8}"><title>A${a + 1}: ${run}h from ${DAY_NAMES[Math.floor(from / 24) % 7]} ${String(from % 24).padStart(2, "0")}:00</title></rect>`;
+          run = 0;
+        }
+      }
+      out += `<text x="${left + 168 * cw + 4}" y="${y + ch - 3}">${worked}h</text>`;
+    });
+    return out + "</svg>";
+  }
+
+  function curve(points, chosen) {
+    const width = 1000, height = 250, left = 58, right = 56, top = 26, bottom = 34;
+    const pw = width - left - right, ph = height - top - bottom;
+    const xs = points.map((p) => p.agents);
+    const lo = Math.min(...xs), hi = Math.max(...xs);
+    const maxCost = Math.max(...points.map((p) => p.cost)) * 1.05;
+    const x = (a) => left + ((a - lo) / Math.max(1, hi - lo)) * pw;
+    const yCov = (c) => top + ph - (c / 100) * ph;
+    const yCost = (c) => top + ph - (c / maxCost) * ph;
+
+    let out = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="headcount curve">`;
+    for (let k = 0; k <= 4; k++) {
+      const gy = top + (ph * k) / 4;
+      out += `<line class="grid" x1="${left}" y1="${gy}" x2="${width - right}" y2="${gy}"/>`;
+      out += `<text class="ax" x="${left - 8}" y="${gy + 4}" text-anchor="end">${100 - k * 25}%</text>`;
+      out += `<text class="ax" x="${width - right + 8}" y="${gy + 4}">€${fmt((maxCost * (4 - k)) / 4 / 1000, 0)}k</text>`;
+    }
+    const cov = points.map((p) => `${x(p.agents).toFixed(1)},${yCov(p.coverage).toFixed(1)}`).join(" ");
+    const cost = points.map((p) => `${x(p.agents).toFixed(1)},${yCost(p.cost).toFixed(1)}`).join(" ");
+    out += `<polyline points="${cost}" fill="none" stroke="#ffb454" stroke-width="1.8" stroke-dasharray="5 4"/>`;
+    out += `<polyline points="${cov}" fill="none" stroke="#22d3a6" stroke-width="2"/>`;
+
+    const here = points.find((p) => p.agents === chosen);
+    if (here) {
+      out += `<line x1="${x(chosen)}" y1="${top}" x2="${x(chosen)}" y2="${top + ph}" stroke="${ACCENT}" stroke-width="1.5"/>`;
+      out += `<circle cx="${x(chosen)}" cy="${yCov(here.coverage)}" r="4.5" fill="#22d3a6"/>`;
+      out += `<circle cx="${x(chosen)}" cy="${yCost(here.cost)}" r="4.5" fill="#ffb454"/>`;
+    }
+    for (const p of points) {
+      if (p.agents % 5 === 0 || p.agents === lo || p.agents === hi) {
+        out += `<text class="ax" x="${x(p.agents)}" y="${top + ph + 18}" text-anchor="middle">${p.agents}</text>`;
+      }
+    }
+    return out + "</svg>";
+  }
+
+  // ── state ───────────────────────────────────────────────────────────────
+  const read = () => ({
+    agents: +$("sm-agents").value,
+    aht: +$("sm-aht").value,
+    targetSla: +$("sm-sla").value / 100,
+    shrinkage: +$("sm-shrink").value / 100,
+    rulesKey: $("sm-rules").value,
+  });
+
+  let curvePoints = [], lastSignature = "";
+
+  function service(v) {
+    return { aht: v.aht, targetSla: v.targetSla, targetSeconds: DATA.targetSeconds,
+             shrinkage: v.shrinkage };
+  }
+
+  function run(v, agents) {
+    const rules = DATA.rules[v.rulesKey];
+    const required = S.requirementFrom(DATA.arrivals, service(v));
+    const assignment = S.greedyRoster(required, agents, rules);
+    const stats = S.summarise(assignment, required, DATA.arrivals, service(v));
+    const money = S.price(assignment, rules, DATA.pay);
+    const broken = S.violations(assignment, rules);
+    return { required, assignment, stats, money, broken, rules };
+  }
+
+  /* The curve is fifty-odd rosters, which is a third of a second of work and
+   * would make the first paint look like a hung page. So the panels draw
+   * immediately from the one scenario that is on screen, and the curve fills in
+   * behind them a few headcounts per frame. Moving the slider never waits for
+   * it; changing a parameter invalidates it and it rebuilds the same way. */
+  let curveToken = 0;
+
+  /* requestAnimationFrame does not fire in a background tab, so a curve
+   * scheduled on it never finishes if the page was opened and left behind —
+   * the panel simply stays blank until the reader looks at it, which is the
+   * one moment it needs to already be there. setTimeout keeps running. */
+  const nextTick = (fn) =>
+    (document.hidden ? setTimeout(fn, 0) : requestAnimationFrame(fn));
+
+  function rebuildCurve(v, onDone) {
+    const signature = [v.aht, v.targetSla, v.shrinkage, v.rulesKey].join("|");
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+
+    const token = ++curveToken;
+    const lo = +$("sm-agents").min, hi = +$("sm-agents").max;
+    const pending = [];
+    let next = lo;
+
+    const step = () => {
+      if (token !== curveToken) return;            // a newer run took over
+      // A hidden tab has no frames to stay inside, so take bigger bites.
+      const until = performance.now() + (document.hidden ? 60 : 12);
+      while (next <= hi && performance.now() < until) {
+        const r = run(v, next);
+        pending.push({ agents: next, coverage: r.stats.coveragePct, cost: r.money.total });
+        next++;
+      }
+      curvePoints = pending.slice();
+      if (next <= hi) {
+        nextTick(step);
+      } else if (onDone) {
+        onDone();
+      }
+      drawCurve();
+    };
+    nextTick(step);
+  }
+
+  function drawCurve() {
+    if (!curvePoints.length) return;
+    $("sm-curve").innerHTML = curve(curvePoints, read().agents);
+  }
+
+  function render() {
+    const v = read();
+    const started = performance.now();
+    const r = run(v, v.agents);
+    const elapsed = performance.now() - started;
+    rebuildCurve(v, () => { $("sm-verdict").innerHTML = verdict(r, v, floorFor(r), needFor(r), elapsed); });
+    drawCurve();
+
+    const needed = needFor(r);
+    const contacts = DATA.arrivals.flat().reduce((a, b) => a + b, 0);
+
+    $("sm-agents-out").textContent = v.agents;
+    $("sm-aht-out").textContent = `${Math.floor(v.aht / 60)}:${String(v.aht % 60).padStart(2, "0")}`;
+    $("sm-sla-out").textContent = `${Math.round(v.targetSla * 100)}%`;
+    $("sm-shrink-out").textContent = `${Math.round(v.shrinkage * 100)}%`;
+
+    const tone = r.stats.coveragePct >= 99.5 ? "good"
+      : r.stats.coveragePct >= 97 ? "warn" : "bad";
+    $("sm-stats").innerHTML = [
+      card("Demand", `${fmt(needed)} h`, "agent-hours the week needs"),
+      card("Coverage", `${fmt(r.stats.coveragePct, 1)}%`, `${fmt(r.stats.short)}h short`, tone),
+      card("Service level", `${fmt(r.stats.serviceLevel * 100, 1)}%`,
+           `target ${Math.round(v.targetSla * 100)}%`,
+           r.stats.serviceLevel >= v.targetSla ? "good" : "bad"),
+      card("Cost", `€${fmt(r.money.total)}`, `€${fmt(r.money.total / contacts, 2)} per contact`, "key"),
+      card("Spare", `${fmt(r.stats.spare)} h`, "paid and not needed"),
+      card("Rules", r.broken.length ? `${r.broken.length} broken` : "all respected",
+           r.stats.idle ? `${r.stats.idle} agents unused` : "audited from the assignment",
+           r.broken.length ? "bad" : "good"),
+    ].join("");
+
+    $("sm-roster").innerHTML = gantt(r.assignment);
+    $("sm-required").innerHTML = heatmap(r.required, { label: "agents needed" });
+    $("sm-coverage").innerHTML = heatmap(r.stats.grid, { label: "coverage", reference: r.required });
+    $("sm-verdict").innerHTML = verdict(r, v, floorFor(r), needed, elapsed);
+  }
+
+  const needFor = (r) => r.required.flat().reduce((a, b) => a + b, 0);
+  const floorFor = (r) => Math.ceil(needFor(r) / r.rules.maxWeekly);
+
+  function card(k, val, note, tone) {
+    return `<div class="stat${tone ? " " + tone : ""}"><span class="k">${k}</span>` +
+           `<span class="v">${val}</span><span class="n">${note}</span></div>`;
+  }
+
+  function verdict(r, v, floor, needed, elapsed) {
+    const bits = [];
+    const enough = curvePoints.find((p) => p.coverage >= 99.95);
+    const working = v.agents - r.stats.idle;
+
+    if (v.agents < floor) {
+      bits.push(`<b>${v.agents} cannot cover this week, and no roster could.</b> ` +
+        `${fmt(needed)} agent-hours over ${r.rules.maxWeekly}h contracts is ${floor} ` +
+        `people before a single rule is applied, so the gap below is arithmetic, ` +
+        `not scheduling.`);
+    } else if (r.stats.coveragePct >= 99.95) {
+      bits.push(`<b>Covered</b>, and it takes ${working} people to do it — ` +
+        `${working - floor} more than the ${floor} the raw hours suggest, which is what ` +
+        `the rest rules and the shift shapes cost.`);
+    } else {
+      bits.push(`<b>${fmt(r.stats.short)} agent-hours short</b> across ` +
+        `${r.stats.slotsShort} of 168 slots, worst ${r.stats.worst} at once` +
+        (enough ? `. ${enough.agents} would clear it` : "") + `.`);
+    }
+
+    if (r.stats.idle) {
+      bits.push(`${r.stats.idle} of the ${v.agents} get no shift at all: once no legal ` +
+        `shift closes a remaining hole the roster stops growing, so the extra heads ` +
+        `are spare capacity rather than a cheaper week.`);
+    }
+    if (enough && v.agents > enough.agents) {
+      const saving = curvePoints.find((p) => p.agents === v.agents).cost - enough.cost;
+      if (saving > 1) {
+        bits.push(`Dropping to ${enough.agents} would save €${fmt(saving)} a week ` +
+          `without losing a point of coverage.`);
+      }
+    }
+    bits.push(`<span style="color:var(--muted)">Rebuilt in ${elapsed.toFixed(0)} ms, ` +
+      `in your browser.</span>`);
+    return bits.join(" ");
+  }
+
+  // ── wiring ──────────────────────────────────────────────────────────────
+  function init() {
+    if (!$("sm-agents")) return;
+    ["sm-agents", "sm-aht", "sm-sla", "sm-shrink", "sm-rules"].forEach((id) => {
+      $(id).addEventListener("input", render);
+      $(id).addEventListener("change", render);
+    });
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script></body></html>

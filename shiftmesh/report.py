@@ -10,6 +10,7 @@ disk and still opens in five years.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from . import benchmarks as B
 from .viz import (
@@ -92,16 +93,30 @@ footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
 """
 
 
-def page(title: str, lede: str, body: str, footer: str) -> str:
+def _js(name: str) -> str:
+    """Read one of the browser-side modules that ships next to this file."""
+    return (Path(__file__).with_name(name)).read_text(encoding="utf-8")
+
+
+def page(title: str, lede: str, body: str, footer: str,
+         interactive: bool = False) -> str:
+    """One file. The scripts are inlined so it still works from a USB stick."""
+    css = CSS + (SIMULATOR_CSS if interactive else "")
+    scripts = ""
+    if interactive:
+        scripts = (
+            "\n<script>" + _js("simulator.js") + "</script>"
+            "\n<script>" + _js("simulator_ui.js") + "</script>"
+        )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{escape(title)}</title><style>{CSS}</style></head>
+<title>{escape(title)}</title><style>{css}</style></head>
 <body><div class="wrap">
 <header><h1>{escape(title)}</h1><p class="lede">{lede}</p></header>
 {body}
 <footer>{footer}</footer>
-</div></body></html>"""
+</div>{scripts}</body></html>"""
 
 
 def section(number: str, title: str, subtitle: str = "") -> str:
@@ -138,7 +153,104 @@ def sources_table() -> str:
 
 
 __all__ = [
-    "CSS", "page", "section", "note", "stats", "sources_table",
+    "CSS", "SIMULATOR_CSS", "page", "section", "note", "stats",
+    "sources_table", "simulator",
     "Heatmap", "Series", "line_chart", "bar_chart", "table", "stat",
     "ACCENT", "ACCENT_2", "WARM", "escape",
 ]
+
+
+# ── the interactive section ──────────────────────────────────────────────
+
+SIMULATOR_CSS = """
+.sim{background:var(--panel2);border:1px solid var(--line);border-radius:14px;
+  padding:20px 20px 8px;margin:22px 0}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:16px 22px;margin-bottom:20px}
+.ctl{display:flex;flex-direction:column;gap:7px}
+.ctl label{color:var(--muted);font-size:12px;text-transform:uppercase;
+  letter-spacing:.07em;display:flex;justify-content:space-between;align-items:baseline}
+.ctl label b{color:var(--accent);font-size:15px;font-variant-numeric:tabular-nums;
+  text-transform:none;letter-spacing:0}
+.ctl input[type=range]{width:100%;accent-color:var(--accent);height:22px;margin:0}
+.ctl select{background:var(--panel);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:7px 9px;font:inherit;font-size:13.5px}
+.verdict{border-left:2.5px solid var(--accent);background:rgba(77,163,255,.05);
+  padding:13px 17px;border-radius:0 10px 10px 0;margin:4px 0 20px;color:#cdd7e6}
+.verdict b{color:var(--accent)}
+.sim figure{background:var(--panel);margin:16px 0}
+@media (max-width:620px){.controls{grid-template-columns:1fr}}
+"""
+
+
+def simulator(requirement_source, arrivals, rules, pay, target_seconds,
+              default_agents: int, lo: int, hi: int) -> str:
+    """The controls, and the panels that redraw when one moves.
+
+    The data goes in as JSON and the solving happens in the browser, so the page
+    stays a single file with nothing behind it.
+    """
+    import json
+
+    payload = {
+        "arrivals": [[round(v, 2) for v in day] for day in arrivals],
+        "targetSeconds": target_seconds,
+        "rules": rules,
+        "pay": pay,
+    }
+
+    return f"""
+<div class="sim">
+  <div class="controls">
+    <div class="ctl">
+      <label for="sm-agents">Agents available <b id="sm-agents-out">{default_agents}</b></label>
+      <input type="range" id="sm-agents" min="{lo}" max="{hi}" value="{default_agents}" step="1">
+    </div>
+    <div class="ctl">
+      <label for="sm-aht">Handle time <b id="sm-aht-out">4:50</b></label>
+      <input type="range" id="sm-aht" min="120" max="600" value="290" step="10">
+    </div>
+    <div class="ctl">
+      <label for="sm-sla">Service target <b id="sm-sla-out">80%</b></label>
+      <input type="range" id="sm-sla" min="50" max="95" value="80" step="5">
+    </div>
+    <div class="ctl">
+      <label for="sm-shrink">Shrinkage <b id="sm-shrink-out">30%</b></label>
+      <input type="range" id="sm-shrink" min="0" max="45" value="30" step="1">
+    </div>
+    <div class="ctl">
+      <label for="sm-rules">Working-time rules</label>
+      <select id="sm-rules">
+        <option value="spain">Spain — statutory floor</option>
+        <option value="spain-callcentre">Spain — contact centre agreement</option>
+        <option value="eu-minimum">EU Working Time Directive floor</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats" id="sm-stats"></div>
+  <div class="verdict" id="sm-verdict"></div>
+
+  <figure><figcaption><b>The distribution matrix</b><span>one column per hour,
+    Monday 00:00 on the left — blue is daytime, amber includes night hours</span></figcaption>
+    <div id="sm-roster"></div>
+    <div class="legend"><span><i style="--c:#4da3ff"></i>day</span>
+      <span><i style="--c:#ffb454"></i>includes night hours</span></div>
+  </figure>
+
+  <div class="grid2">
+    <figure><figcaption><b>Agents needed</b><span>Erlang C on the forecast</span></figcaption>
+      <div id="sm-required"></div></figure>
+    <figure><figcaption><b>On the floor against needed</b><span>red short, blue spare</span></figcaption>
+      <div id="sm-coverage"></div></figure>
+  </div>
+
+  <figure><figcaption><b>Every headcount from {lo} to {hi}</b><span>coverage in green,
+    weekly cost in amber — the line marks where the slider is</span></figcaption>
+    <div id="sm-curve"></div>
+    <div class="legend"><span><i style="--c:#22d3a6"></i>coverage</span>
+      <span><i style="--c:#ffb454"></i>cost per week</span></div>
+  </figure>
+</div>
+<script>window.SHIFTMESH_DATA = {json.dumps(payload, separators=(",", ":"))};</script>
+"""

@@ -42,6 +42,7 @@ from shiftmesh.report import (  # noqa: E402
     note,
     page,
     section,
+    simulator,
     sources_table,
     stat,
     stats,
@@ -58,6 +59,34 @@ from shiftmesh.sources import (  # noqa: E402
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 CACHE = Path("data/nyc311/contacts-2024.csv")
+
+
+def js_rules() -> dict:
+    """The rule presets, in the shape simulator.js reads."""
+    out = {}
+    for name, r in PRESETS.items():
+        out[name] = {
+            "minShift": r.min_shift_hours,
+            "maxShift": r.max_shift_hours,
+            "maxWeekly": r.max_weekly_hours,
+            "maxOvertime": r.max_overtime_hours_week,
+            "maxDays": r.max_work_days,
+            "minRest": r.min_rest_hours,
+            "minWeeklyRest": r.min_weekly_rest_hours,
+            "maxStartSpread": r.max_start_spread_hours,
+        }
+    return out
+
+
+def js_pay(pay) -> dict:
+    return {
+        "grossAnnual": pay.gross_annual,
+        "annualHours": pay.annual_hours,
+        "socialSecurity": pay.employer_social_security,
+        "nightPremium": pay.night_premium_hour,
+        "sundayPremium": pay.sunday_premium_shift,
+        "overtimeUplift": pay.overtime_uplift,
+    }
 
 
 def build_channels(args) -> dict[str, Channel]:
@@ -343,8 +372,37 @@ service level in seconds.</p>""")
              "audited from the assignment", "good" if not s.violations else "bad"),
     ]))
 
+    # ── the simulator ────────────────────────────────────────────────────
+    body.append(section(
+        "05", "Move the numbers yourself",
+        "The same pipeline, running in your browser. Change how many people you "
+        "have, or what you promise them, and watch the matrix rebuild."))
+    body.append(f"""<p>Everything above is one scenario. The panel below is the
+whole thing — Erlang C, the shift catalogue, the rules audit and the cost model
+— ported to JavaScript and running on the page, so the question "what if we were
+four people short" takes a few milliseconds instead of a terminal.</p>""")
+    body.append(note(
+        "<b>This is the greedy roster, not the solver.</b> CP-SAT does not run in "
+        "a browser, so the panel builds each week the way the warm start does: "
+        "hand every agent the shift that closes the biggest remaining hole, if "
+        "the rules still hold. That is instant and it is legal — the audit runs "
+        "live and will say so if it ever is not — but it leaves more spare hours "
+        f"than the solver. On this week the solver reached {s.overstaffed_hours}h "
+        "spare; the greedy alone lands higher, and the difference is what the "
+        "sixty seconds of search above bought."))
+    body.append(simulator(
+        requirement_source=None,
+        arrivals=[[round(v, 2) for v in predicted[d * 24:(d + 1) * 24]] for d in range(7)],
+        rules=js_rules(),
+        pay=js_pay(pay),
+        target_seconds=B.VOICE_SLA_SECONDS.value,
+        default_agents=agents,
+        lo=max(4, int(agents * 0.55)),
+        hi=int(agents * 1.35),
+    ))
+
     # ── money ────────────────────────────────────────────────────────────
-    body.append(section("05", "What it costs",
+    body.append(section("06", "What it costs",
                         "Priced against the Spanish sector agreement, premium by "
                         "premium."))
     body.append(f"""<p>An hour of rostered agent time costs
@@ -387,7 +445,7 @@ them.</p>""")
         "trade away if the objective priced them."))
 
     # ── sources ──────────────────────────────────────────────────────────
-    body.append(section("06", "Where every number came from",
+    body.append(section("07", "Where every number came from",
                         "Including the two that were looked for and not found."))
     body.append(sources_table())
     weakest = ", ".join(b.what for b in B.WEAKEST)
@@ -414,7 +472,7 @@ them.</p>""")
         f"calls a year. This page takes {desk}, forecasts a week of them, works "
         "out how many people that needs, builds a roster that obeys Spanish "
         "working-time law, and puts a price on it.",
-        "\n".join(body), footer,
+        "\n".join(body), footer, interactive=True,
     )
 
 

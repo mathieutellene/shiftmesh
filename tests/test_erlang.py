@@ -90,3 +90,51 @@ def test_target_round_trip_hits_the_promise():
     target = ServiceTarget()
     for calls in (10, 50, 120, 400, 1500):
         assert target.achieved_sla(target.required(calls), calls) >= target.target_sla
+
+
+def test_the_recursion_holds_where_even_log_space_overflowed():
+    """The old implementation exponentiated before dividing, and died ~715 agents.
+
+    ``exp(n·ln a − ln n!)`` is a float like any other: for a large operation the
+    exponent crosses 709.78 and the whole thing raises before the ratio is ever
+    taken. The recursion never builds a number bigger than the answer.
+    """
+    with pytest.raises(OverflowError):
+        math.exp(715 * math.log(714.0) - math.lgamma(716))
+
+    for agents, intensity in [(715, 714.0), (2_000, 1_950.0), (5_000, 4_900.0)]:
+        p = probability_wait(agents, intensity)
+        assert 0.0 < p < 1.0
+        assert service_level(agents, intensity * 3600 / 195, 195, 20) > 0.0
+
+
+def test_erlang_b_is_the_textbook_recursion():
+    """B(n) = a·B(n-1) / (n + a·B(n-1)), starting from B(0) = 1."""
+    from shiftmesh.erlang import blocking_probability
+
+    for intensity in (0.5, 3.0, 17.5, 200.0):
+        b = 1.0
+        for n in range(1, 60):
+            b = intensity * b / (n + intensity * b)
+            assert blocking_probability(n, intensity) == pytest.approx(b, rel=1e-12)
+
+
+@pytest.mark.parametrize("shrinkage", [0.0, 0.156, 0.185, 0.3, 0.312, 0.425, 0.55])
+def test_the_round_trip_holds_at_every_shrinkage(shrinkage):
+    """``required`` rounds up and ``achieved_sla`` rounds down, on the same number.
+
+    At 30% shrinkage, 90 agents times 0.7 is 62.99999999999999 in binary, and
+    a bare ``int()`` reports 62 productive agents where there are 63 — quietly
+    failing the target the roster was built to hit.
+    """
+    target = ServiceTarget(shrinkage=shrinkage)
+    for calls in (5, 40, 120, 480, 1002, 2500):
+        needed = target.required(calls)
+        if needed:
+            assert target.achieved_sla(needed, calls) >= target.target_sla
+
+
+def test_the_exact_case_that_used_to_fail():
+    target = ServiceTarget(shrinkage=0.3)
+    assert target.required(1002) == 90
+    assert target.achieved_sla(90, 1002) >= 0.90

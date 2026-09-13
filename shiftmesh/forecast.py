@@ -197,13 +197,26 @@ class Forecaster:
         Lags reach back a week, so a one-week horizon never needs its own
         predictions as input. Forecasting further out would.
         """
+        return self._apply(self.level(y, start, hours), self.uplift)
+
+    def level(self, y: np.ndarray, start: int, hours: int = HOURS_PER_WEEK) -> np.ndarray:
+        """The smeared ``log1p`` level, before uplift and before clipping.
+
+        Kept separate so a caller sweeping several uplifts fits once and scales
+        this, which is exactly what ``predict`` would have returned for each —
+        rescaling an already-clipped, already-shifted prediction is not.
+        """
         if self.coef_ is None:
             raise RuntimeError("fit first")
         if hours > HOURS_PER_WEEK:
             raise ValueError("horizon beyond one week would need recursive lags")
         t = np.arange(start, start + hours)
-        fitted = np.exp(_design(t, y) @ self.coef_)
-        return (fitted * self.smear_ * (1.0 + self.uplift) - 1.0).clip(min=0.0)
+        return np.exp(_design(t, y) @ self.coef_) * self.smear_
+
+    @staticmethod
+    def _apply(level: np.ndarray, uplift: float) -> np.ndarray:
+        """Turn a ``log1p`` level into calls at a given uplift."""
+        return (level * (1.0 + uplift) - 1.0).clip(min=0.0)
 
 
 # ── baselines ────────────────────────────────────────────────────────────
@@ -235,7 +248,21 @@ class Score:
     agent_mae: float
     hours_understaffed: int
     sla_gap: float
-    """Service level lost by staffing to the forecast instead of the truth."""
+    """Service level lost by staffing to the forecast instead of the truth.
+
+    A difference of two proportions, in percentage points — not a ratio.
+    """
+
+    delivered_sla: float = 1.0
+    """Call-weighted service level this forecast would actually have delivered."""
+
+    achievable_sla: float = 1.0
+    """What perfect foresight would have delivered on the same arrivals.
+
+    Not 1.0: Erlang C plus an integer headcount leaves a few points on the
+    table even when you know exactly how many calls are coming. Any claim
+    about "recovering N% of achievable service" has to divide by this.
+    """
 
     @property
     def headline(self) -> str:
@@ -282,7 +309,8 @@ def score(
     else:
         delivered = perfect = 1.0
 
-    return Score(name, mae, smape, agent_mae, short, max(0.0, perfect - delivered))
+    return Score(name, mae, smape, agent_mae, short,
+                 max(0.0, perfect - delivered), delivered, perfect)
 
 
 def backtest(
@@ -325,12 +353,19 @@ def backtest(
 
 
 def forecast_next_week(
-    y: np.ndarray, ridge: float = 1.0
+    y: np.ndarray, ridge: float = 1.0, uplift: float = 0.0
 ) -> np.ndarray:
-    """Fit on everything and predict the week that follows the history."""
+    """Fit on everything and predict the week that follows the history.
+
+    The padding is what makes this work: ``_design`` reads lags at ``t - 168``
+    and ``t - 336``, and for the week after the history those land inside the
+    real data, never in the zeros appended here. The zeros only exist so the
+    array is long enough to index.
+    """
     start = len(y)
     padded = np.concatenate([y, np.zeros(HOURS_PER_WEEK)])
-    return Forecaster(ridge=ridge).fit(y, upto=start).predict(padded, start)
+    model = Forecaster(ridge=ridge, uplift=uplift).fit(y, upto=start)
+    return model.predict(padded, start)
 
 
 # ── choosing how far above the mean to staff ─────────────────────────────
@@ -366,22 +401,30 @@ def tune_uplift(
     the last point or two of service level are usually the expensive ones.
     """
     n_weeks = len(y) // HOURS_PER_WEEK
-    actuals, base = [], []
+    actuals, levels = [], []
     for w in range(min_train_weeks, n_weeks):
         start = w * HOURS_PER_WEEK
         actuals.append(y[start:start + HOURS_PER_WEEK])
         model = Forecaster(ridge=ridge).fit(y, upto=start)
-        base.append(model.predict(y, start))  # uplift 0
+        # The level, not a prediction: fit once per week, scale it per uplift.
+        levels.append(model.level(y, start))
     truth = np.concatenate(actuals)
-    zero = np.concatenate(base)
+    level = np.concatenate(levels)
+
+    # What perfect foresight would have delivered, as the denominator for every
+    # row. It is not 1.0 — even staffed to the actual arrivals, Erlang C and an
+    # integer headcount leave a few points on the table — so dividing by it is
+    # what makes "share of achievable service" mean what it says.
+    perfect = score("oracle", truth, truth, target)
+    ceiling = perfect.delivered_sla
 
     rows: list[UpliftRow] = []
     for u in candidates:
-        # predict(uplift=u) = (fitted·smear·(1+u) − 1), and zero = fitted·smear − 1
-        predicted = ((zero + 1.0) * (1.0 + u) - 1.0).clip(min=0.0)
+        predicted = Forecaster._apply(level, u)
         s = score(f"+{u:.0%}", truth, predicted, target)
         hours = int(sum(target.required(v) for v in predicted))
-        rows.append(UpliftRow(u, hours, 1.0 - s.sla_gap, s.hours_understaffed))
+        share = s.delivered_sla / ceiling if ceiling > 0 else 1.0
+        rows.append(UpliftRow(u, hours, min(1.0, share), s.hours_understaffed))
 
     chosen = next(
         (r.uplift for r in rows if r.sla_recovered >= recover),

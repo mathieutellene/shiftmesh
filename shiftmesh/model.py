@@ -127,6 +127,7 @@ def solve(
     workers: int = 8,
     seed: int = 0,
     warm_start: bool = True,
+    deterministic: bool = False,
 ) -> Roster:
     """Build a weekly roster for ``n_agents`` against an hourly requirement.
 
@@ -137,6 +138,24 @@ def solve(
     that roster unchanged if the budget was too small to find anything better.
     ``scripts/solve.py --no-warm-start`` turns it off, which is how the
     difference it makes was measured.
+
+    ``deterministic`` trades quality for repeatability. By default the search
+    runs eight workers against a wall-clock budget, so two runs of the same
+    command return different rosters — the demand is fixed by its seed, the
+    roster is not. Setting this pins the search to one worker and a
+    deterministic budget, and the same inputs then give byte-identical output
+    on any machine.
+
+    It is not free, and the cost is larger than it looks. Measured on the
+    repository's own demo, one worker returns nothing at all below about three
+    minutes of wall-clock — every shorter run falls back to the warm start —
+    and when it finally does return a roster, that roster has sixty-seven
+    spare agent-hours, which is exactly what the warm start already had. Eight
+    workers reach six in forty-five seconds. The parallel portfolio is not a
+    speed-up here; it is the entire reason the model is solvable.
+
+    ``time_limit`` also stops meaning seconds: it becomes deterministic units,
+    worth roughly two seconds each on the machine this was written on.
     """
     weights = weights or Weights()
     shifts = enumerate_shifts(rules)
@@ -311,9 +330,15 @@ def solve(
 
     # ── solve ────────────────────────────────────────────────────────────
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = time_limit
-    solver.parameters.num_search_workers = workers
     solver.parameters.random_seed = seed
+    if deterministic:
+        # One worker and a deterministic budget: no thread interleaving, no
+        # clock, so the answer depends only on the inputs.
+        solver.parameters.num_search_workers = 1
+        solver.parameters.max_deterministic_time = time_limit
+    else:
+        solver.parameters.max_time_in_seconds = time_limit
+        solver.parameters.num_search_workers = workers
 
     # Probing is off deliberately. On a model this size it spends fifteen
     # seconds proving implications between shift variables before the search

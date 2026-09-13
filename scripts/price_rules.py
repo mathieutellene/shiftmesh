@@ -44,23 +44,25 @@ from shiftmesh.rules import WorkRules  # noqa: E402
 
 BASE = PRESETS["spain"]
 
-# Each entry relaxes (or tightens) one rule and nothing else.
-SCENARIOS: list[tuple[str, dict, str]] = [
-    ("baseline — Spanish statute", {}, "ET arts. 34 and 37 as written"),
+# Each entry changes exactly one rule. The last field says whether the change is
+# a relaxation — a rule loosened, so the set of legal rosters can only grow — or
+# a tightening. It is not decoration: it is what makes a wrong answer detectable.
+SCENARIOS: list[tuple[str, dict, str, bool]] = [
+    ("baseline — Spanish statute", {}, "ET arts. 34 and 37 as written", True),
     ("rest 12h → 11h", {"min_rest_hours": 11},
-     "the EU Working Time Directive floor"),
+     "the EU Working Time Directive floor", True),
     ("weekly rest 36h → 24h", {"min_weekly_rest_hours": 24},
-     "one day off instead of a day and a half"),
+     "one day off instead of a day and a half", True),
     ("5 → 6 working days", {"max_work_days": 6},
-     "shorter shifts spread across six days"),
+     "shorter shifts spread across six days", True),
     ("split shifts allowed", {"allow_split_shifts": True},
-     "two blocks in a day, legal in Spain and widely disliked"),
+     "1,105 shifts to choose from instead of 145", True),
     ("max shift 9h → 12h", {"max_shift_hours": 12},
-     "long shifts, fewer handovers"),
+     "long shifts, fewer handovers", True),
     ("40h → 48h week", {"max_weekly_hours": 48},
-     "the directive's absolute ceiling"),
+     "the directive's absolute ceiling", True),
     ("start times pinned to ±3h", {"max_start_spread_hours": 3},
-     "a promise to agents, not a legal obligation — this one costs"),
+     "a promise to agents, not a legal obligation", False),
 ]
 
 
@@ -79,13 +81,18 @@ def cheapest_headcount(requirement, rules: WorkRules, start: int, lo: int, hi: i
     """Smallest headcount that covers the week, walking out from ``start``.
 
     Coverage is monotone in headcount in theory — an extra agent can always
-    repeat an existing roster line — but each attempt is a truncated search,
-    so the answer is really "the smallest headcount that covered the week
-    within the budget". Walking one step at a time rather than bisecting keeps
-    that honest: every number below the one reported was tried and failed.
+    repeat an existing roster line — but each attempt is a truncated search, so
+    what comes back is "the smallest headcount that covered the week within the
+    budget", not the true optimum.
 
-    Starting from the previous scenario's answer rather than the floor cuts the
-    work roughly in half, since relaxing a rule can only ever help.
+    Walking one step at a time rather than bisecting means the number directly
+    below the one reported was tried and failed, which bisection cannot promise.
+    It does not mean every number below it was tried: the walk stops at the
+    first failure, and it starts from the previous scenario's answer rather
+    than from the floor, which halves the work since relaxing a rule can only
+    ever help. A rule whose real price is two heads can therefore be reported
+    as one if the search stalls on the way down — always read the table
+    alongside the budget it was produced with.
     """
     best_cov = 0.0
     ok, cov = covers(requirement, start, rules, seconds, tolerance)
@@ -124,6 +131,9 @@ def main() -> int:
                    help="agent-hours of shortfall still counted as covered")
     p.add_argument("--headroom", type=int, default=10,
                    help="how far above the theoretical floor to search")
+    p.add_argument("--start", type=int,
+                   help="headcount to try first for the baseline row; the walk goes "
+                        "out from here, so a good guess saves whole attempts")
     args = p.parse_args()
 
     if args.requirement:
@@ -142,17 +152,18 @@ def main() -> int:
     print(f"budget     {args.time:.0f}s per attempt, "
           f"searching {floor}–{floor + args.headroom}\n")
 
-    width = max(len(name) for name, _, _ in SCENARIOS)
+    width = max(len(name) for name, *_ in SCENARIOS)
     print(f"{'rule':<{width}}  {'agents':>6}  {'vs base':>7}  note")
     print("─" * (width + 60))
 
     baseline = None
+    unresolved: list[str] = []
     started = time.time()
-    for name, changes, note in SCENARIOS:
+    for name, changes, note, relaxation in SCENARIOS:
         rules = BASE.relaxed(**changes) if changes else BASE
         # A longer week moves the theoretical floor, so recompute it per row.
         lo = minimum_agents(requirement, rules.max_weekly_hours)
-        start = baseline if baseline is not None else floor + 4
+        start = baseline if baseline is not None else (args.start or floor + 4)
         n, cov = cheapest_headcount(
             requirement, rules, max(lo, start), lo, floor + args.headroom,
             args.time, args.tolerance
@@ -163,15 +174,31 @@ def main() -> int:
             continue
         if baseline is None:
             baseline = n
-            delta = "—"
-        else:
-            diff = n - baseline
-            delta = "same" if diff == 0 else f"{diff:+d}"
+            print(f"{name:<{width}}  {n:>6}  {'—':>7}  {note}")
+            continue
+
+        diff = n - baseline
+        # A relaxation cannot raise the headcount: every roster that was legal
+        # before is still legal after. When one appears to, that is the search
+        # budget talking and not the rule, and printing the difference as a
+        # price would be publishing a number known to be wrong.
+        if relaxation and diff > 0:
+            unresolved.append(name)
+            print(f"{name:<{width}}  {n:>6}  {'?':>7}  {note}")
+            continue
+        delta = "same" if diff == 0 else f"{diff:+d}"
         print(f"{name:<{width}}  {n:>6}  {delta:>7}  {note}")
 
     print(f"\n{time.time() - started:.0f}s total")
     print("\nA negative number is headcount the rule is costing you today.")
     print("A positive one is what the promise in that row costs to keep.")
+    if unresolved:
+        print(f"\n?  {', '.join(unresolved)} came out above the baseline, which")
+        print("   cannot be true: relaxing a rule only ever adds legal rosters. Those")
+        print("   rows enlarge the shift catalogue enough that the search stops")
+        print("   converging in the time allowed, so they are unresolved rather than")
+        print(f"   priced. Re-run them with a larger --time (this run used "
+              f"{args.time:.0f}s).")
     return 0
 
 

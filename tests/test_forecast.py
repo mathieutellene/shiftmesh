@@ -8,6 +8,7 @@ from shiftmesh.forecast import (
     HOURS_PER_WEEK,
     Forecaster,
     backtest,
+    forecast_next_week,
     load_history_csv,
     score,
     seasonal_mean,
@@ -70,14 +71,35 @@ def test_the_forecast_uses_no_data_from_the_week_it_predicts(history):
     assert np.allclose(clean, model.predict(tampered, start))
 
 
-def test_smearing_lifts_the_level(history):
-    """Exponentiating a log-space fit lands low; Duan's correction undoes it."""
-    start = 20 * HOURS_PER_WEEK
-    model = Forecaster().fit(history, upto=start)
-    assert model.smear_ > 1.0
+def test_smearing_corrects_a_real_downward_bias(history):
+    """Exponentiating a log-space fit lands low; Duan's correction undoes it.
 
-    raw = model.predict(history, start) / model.smear_
-    assert raw.sum() < model.predict(history, start).sum()
+    Asserting that the factor is above 1 proves nothing — an unpenalised
+    intercept forces the residuals to sum to zero, so Jensen makes
+    ``mean(exp(r)) > 1`` an identity. And a single week proves nothing either:
+    arrival noise swamps the bias, and on some weeks the uncorrected fit
+    happens to land high.
+
+    The bias is systematic, so the test has to be too. Across every week of
+    the backtest the uncorrected fit undershoots the arrivals it is predicting,
+    and the correction closes most of that gap.
+    """
+    actual_total = uncorrected_total = corrected_total = 0.0
+    for w in range(8, len(history) // HOURS_PER_WEEK):
+        start = w * HOURS_PER_WEEK
+        actual_total += history[start:start + HOURS_PER_WEEK].sum()
+
+        model = Forecaster().fit(history, upto=start)
+        corrected_total += model.predict(history, start).sum()
+
+        naive = Forecaster(ridge=model.ridge)
+        naive.coef_, naive.smear_ = model.coef_, 1.0  # same fit, uncorrected
+        uncorrected_total += naive.predict(history, start).sum()
+
+    assert uncorrected_total < actual_total, "the uncorrected fit should undershoot"
+    assert abs(corrected_total - actual_total) < abs(uncorrected_total - actual_total)
+    # And the correction must be doing the work, not rounding noise.
+    assert corrected_total - uncorrected_total > 0.01 * actual_total
 
 
 def test_uplift_scales_the_forecast_up(history):
@@ -162,3 +184,67 @@ def test_a_csv_round_trip_preserves_the_history(tmp_path, history):
         encoding="utf-8",
     )
     assert np.allclose(load_history_csv(path), history, atol=1e-5)
+
+
+def test_the_level_scales_to_exactly_what_predict_returns(history):
+    """``tune_uplift`` fits once and scales the level; that must be no shortcut.
+
+    Rescaling an already-clipped, already-shifted prediction is not the same
+    function — the ``-1`` and the ``clip`` sit outside the uplift factor — so
+    the sweep would have been scoring forecasts the model never produces.
+    """
+    start = 20 * HOURS_PER_WEEK
+    fitted = Forecaster().fit(history, upto=start)
+    level = fitted.level(history, start)
+
+    for u in (0.0, 0.05, 0.15, 0.30, 1.0):
+        direct = Forecaster(uplift=u).fit(history, upto=start).predict(history, start)
+        assert np.allclose(direct, Forecaster._apply(level, u))
+
+
+def test_perfect_foresight_still_misses_some_service(history):
+    """The ceiling the uplift is measured against is not 100%.
+
+    Erlang C plus a whole number of agents leaves points on the table even
+    when the arrivals are known exactly, so "share of achievable service" has
+    to divide by this rather than by one.
+    """
+    week = history[:HOURS_PER_WEEK]
+    s = score("oracle", week, week, TARGET)
+    assert s.sla_gap == pytest.approx(0.0)
+    assert TARGET.target_sla <= s.achievable_sla < 1.0
+    assert s.delivered_sla == pytest.approx(s.achievable_sla)
+
+
+def test_recovered_service_is_a_share_not_a_gap(history):
+    """With a ceiling below 1.0 the two readings genuinely differ."""
+    _, rows = tune_uplift(history, TARGET, min_train_weeks=8)
+    worst = rows[0]
+    # A share of the ceiling is strictly harsher than 1 minus the raw gap.
+    week = history[:HOURS_PER_WEEK]
+    ceiling = score("oracle", week, week, TARGET).achievable_sla
+    assert ceiling < 1.0
+    assert 0.0 < worst.sla_recovered <= 1.0
+
+
+def test_forecast_next_week_carries_the_uplift(history):
+    """It exists to be the one-call path, so it has to take the tuned number."""
+    plain = forecast_next_week(history)
+    lifted = forecast_next_week(history, uplift=0.15)
+    assert len(plain) == HOURS_PER_WEEK
+    assert (plain >= 0).all()
+    assert lifted.sum() > plain.sum()
+
+    # And it must agree with doing it by hand.
+    padded = np.concatenate([history, np.zeros(HOURS_PER_WEEK)])
+    by_hand = (Forecaster(uplift=0.15).fit(history, upto=len(history))
+               .predict(padded, len(history)))
+    assert np.allclose(lifted, by_hand)
+
+
+def test_forecast_next_week_reads_real_history_not_the_padding(history):
+    """The lags for the week after the history land inside the data, not the zeros."""
+    clean = forecast_next_week(history)
+    tampered = history.copy()
+    tampered[-HOURS_PER_WEEK:] *= 3.0          # the week the lags will read
+    assert not np.allclose(clean, forecast_next_week(tampered))

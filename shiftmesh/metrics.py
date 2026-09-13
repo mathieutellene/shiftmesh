@@ -51,8 +51,31 @@ def check_rules(roster: Roster) -> list[Violation]:
                     Violation(a, "shift length", f"{DAYS[d]}: {hours}h outside "
                               f"[{r.min_shift_hours}, {r.max_shift_hours}]")
                 )
-            if len(shift) > 1 and not r.allow_split_shifts:
-                out.append(Violation(a, "split shift", f"{DAYS[d]}: split not allowed"))
+            if len(shift) > 1:
+                if not r.allow_split_shifts:
+                    out.append(
+                        Violation(a, "split shift", f"{DAYS[d]}: split not allowed")
+                    )
+                elif len(shift) > 2:
+                    out.append(
+                        Violation(a, "split shift",
+                                  f"{DAYS[d]}: {len(shift)} blocks, at most 2 allowed")
+                    )
+                else:
+                    (s1, d1), (s2, d2) = shift
+                    gap = s2 - (s1 + d1)
+                    if min(d1, d2) < r.split_min_block_hours:
+                        out.append(
+                            Violation(a, "split shift",
+                                      f"{DAYS[d]}: block of {min(d1, d2)}h under the "
+                                      f"{r.split_min_block_hours}h minimum")
+                        )
+                    if not r.split_gap_hours_min <= gap <= r.split_gap_hours_max:
+                        out.append(
+                            Violation(a, "split shift",
+                                      f"{DAYS[d]}: {gap}h gap outside "
+                                      f"[{r.split_gap_hours_min}, {r.split_gap_hours_max}]")
+                        )
 
         if week > r.with_overtime():
             out.append(
@@ -64,16 +87,30 @@ def check_rules(roster: Roster) -> list[Violation]:
             )
 
         # Rest, walking round the week so Sunday meets Monday.
+        #
+        # Measured to the next day the agent actually works, not merely to
+        # tomorrow. Skipping to tomorrow alone is only sound while no shift
+        # runs past hour 48 - min_rest, and while the model guarantees that by
+        # never offering such a shift, the audit must not inherit the
+        # assumption — its whole job is to catch the model being wrong. A
+        # roster handed in from elsewhere is checked on its own terms.
         for d in range(n_days):
-            nxt = (d + 1) % n_days
-            this, following = roster.assignment[(a, d)], roster.assignment[(a, nxt)]
-            if not this or not following:
+            this = roster.assignment[(a, d)]
+            if not this:
                 continue
-            rest = HOURS + shift_start(following) - shift_end(this)
-            if rest < r.min_rest_hours:
-                out.append(
-                    Violation(a, "rest", f"{DAYS[d]}→{DAYS[nxt]}: {rest}h between shifts")
-                )
+            for offset in range(1, n_days):
+                nxt = (d + offset) % n_days
+                following = roster.assignment[(a, nxt)]
+                if not following:
+                    continue
+                rest = offset * HOURS + shift_start(following) - shift_end(this)
+                if rest < r.min_rest_hours:
+                    gap = "" if offset == 1 else f" across {offset - 1} day(s) off"
+                    out.append(
+                        Violation(a, "rest",
+                                  f"{DAYS[d]}→{DAYS[nxt]}: {rest}h between shifts{gap}")
+                    )
+                break  # only the next worked day can be the tight one
 
         # One long break somewhere in the week.
         if r.min_weekly_rest_hours > 0:

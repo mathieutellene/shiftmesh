@@ -73,3 +73,32 @@ def test_overtime_ceiling():
     assert SPAIN_STATUTORY.with_overtime() == 44
     with pytest.raises(dataclasses.FrozenInstanceError):
         SPAIN_STATUTORY.max_weekly_hours = 50
+
+
+def test_no_shift_runs_past_the_point_the_rest_chain_can_see():
+    """Every preset must keep shift_end within 48 - min_rest_hours.
+
+    The model links rest between consecutive days only. That is sound exactly
+    while a gap that skips a day is automatically long enough, and that gap is
+    ``48 - shift_end``. A shift ending later than ``48 - min_rest_hours`` walks
+    straight through both the constraint and the audit.
+    """
+    for name, rules in PRESETS.items():
+        limit = 48 - rules.min_rest_hours
+        for shift in enumerate_shifts(rules):
+            if shift:
+                assert shift_end(shift) <= limit, f"{name}: {shift} ends {shift_end(shift)}"
+
+
+def test_the_statutory_catalogue_is_unchanged_by_the_filter():
+    """Six durations at twenty-four start hours, plus the day off."""
+    assert len(enumerate_shifts(SPAIN_STATUTORY)) == 6 * 24 + 1
+
+
+def test_normal_shift_hours_is_gone():
+    """It was documented as the overtime threshold and read by nothing.
+
+    Overtime is weekly in both places that compute it, so the field promised a
+    per-shift rule the model does not implement.
+    """
+    assert not hasattr(SPAIN_STATUTORY, "normal_shift_hours")

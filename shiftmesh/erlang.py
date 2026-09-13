@@ -3,8 +3,20 @@
 Agner Krarup Erlang derived this in 1917 for telephone exchanges. It still
 decides the staffing of essentially every call centre in the world.
 
-All factorials are computed in log space (``math.lgamma``) because the direct
-form overflows above roughly 170 agents — a real limit on a large operation.
+Nothing here evaluates a factorial. Written as the textbook states it, Erlang C
+divides a^n/n! by a sum of the same terms, and 171! is already larger than a
+double can hold — so a 200-agent operation returns ``inf/inf``. Moving the
+factorials into log space with ``math.lgamma`` pushes that wall back but does
+not remove it: the exponent has to come back out through ``math.exp`` before
+the ratio is taken, and that overflows again somewhere around 715 agents.
+
+So the implementation never leaves safe ground. It uses the Erlang B recursion
+
+    1/B(0) = 1,    1/B(n) = 1 + n/a · 1/B(n-1)
+
+which touches nothing larger than the answer itself, and converts to Erlang C
+at the end. It is exact, it is linear in the agent count, and it holds for a
+five-thousand-seat operation as readily as for five.
 """
 
 from __future__ import annotations
@@ -18,6 +30,23 @@ def traffic_intensity(calls_per_hour: float, aht_seconds: float) -> float:
     return (calls_per_hour * aht_seconds) / 3600.0
 
 
+def blocking_probability(agents: int, intensity: float) -> float:
+    """Erlang B: probability a call is lost when there is no queue at all.
+
+    Computed by the reciprocal recursion, which stays between 1 and roughly
+    ``agents/intensity`` at every step and so cannot overflow. Erlang C is one
+    line away from it, and this is the only numerically safe route there.
+    """
+    if agents <= 0:
+        return 1.0
+    if intensity <= 0:
+        return 0.0
+    inverse = 1.0
+    for n in range(1, agents + 1):
+        inverse = 1.0 + inverse * n / intensity
+    return 1.0 / inverse
+
+
 def probability_wait(agents: int, intensity: float) -> float:
     """Erlang C: probability an arriving call finds every agent busy."""
     if agents <= 0:
@@ -28,15 +57,13 @@ def probability_wait(agents: int, intensity: float) -> float:
         # The queue is unstable: work arrives faster than it can be served.
         return 1.0
 
-    log_a = math.log(intensity)
-    # a^n / n!  ->  exp(n·ln a − ln n!)
-    top = math.exp(agents * log_a - math.lgamma(agents + 1))
-    top *= agents / (agents - intensity)
-
-    # The Poisson sum Σ a^k / k! for k < n
-    bottom = sum(math.exp(k * log_a - math.lgamma(k + 1)) for k in range(agents))
-    total = bottom + top
-    return top / total if total > 0 else 1.0
+    # C = B / (1 − ρ(1 − B)), with ρ the occupancy a/n.
+    b = blocking_probability(agents, intensity)
+    occupancy = intensity / agents
+    denominator = 1.0 - occupancy * (1.0 - b)
+    if denominator <= 0.0:
+        return 1.0
+    return min(1.0, b / denominator)
 
 
 def service_level(
@@ -123,8 +150,19 @@ class ServiceTarget:
         return apply_shrinkage(productive, self.shrinkage)
 
     def achieved_sla(self, agents: int, calls_per_hour: float) -> float:
-        """Service level actually delivered by ``agents`` rostered agents."""
-        productive = agents * (1.0 - self.shrinkage)
+        """Service level actually delivered by ``agents`` rostered agents.
+
+        Rounding down is deliberate — a fraction of an agent does not answer
+        calls — but it has to round down the *real* number, not a float that
+        missed it. ``required`` divides by ``1 - shrinkage`` and this multiplies
+        by it, and the round trip does not always land clean: at 30% shrinkage,
+        90 agents come back as 62.99999999999999 rather than 63, and a bare
+        ``int()`` would quietly report the queue a whole agent short and miss
+        the target it was staffed to hit. The tolerance costs nothing and makes
+        ``achieved_sla(required(c), c) >= target_sla`` hold for every shrinkage
+        rather than for the ones that happen to divide nicely.
+        """
+        productive = math.floor(agents * (1.0 - self.shrinkage) + 1e-9)
         return service_level(
-            int(productive), calls_per_hour, self.aht_seconds, self.target_seconds
+            productive, calls_per_hour, self.aht_seconds, self.target_seconds
         )

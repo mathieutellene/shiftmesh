@@ -25,9 +25,6 @@ class WorkRules:
     """ET art. 34.3: nine hours of actual work per day unless the collective
     agreement says otherwise. Many call-centre agreements allow more."""
 
-    normal_shift_hours: int = 8
-    """Hours before a shift starts accruing overtime."""
-
     # ── weekly ───────────────────────────────────────────────────────────
     max_weekly_hours: int = 40
     """ET art. 34.1: forty hours a week averaged over the year."""
@@ -58,8 +55,14 @@ class WorkRules:
 
     # ── preference (soft, not law) ───────────────────────────────────────
     max_start_spread_hours: int = 24
-    """Hard cap on how far an agent's start times may drift across the week.
-    24 means unconstrained; lowering it forces regular shifts."""
+    """Hard cap on how far an agent may start from their own anchor hour.
+
+    The anchor floats — the solver picks the one that suits each agent — so the
+    widest gap between two of their start times is up to *twice* this value: at
+    3, an agent may be given 08:00 on Monday and 14:00 on Friday, both three
+    hours from an 11:00 anchor. That pairwise figure is what ``start_spread``
+    measures and what the CLI prints as "start times drift". Anything from 12
+    upwards is unconstrained, since the clock face is only 24 hours around."""
 
     def with_overtime(self) -> int:
         """Weekly ceiling including permitted overtime."""
@@ -111,11 +114,23 @@ def enumerate_shifts(rules: WorkRules) -> list[tuple[int, ...]]:
     Enumerating shifts rather than modelling start/end as free integers keeps
     the search space small and makes "which shifts exist" a business decision
     rather than a modelling accident.
+
+    One shift is excluded for a modelling reason rather than a business one.
+    The model links rest between *consecutive* days only, which is sound as
+    long as any gap that skips a day is automatically long enough — and the
+    gap across a day off is ``48 - shift_end``. A shift running past hour
+    ``48 - min_rest_hours`` breaks that, so it is never offered. Without the
+    filter, a split shift of 23:00–06:00 plus 10:00–13:00 ends at hour 37 and
+    leaves only eleven hours before a midnight start two days later, which
+    both the model and the audit would wave through.
     """
+    latest_end = 2 * 24 - rules.min_rest_hours
     shifts: list[tuple[int, ...]] = [()]  # day off
 
     for duration in range(rules.min_shift_hours, rules.max_shift_hours + 1):
         for start in range(24):
+            if start + duration > latest_end:
+                continue
             shifts.append(((start, duration),))
 
     if rules.allow_split_shifts:
@@ -126,6 +141,8 @@ def enumerate_shifts(rules: WorkRules) -> list[tuple[int, ...]]:
                     continue
                 for gap in range(lo, hi + 1):
                     for start in range(24):
+                        if start + d1 + gap + d2 > latest_end:
+                            continue
                         shifts.append(((start, d1), (start + d1 + gap, d2)))
 
     return shifts

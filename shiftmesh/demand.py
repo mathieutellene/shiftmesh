@@ -111,11 +111,17 @@ def agent_hours(requirement: list[list[int]]) -> int:
     return sum(sum(day) for day in requirement)
 
 
-def minimum_agents(requirement: list[list[int]], max_weekly_hours: int) -> int:
-    """Fewest agents that could possibly cover the week, ignoring every other rule.
+def minimum_agents(requirement: list[list[int]], hours_per_agent: int) -> int:
+    """Fewest agents that could cover the week at ``hours_per_agent`` each.
 
     A roster needing more than this is not necessarily wasteful: rest rules and
-    shift shapes cost real capacity. But a roster needing *fewer* is impossible,
-    which makes this the first sanity check on any result.
+    shift shapes cost real capacity. But a roster needing *fewer* is impossible
+    at those hours, which makes this the first sanity check on any result.
+
+    Which hours you pass matters, and it is easy to get wrong. Passing the
+    contracted week gives the floor at contracted hours — the useful planning
+    number. It is *not* a proof of impossibility, because the model may spend
+    overtime: pass :meth:`WorkRules.with_overtime` for that, or the answer says
+    "impossible" about rosters the solver can in fact build.
     """
-    return math.ceil(agent_hours(requirement) / max_weekly_hours)
+    return math.ceil(agent_hours(requirement) / hours_per_agent)

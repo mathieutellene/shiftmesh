@@ -39,11 +39,18 @@ from shiftmesh import (  # noqa: E402
 from shiftmesh.rules import covered_hours  # noqa: E402
 
 
+# Every row of the roster chart starts with this many characters, headers
+# included. Get it wrong by one and the whole grid slides under its own ruler,
+# which reads as a roster an hour out rather than as a formatting slip.
+GUTTER = 7
+
+
 def render_roster(roster) -> str:
     """One line per agent, 168 cells, so the week's shape is visible at a glance."""
+    pad = " " * GUTTER
     out = ["", "ROSTER  ·  one column per hour, Monday 00:00 on the left", ""]
-    out.append("        " + "".join(f"{DAYS[d][:3]:<24}" for d in range(len(DAYS))))
-    out.append("        " + "".join(
+    out.append(pad + "".join(f"{DAYS[d][:3]:<24}" for d in range(len(DAYS))))
+    out.append(pad + "".join(
         ("|" + "".join(str(h % 10) for h in range(1, HOURS))) for _ in DAYS
     ))
     for a in range(roster.n_agents):
@@ -52,7 +59,8 @@ def render_roster(roster) -> str:
             for h in covered_hours(roster.assignment[(a, d)]):
                 idx = ((d + h // HOURS) % len(DAYS)) * HOURS + h % HOURS
                 cells[idx] = "█"
-        out.append(f"  A{a + 1:<3} {''.join(cells)}  {roster.hours_worked(a):>3}h")
+        label = f"A{a + 1}".ljust(GUTTER - 1)[:GUTTER - 1] + " "
+        out.append(label + "".join(cells) + f"  {roster.hours_worked(a):>3}h")
     return "\n".join(out)
 
 
@@ -61,14 +69,27 @@ def render_coverage(roster) -> str:
     from shiftmesh.metrics import recompute_coverage
 
     grid = recompute_coverage(roster)
+    # Wide enough for the largest number actually in the grid, so the marker is
+    # never the character that gets cut. A fixed six-column cell silently
+    # truncated the marker as soon as an hour needed ten agents, which hid
+    # every shortfall in exactly the busy hours worth looking at.
+    biggest = max(
+        max(max(row) for row in grid),
+        max(max(row) for row in roster.required),
+        1,
+    )
+    digits = len(str(biggest))
+    width = 2 * digits + 3  # "nn/nn" + marker + a space
+
     out = ["", "COVERAGE  ·  · exact   + spare   ▼ short", ""]
-    out.append("  hour  " + "".join(f"{DAYS[d][:3]:>6}" for d in range(len(DAYS))))
+    out.append("  hour  " + "".join(f"{DAYS[d][:3]:>{width}}" for d in range(len(DAYS))))
     for h in range(HOURS):
         row = [f"  {h:02d}:00 "]
         for d in range(len(DAYS)):
-            diff = grid[d][h] - roster.required[d][h]
+            have, need = grid[d][h], roster.required[d][h]
+            diff = have - need
             mark = "·" if diff == 0 else ("▼" if diff < 0 else "+")
-            row.append(f"{grid[d][h]:>3}/{roster.required[d][h]:<1}{mark}"[:6].rjust(6))
+            row.append(f"{have:>{digits}}/{need:<{digits}}{mark}".rjust(width))
         out.append("".join(row))
     return "\n".join(out)
 
@@ -94,6 +115,9 @@ def main() -> int:
     p.add_argument("--quiet", action="store_true", help="skip the two grids")
     p.add_argument("--no-warm-start", action="store_true",
                    help="start the solver cold, to see what the greedy roster is worth")
+    p.add_argument("--deterministic", action="store_true",
+                   help="one worker and a deterministic budget: repeatable, "
+                        "much weaker, and --time is then in deterministic units")
     args = p.parse_args()
 
     target = ServiceTarget(args.aht, args.sla, args.sla_seconds, args.shrinkage)
@@ -111,18 +135,25 @@ def main() -> int:
 
     rules = PRESETS[args.rules]
     floor = minimum_agents(requirement, rules.max_weekly_hours)
+    # The solver may spend overtime, so the point below which the week is
+    # genuinely impossible sits lower than the contracted-hours floor.
+    hard_floor = minimum_agents(requirement, rules.with_overtime())
 
     print(f"demand      {source}")
     print(f"            {agent_hours(requirement):,} agent-hours across the week")
     print(f"rules       {args.rules} · {rules.max_weekly_hours}h/week · "
           f"{rules.min_rest_hours}h rest · max {rules.max_work_days} days")
-    print(f"agents      {args.agents}  (absolute floor is {floor}, ignoring every rule)")
-    if args.agents < floor:
+    print(f"agents      {args.agents}  (floor is {floor} at contracted hours, "
+          f"{hard_floor} with every permitted overtime hour)")
+    if args.agents < hard_floor:
         print("            ⚠ below the floor — the week cannot be covered")
-    print(f"solving     budget {args.time:.0f}s …", flush=True)
+    budget = (f"{args.time:.0f} deterministic units, single worker"
+              if args.deterministic else f"{args.time:.0f}s")
+    print(f"solving     budget {budget} …", flush=True)
 
     roster = solve(requirement, args.agents, rules, Weights(), time_limit=args.time,
-                   warm_start=not args.no_warm_start)
+                   warm_start=not args.no_warm_start,
+                   deterministic=args.deterministic)
     s = summarise(roster)
 
     if not args.quiet:

@@ -3,7 +3,14 @@
     history ──▶ forecast ──▶ Erlang C ──▶ agents per hour ──▶ CP-SAT ──▶ roster
 """
 
-from .erlang import ServiceTarget, agents_required, apply_shrinkage, service_level
+from .erlang import (
+    ServiceTarget,
+    agents_required,
+    apply_shrinkage,
+    blocking_probability,
+    probability_wait,
+    service_level,
+)
 from .demand import (
     agent_hours,
     load_requirement_csv,
@@ -33,6 +40,7 @@ __version__ = "1.0.0"
 __all__ = [
     # queueing
     "ServiceTarget", "agents_required", "apply_shrinkage", "service_level",
+    "probability_wait", "blocking_probability",
     # demand
     "synthetic_arrivals", "requirement_from_arrivals", "load_requirement_csv",
     "save_requirement_csv", "agent_hours", "minimum_agents",

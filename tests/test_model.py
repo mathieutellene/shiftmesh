@@ -273,3 +273,24 @@ def test_the_deterministic_path_repeats_itself():
     for other in runs[1:]:
         assert other.assignment == first
     assert check_rules(runs[0]) == []
+
+
+def test_the_search_is_recorded_not_just_its_answer(roster):
+    """The report draws the convergence, so the trace has to be real."""
+    assert roster.status in ("OPTIMAL", "FEASIBLE")
+    assert roster.trace, "no improved solutions were recorded"
+    for t, objective, bound in roster.trace:
+        assert t >= 0
+        assert bound <= objective + 1e-6, "a bound above the incumbent is impossible"
+    times = [t for t, _, _ in roster.trace]
+    objectives = [o for _, o, _ in roster.trace]
+    assert times == sorted(times)
+    assert objectives == sorted(objectives, reverse=True), "solutions must improve"
+
+
+def test_the_model_reports_its_own_size(roster):
+    stats_ = roster.model_stats
+    assert stats_["shifts"] == len(__import__("shiftmesh.rules", fromlist=["x"])
+                                   .enumerate_shifts(RULES))
+    assert stats_["booleans"] == stats_["shifts"] * stats_["agents"] * stats_["days"]
+    assert stats_["solutions"] == len(roster.trace)

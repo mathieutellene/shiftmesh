@@ -159,3 +159,33 @@ def test_cost_per_contact_and_annualising_are_what_they_say():
     assert cost_per_contact(1000.0, 0) == 0.0
     assert annualise(1000.0) == pytest.approx(52_000.0)
     assert annualise(1000.0, weeks=4) == pytest.approx(4_000.0)
+
+
+def test_the_per_agent_split_adds_up_to_the_per_agent_total(roster):
+    """The stacked chart is only honest if the bands sum to the bar."""
+    money = price_roster(roster)
+    for i in range(roster.n_agents):
+        parts = (money.per_agent_base[i] + money.per_agent_night[i]
+                 + money.per_agent_sunday[i] + money.per_agent_holiday[i]
+                 + money.per_agent_overtime[i])
+        assert parts == pytest.approx(money.per_agent[i], rel=1e-9)
+
+
+def test_the_split_totals_match_the_week(roster):
+    money = price_roster(roster)
+    assert sum(money.per_agent_night) == pytest.approx(money.night, rel=1e-9)
+    assert sum(money.per_agent_sunday) == pytest.approx(money.sunday, rel=1e-9)
+    assert sum(money.per_agent_overtime) == pytest.approx(money.overtime, rel=1e-9)
+    assert sum(money.per_agent) == pytest.approx(money.total, rel=1e-6)
+
+
+def test_overtime_lands_in_its_own_band_not_the_base(roster):
+    """The pink band is the one anybody looks for; it must not hide in blue."""
+    pay = PayRules()
+    keep = dict(roster.assignment)
+    for d in range(7):
+        roster.assignment[(0, d)] = ((8, 9),) if d < 5 else ()   # 45h, 5 over
+    money = price_roster(roster, pay)
+    roster.assignment.update(keep)
+    assert money.per_agent_overtime[0] > 0
+    assert money.per_agent_overtime[0] == pytest.approx(money.overtime, rel=1e-9)

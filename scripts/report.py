@@ -12,6 +12,7 @@ week, how many people that needs, who works when, and what it costs.
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 
@@ -29,7 +30,14 @@ from shiftmesh import benchmarks as B  # noqa: E402
 from shiftmesh.channels import Channel, erlang_a, sqrt_staffing  # noqa: E402
 from shiftmesh.cost import PayRules, annualise, cost_per_contact, price_roster  # noqa: E402
 from shiftmesh.erlang import traffic_intensity  # noqa: E402
-from shiftmesh.forecast import Forecaster, HOURS_PER_WEEK, backtest, tune_uplift  # noqa: E402
+from shiftmesh.forecast import (  # noqa: E402
+    Forecaster,
+    HOURS_PER_WEEK,
+    backtest,
+    backtest_weekly,
+    learning_curve,
+    tune_uplift,
+)
 from shiftmesh.metrics import recompute_coverage  # noqa: E402
 from shiftmesh.report import (  # noqa: E402
     ACCENT,
@@ -37,18 +45,28 @@ from shiftmesh.report import (  # noqa: E402
     Heatmap,
     Series,
     WARM,
-    bar_chart,
     line_chart,
     note,
     page,
+    prose,
     section,
+    RULE_NOTES,
+    rules_table,
     simulator,
     sources_table,
     stat,
     stats,
     table,
 )
-from shiftmesh.rules import covered_hours  # noqa: E402
+from shiftmesh.rules import covered_hours, enumerate_shifts  # noqa: E402
+from shiftmesh.viz import (  # noqa: E402
+    NIGHT,
+    PINK,
+    SUNDAY,
+    bar_chart,
+    convergence_chart,
+    stacked_bars,
+)
 from shiftmesh.sources import (  # noqa: E402
     DATASET_PAGE,
     Window,
@@ -218,7 +236,7 @@ def main() -> int:
         target, actual, predicted, plain, uplift, uplift_rows,
         channels, need_voice, need_tickets, need_total,
         roster, s, covered, money, pay, contacts_week,
-        call_multiple, request_rate, agents, desk_share,
+        call_multiple, request_rate, agents, desk_share, model,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html, encoding="utf-8")
@@ -229,16 +247,16 @@ def main() -> int:
 def render(args, window, raw, calls, digital, every, target, actual, predicted,
            plain, uplift, uplift_rows, channels, need_voice, need_tickets,
            need_total, roster, s, covered, money, pay, contacts_week,
-           call_multiple, request_rate, agents, desk_share) -> str:
+           call_multiple, request_rate, agents, desk_share, model) -> str:
     body: list[str] = []
     week_label = f"week {target} of {args.weeks}, starting {window.start}"
 
     # ── provenance ───────────────────────────────────────────────────────
     body.append(section("01", "The data", "Real, public, and not what it looks like."))
-    body.append(f"""<p>Every contact below is a row in New York City's
+    body.append(prose(f"""Every contact below is a row in New York City's
 <a href="{DATASET_PAGE}" rel="noopener">311 Service Requests</a> dataset —
 {len(next(iter(raw.values()))):,} hours of {args.weeks} whole weeks, fetched from the
-city's own API. Nothing here is generated.</p>""")
+city's own API. Nothing here is generated.""", single=True))
 
     body.append(note(
         "<b>These rows are service requests, not contacts.</b> New York took "
@@ -251,12 +269,12 @@ city's own API. Nothing here is generated.</p>""")
         "web and app rows are self-service submissions that reach an agent only as "
         "deferred work, never as a queue.", "key"))
 
-    body.append(f"""<p>The desk rostered here is the
+    body.append(prose(f"""The desk rostered here is the
 <b>Spanish-language line</b>, which New York reports separately:
 {args.annual_calls:,.0f} calls a year, {desk_share:.1%} of the whole operation.
 It is chosen because it is real, named, published and about twenty-five people —
 where the full 311 floor is over a thousand, which is a different kind of problem
-and not one a laptop should pretend to solve.</p>""")
+and not one a laptop should pretend to solve.""", single=True))
 
     body.append(stats([
         stat("Rows", f"{every.sum():,.0f}", f"{args.weeks} weeks of 2024"),
@@ -289,12 +307,77 @@ wait for an agent to be awake.</p>""")
          Series(list(predicted), f"forecast staffed to, +{uplift:.0%}", ACCENT)],
         "Calls per hour, forecast against actual", week_label, unit="calls/hour"))
 
+    f = model.fit_
     body.append(stats([
-        stat("Forecast", f"{predicted.sum():,.0f}", "calls for the week", "key"),
-        stat("Actual", f"{actual.sum():,.0f}", "what arrived"),
-        stat("Mean error", f"{err:,.0f}", "calls per hour"),
+        stat("Trained on", f"{f['rows']:,}", f"hourly observations, {f['weeks']:.0f} weeks", "key"),
+        stat("Features", f"{f['features']}", "columns in the design matrix"),
+        stat("R² in log space", f"{f['r2_log']:.3f}", f"residual sd {f['residual_sd']:.3f}"),
+        stat("Forecast", f"{predicted.sum():,.0f}", f"vs {actual.sum():,.0f} actual"),
+        stat("Mean error", f"{err:,.1f}", "calls per hour"),
         stat("Uplift", f"+{uplift:.0%}", "chosen from the history", "warn"),
     ]))
+
+    body.append('<div class="split">')
+    body.append(f"""<div><h3>What the model is</h3>
+<p>A ridge regression on a seasonal basis, fitted on <code>log1p</code> so the
+seasonality is multiplicative and a prediction can never come out negative.
+{f['features']} columns: four harmonics of the daily cycle and the same four
+again interacted with a weekend flag, because Saturday has a different shape and
+not merely a smaller one; three harmonics of the weekly cycle; six day-of-week
+levels; a linear trend in weeks; and the same hour one and two weeks back.</p>
+<p>It is deliberately small. {f['rows']:,} observations against
+{f['features']} parameters is about {f['rows'] // f['features']} rows per
+column, and anything heavier would be fitting the noise in the shoulders of the
+morning peak. The penalty leaves the intercept alone so the level stays free,
+which is also why the residuals come out centred to
+{abs(f['residual_mean']):.0e} — and that in turn is why the smearing factor is a
+clean {f['smearing']:.4f} rather than something that has absorbed a bias.</p></div>""")
+
+    top = f["effects"][:10]
+    body.append(table(
+        ["feature", "standardised effect"],
+        [[name, f"{value:+.3f}"] for name, value in top],
+        "What the model leans on",
+        "coefficient × the spread of its own column, which is the only way to "
+        "compare a dummy with a harmonic",
+    ))
+    body.append("</div>")
+
+    body.append(note(
+        "The first daily harmonic alone carries more weight than every day-of-week "
+        "level put together. That is the two-humped day — morning rush, lunch dip, "
+        "evening rush — and it is why a model with no seasonal basis at all has to "
+        "learn the shape from the lag features and never quite does."))
+
+    weekly = backtest_weekly(calls, min_train_weeks=8)
+    body.append(line_chart(
+        [Series(weekly["seasonal naive"], "seasonal naive", WARM, dashed=True),
+         Series(weekly["4-week mean"], "4-week mean", ACCENT_2, dashed=True),
+         Series(weekly["ridge seasonal"], "ridge seasonal", ACCENT)],
+        "Error week by week, not just on average",
+        f"mean absolute error in calls per hour, {len(weekly['week'])} weeks scored, "
+        "refitting before each one",
+        unit="calls/hour", day_ticks=False))
+    body.append(note(
+        "A pooled MAE hides whether a model is steadily better or merely better on "
+        "average. Here the ridge line sits under the naive one in almost every week "
+        "rather than winning a few by a lot — which is the version worth having, "
+        "because a forecast that is reliably slightly better is schedulable and one "
+        "that is wildly better in some weeks is not."))
+
+    curve_pts = learning_curve(calls)
+    if curve_pts:
+        body.append(bar_chart(
+            [f"{n}w" for n, _ in curve_pts], [e for _, e in curve_pts],
+            "Would more history help?",
+            "test error against weeks of training data, scored on the same final weeks",
+            colour=ACCENT_2, unit=" calls/hour"))
+        best = min(curve_pts, key=lambda kv: kv[1])
+        body.append(note(
+            f"It stops helping. Error bottoms out around {best[0]} weeks of history and "
+            "flattens after that: the weekly shape is learned quickly and the extra "
+            "months mostly add drift the trend term already handles. Worth knowing "
+            "before anyone is asked to warehouse three years of interval data."))
     body.append(f"""<p>The uplift is deliberate. An unbiased forecast is wrong in
 the expensive direction half the time, because a missing agent costs a queue and
 a spare one costs an hour of salary. How far above the mean to staff is settled
@@ -310,13 +393,16 @@ by backtesting rather than by taste:</p>""")
     body.append(section("03", "How many people that needs",
                         "Three channels, three models — because they are three "
                         "different problems."))
-    body.append(f"""<p><b>Voice</b> goes through Erlang C at
+    body.append(prose(f"""<b>Voice</b> goes through Erlang C at
 {args.voice_aht:.0f}s handle time against {channels['voice'].service_promise}.
-<b>Service requests</b> do not: nobody is on the line, so the question is not how
-long a queue gets but whether enough agent-hours exist inside the
-{args.window_hours:.0f}-hour cycle time to clear the work. That is conservation,
-not queueing, and it is measured as COPC's <i>On Time</i> rather than as a
-service level in seconds.</p>""")
+The queue is real, the caller is waiting, and the formula answers the only
+question that matters: how many people keep the delay short.""",
+f"""<b>Service requests</b> do not work that way at all: nobody is on the line,
+so the question is not how long a queue gets but whether enough agent-hours
+exist inside the {args.window_hours:.0f}-hour cycle time to clear the work. That
+is conservation, not queueing, and it is measured as COPC's <i>On Time</i>
+rather than as a service level in seconds. Running email through Erlang C is the
+most common mistake in this field and it errs in both directions.""" ))
 
     body.append('<div class="grid2">')
     body.append(Heatmap([[float(v) for v in row] for row in need_voice],
@@ -351,10 +437,39 @@ service level in seconds.</p>""")
     body.append(Heatmap([[float(v) for v in row] for row in need_total],
                         "Agents needed — both channels", week_label).render())
 
+    # ── the rules ────────────────────────────────────────────────────────
+    body.append(section("04", "The rules the roster has to obey",
+                        "Every constraint, what it means, and whether it is actually "
+                        "the law."))
+    body.append(prose("""A roster is only interesting if it is legal, and "legal"
+turns out to be three different things wearing the same coat. Some of these are
+the Estatuto de los Trabajadores and cannot be bargained away.""",
+"""Some are the sector agreement, which means they are real obligations that a
+different agreement could set differently — and several of the numbers people
+assume are law turn out to live here. And one or two are neither: decisions
+somebody made, which are the ones worth arguing about precisely because nobody
+has to keep them."""))
+    body.append(rules_table(PRESETS))
+    body.append(note(
+        "The row that catches people out is the twelve hours between shifts. It is "
+        "statute, it is unglamorous, and it does more to shape the week than the "
+        "forty-hour limit does: it is what stops a late finish being followed by an "
+        "early start, which is exactly the pattern a naive optimiser reaches for "
+        "when demand peaks twice a day."))
+
+    shift_counts = {name: len(enumerate_shifts(r)) for name, r in PRESETS.items()}
+    body.append(stats([
+        stat("Shifts to choose from", f"{shift_counts[args.rules]:,}",
+             f"per agent per day, under {args.rules}", "key"),
+        stat("Agent-days to fill", f"{agents * 7:,}", f"{agents} agents × 7 days"),
+        stat("Possible rosters", f"10^{int(agents * 7 * math.log10(shift_counts[args.rules])):,}",
+             "before a single rule is applied"),
+        stat("Rules enforced", f"{len(RULE_NOTES)}", "audited from the assignment, not the model"),
+    ]))
+
     # ── roster ───────────────────────────────────────────────────────────
-    body.append(section("04", "Who works when",
-                        "A CP-SAT model over one circular week, under Spanish "
-                        "working-time law."))
+    body.append(section("05", "Who works when",
+                        "A CP-SAT model over one circular week, under the rules above."))
     body.append(roster_gantt(roster))
     body.append(Heatmap([[float(v) for v in row] for row in covered],
                         "Coverage against requirement",
@@ -362,6 +477,40 @@ service level in seconds.</p>""")
                         colour="balance",
                         reference=[[float(v) for v in row] for row in roster.required]
                         ).render())
+    if roster.trace:
+        body.append("<h3>How it got there</h3>")
+        body.append(f"""<p>CP-SAT does not walk to an answer, it closes on one
+from both sides. A portfolio of eight workers proposes rosters from above while
+a bound climbs from below, and the search is finished when the two meet. On this
+week it found <b>{len(roster.trace)} successively better rosters</b> in
+{args.time:.0f} seconds and never did meet the bound — which is normal, and the
+gap it stopped at is the honest measure of how much is still unknown.</p>""")
+        body.append(convergence_chart(
+            roster.trace, args.time,
+            "The search, second by second",
+            f"{roster.model_stats.get('booleans', 0):,} boolean variables, "
+            f"{roster.model_stats.get('workers', 8)} workers"))
+
+        first_t, first_o, _ = roster.trace[0]
+        last_t, last_o, last_b = roster.trace[-1]
+        body.append(stats([
+            stat("Rosters found", f"{len(roster.trace)}", "each better than the last", "key"),
+            stat("First at", f"{first_t:,.1f}s", f"objective {first_o:,.0f}"),
+            stat("Improvement", f"{100 * (first_o - last_o) / max(first_o, 1):.0f}%",
+                 "off the first legal week it found", "good"),
+            stat("Gap left", f"{s.optimality_gap * 100:.0f}%",
+                 "what the clock did not resolve", "warn"),
+        ]))
+        body.append(note(
+            f"The blue line is the best week found so far and the green one is the "
+            f"proof that nothing cheaper than that value exists. Blue falls quickly — "
+            f"most of the {100 * (first_o - last_o) / max(first_o, 1):.0f}% is gone "
+            f"early — and then crawls, which is the usual shape: the easy savings are "
+            f"the obvious ones. Green barely moves, and that is the real story. "
+            f"Proving a roster optimal is far harder than finding a good one, so the "
+            f"gap stays wide even though the roster stopped improving. "
+            "The word <i>optimal</i> is not available here and is not used."))
+
     body.append(stats([
         stat("Agents", f"{agents}", f"{args.rules} rules"),
         stat("Coverage", f"{s.coverage_pct:.1f}%",
@@ -374,7 +523,7 @@ service level in seconds.</p>""")
 
     # ── the simulator ────────────────────────────────────────────────────
     body.append(section(
-        "05", "Move the numbers yourself",
+        "06", "Move the numbers yourself",
         "The same pipeline, running in your browser. Change how many people you "
         "have, or what you promise them, and watch the matrix rebuild."))
     body.append(f"""<p>Everything above is one scenario. The panel below is the
@@ -402,15 +551,18 @@ four people short" takes a few milliseconds instead of a terminal.</p>""")
     ))
 
     # ── money ────────────────────────────────────────────────────────────
-    body.append(section("06", "What it costs",
+    body.append(section("07", "What it costs",
                         "Priced against the Spanish sector agreement, premium by "
                         "premium."))
-    body.append(f"""<p>An hour of rostered agent time costs
+    body.append(prose(f"""An hour of rostered agent time costs
 <b>&euro;{pay.loaded_hour:,.2f}</b>: &euro;{pay.gross_annual:,.2f} a year over
 {pay.annual_hours:,.0f} rostered hours is &euro;{pay.ordinary_hour:.2f} gross,
-and employer social security adds {pay.employer_social_security:.2%}. Premiums
-go on the ordinary hour, not the loaded one, which is how the agreement writes
-them.</p>""")
+and employer social security adds {pay.employer_social_security:.2%}.""",
+"""Premiums go on the <i>ordinary</i> hour, not the loaded one, which is how the
+agreement writes them — and the other order quietly inflates every night shift
+by a third. Night work adds a flat amount per hour between 22:00 and 06:00,
+Sundays and holidays a flat amount per shift, and overtime a percentage on
+top."""))
 
     body.append(table(
         ["", "quantity", "amount"],
@@ -429,23 +581,39 @@ them.</p>""")
              f"vs €{pay.loaded_hour:,.2f} base"),
     ]))
 
-    hours = [roster.hours_worked(a) for a in range(roster.n_agents)]
-    body.append(bar_chart([f"A{i+1}" for i in range(min(30, len(money.per_agent)))],
-                          money.per_agent[:30],
-                          "Cost per agent, this week",
-                          "first 30 agents — the spread is night and Sunday work, "
-                          "not different pay", colour=ACCENT, unit=" EUR"))
+    n_show = min(32, len(money.per_agent))
+    body.append(stacked_bars(
+        [f"A{i+1}" for i in range(n_show)],
+        [("ordinary hours", ACCENT, money.per_agent_base[:n_show]),
+         ("night premium", NIGHT, money.per_agent_night[:n_show]),
+         ("Sunday premium", SUNDAY, money.per_agent_sunday[:n_show]),
+         ("holiday premium", WARM, money.per_agent_holiday[:n_show]),
+         ("overtime", PINK, money.per_agent_overtime[:n_show])],
+        "Cost per agent, this week",
+        f"first {n_show} agents — every bar is the same grade, so the colour on top "
+        "is the whole story",
+        unit=" EUR"))
+
+    with_night = sum(1 for v in money.per_agent_night if v > 0)
+    with_sunday = sum(1 for v in money.per_agent_sunday if v > 0)
+    with_ot = sum(1 for v in money.per_agent_overtime if v > 0)
     body.append(note(
-        f"The spread is worth reading. Every agent is on the same grade, so the "
-        f"difference between the cheapest (&euro;{min(money.per_agent):,.0f}) and the "
-        f"dearest (&euro;{max(money.per_agent):,.0f}) is entirely night hours and "
-        f"Sunday shifts. {money.night_hours:,.0f} hours of this roster fall between "
-        f"22:00 and 06:00 and {money.sunday_shifts} shifts land on a Sunday — both "
-        "are scheduling choices with a price, and both are things the solver would "
-        "trade away if the objective priced them."))
+        f"Everyone here is on the same grade, so the blue is identical work at an "
+        f"identical rate and every band above it is a scheduling decision. "
+        f"<b>{with_night} agents carry night hours</b> "
+        f"(&euro;{money.night:,.0f} across the week), <b>{with_sunday} work a Sunday</b> "
+        f"(&euro;{money.sunday:,.0f}), and "
+        + (f"<b>{with_ot} go into overtime</b> (&euro;{money.overtime:,.0f}, in pink — "
+           "the dearest hour on the page at +25% on the ordinary rate)"
+           if with_ot else
+           "<b>nobody goes into overtime</b>, which is why there is no pink: the solver "
+           "prices an overtime hour at a hundred times an ordinary one and will "
+           "restructure the whole week to avoid a single one")
+        + f". The gap between the cheapest agent at &euro;{min(money.per_agent):,.0f} and "
+        f"the dearest at &euro;{max(money.per_agent):,.0f} is entirely those bands."))
 
     # ── sources ──────────────────────────────────────────────────────────
-    body.append(section("07", "Where every number came from",
+    body.append(section("08", "Where every number came from",
                         "Including the two that were looked for and not found."))
     body.append(sources_table())
     weakest = ", ".join(b.what for b in B.WEAKEST)

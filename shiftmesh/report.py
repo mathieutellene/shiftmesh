@@ -34,18 +34,69 @@ CSS = """
   --warm:#ffb454; --short:#ff5c7a;
 }
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--ink);color:var(--text);
-  font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  font-feature-settings:"tnum" 1}
-.wrap{max-width:1180px;margin:0 auto;padding:0 22px 90px}
-header{padding:58px 0 30px;border-bottom:1px solid var(--line);margin-bottom:34px}
-h1{margin:0 0 10px;font-size:34px;letter-spacing:-.02em;font-weight:650}
-h2{margin:54px 0 6px;font-size:21px;letter-spacing:-.01em;font-weight:620}
+
+/* The page used to be a flat slab of one colour with a 1180px column down the
+   middle, which read as a document someone forgot to lay out. The ground is now
+   built from a few very slow radial washes plus a faint grid, fixed to the
+   viewport so scrolling moves the content across it rather than dragging it
+   along. It costs one painted layer and no script. */
+body{margin:0;color:var(--text);
+  font:15.5px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-feature-settings:"tnum" 1;
+  background:var(--ink)}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 12% -5%,  rgba(77,163,255,.10), transparent 60%),
+    radial-gradient(900px 640px at 92% 12%,  rgba(34,211,166,.07), transparent 58%),
+    radial-gradient(1000px 700px at 60% 105%, rgba(124,107,255,.08), transparent 62%),
+    linear-gradient(180deg,#0b0f17 0%,#0d121d 55%,#0b0f17 100%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:
+    linear-gradient(rgba(255,255,255,.020) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.020) 1px, transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(1400px 900px at 50% 0%, #000 20%, transparent 78%)}
+
+/* Full width, not half of it. The measure is held by the text block rather
+   than by the page, so prose stays readable while grids and tables get the
+   whole window. */
+.wrap{max-width:min(1560px, 94vw);margin:0 auto;padding:0 clamp(16px,2.4vw,34px) 90px}
+header{padding:66px 0 32px;border-bottom:1px solid var(--line);margin-bottom:34px}
+h1{margin:0 0 12px;font-size:clamp(30px,3.4vw,46px);letter-spacing:-.024em;
+  font-weight:650;line-height:1.06;max-width:22ch}
+h2{margin:60px 0 6px;font-size:clamp(20px,1.7vw,25px);letter-spacing:-.016em;font-weight:620}
 h2 .num{color:var(--muted);font-weight:500;margin-right:10px;font-variant-numeric:tabular-nums}
-h3{margin:30px 0 8px;font-size:16px;font-weight:600;color:var(--text)}
-p{margin:10px 0;max-width:76ch;color:#cdd7e6}
-.lede{font-size:17px;color:var(--muted);max-width:74ch;margin:0}
-.sub{color:var(--muted);margin:2px 0 18px;max-width:76ch}
+h3{margin:30px 0 8px;font-size:16.5px;font-weight:600;color:var(--text)}
+p{margin:11px 0;max-width:90ch;color:#cdd7e6}
+.lede{font-size:clamp(16px,1.25vw,19px);color:var(--muted);max-width:80ch;margin:0;line-height:1.55}
+.sub{color:var(--muted);margin:2px 0 18px;max-width:88ch}
+
+/* Prose that should sit beside something rather than above it. */
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  gap:26px 40px;align-items:start;margin:18px 0}
+.split > * {min-width:0}
+.split p{max-width:62ch}
+@media (max-width:900px){ .split{grid-template-columns:1fr} }
+
+/* Filling the width without stretching the line.
+   A paragraph that runs the whole of a 1560px page is about 190 characters
+   across and nobody finishes a line of it — the eye loses the return. So the
+   page fills sideways in columns instead: the measure stays near 70 characters
+   where it belongs, and the empty half of the page disappears. Blocks are kept
+   short on purpose, because a column taller than the window means reading down,
+   scrolling back up, and reading down again. */
+.prose{margin:12px 0}
+.prose p{max-width:none;margin:0 0 12px}
+.prose p:last-child{margin-bottom:0}
+@media (min-width:1180px){
+  .prose{columns:2;column-gap:46px}
+  .prose p{break-inside:avoid}
+}
+@media (min-width:1680px){ .prose.wide{columns:3;column-gap:44px} }
+
+/* A lead paragraph that should stay one column and carry the section. */
+.prose.single{columns:1}
+.prose.single p{max-width:92ch}
 a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.3)}
 a:hover{border-bottom-color:var(--accent)}
 code{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -119,6 +170,15 @@ def page(title: str, lede: str, body: str, footer: str,
 </div>{scripts}</body></html>"""
 
 
+def prose(*paragraphs: str, wide: bool = False, single: bool = False) -> str:
+    """Several paragraphs that should fill the page in columns rather than
+    running half its width and leaving the rest empty."""
+    cls = "prose" + (" wide" if wide else "") + (" single" if single else "")
+    body = "".join(p if p.lstrip().startswith("<p") else f"<p>{p}</p>"
+                   for p in paragraphs)
+    return f'<div class="{cls}">{body}</div>'
+
+
 def section(number: str, title: str, subtitle: str = "") -> str:
     out = f'<h2><span class="num">{escape(number)}</span>{escape(title)}</h2>'
     if subtitle:
@@ -153,7 +213,7 @@ def sources_table() -> str:
 
 
 __all__ = [
-    "CSS", "SIMULATOR_CSS", "page", "section", "note", "stats",
+    "CSS", "SIMULATOR_CSS", "page", "section", "note", "stats", "prose",
     "sources_table", "simulator",
     "Heatmap", "Series", "line_chart", "bar_chart", "table", "stat",
     "ACCENT", "ACCENT_2", "WARM", "escape",
@@ -163,18 +223,33 @@ __all__ = [
 # ── the interactive section ──────────────────────────────────────────────
 
 SIMULATOR_CSS = """
-.sim{background:var(--panel2);border:1px solid var(--line);border-radius:14px;
-  padding:20px 20px 8px;margin:22px 0}
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-  gap:16px 22px;margin-bottom:20px}
-.ctl{display:flex;flex-direction:column;gap:7px}
-.ctl label{color:var(--muted);font-size:12px;text-transform:uppercase;
-  letter-spacing:.07em;display:flex;justify-content:space-between;align-items:baseline}
-.ctl label b{color:var(--accent);font-size:15px;font-variant-numeric:tabular-nums;
-  text-transform:none;letter-spacing:0}
-.ctl input[type=range]{width:100%;accent-color:var(--accent);height:22px;margin:0}
-.ctl select{background:var(--panel);color:var(--text);border:1px solid var(--line);
-  border-radius:8px;padding:7px 9px;font:inherit;font-size:13.5px}
+.sim{background:var(--panel2);border:1px solid var(--line);border-radius:16px;
+  padding:22px 22px 10px;margin:22px 0}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px 22px;margin-bottom:22px}
+.ctl{display:flex;flex-direction:column}
+.ctl label{color:var(--muted);font-size:11.5px;text-transform:uppercase;
+  letter-spacing:.08em;margin-bottom:7px}
+.ctl .box{position:relative;display:flex;align-items:center}
+.ctl .box input[type=number]{width:100%;font:inherit;font-size:19px;font-weight:640;
+  font-variant-numeric:tabular-nums;color:var(--text);background:#0c1220;
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;padding-right:76px;
+  -moz-appearance:textfield}
+.ctl .box input[type=number]::-webkit-outer-spin-button,
+.ctl .box input[type=number]::-webkit-inner-spin-button{opacity:.4;height:30px}
+.ctl .box input:hover{border-color:#35425c}
+.ctl .box input:focus,.ctl .box select:focus{border-color:var(--accent);outline:none;
+  box-shadow:0 0 0 3px rgba(77,163,255,.16)}
+.ctl .box .u{position:absolute;right:32px;font-size:11.5px;color:var(--muted);
+  pointer-events:none;letter-spacing:.02em}
+.ctl select{width:100%;background:#0c1220;color:var(--text);border:1px solid var(--line);
+  border-radius:9px;padding:12px 11px;font:inherit;font-size:14px}
+.ctl .rg{margin:6px 0 0;font-size:11.5px;color:var(--muted);max-width:none;line-height:1.4}
+
+/* A 24x7 grid at full page width is a wall. Cap it, and let two sit together. */
+.sim figure svg, .grid2 figure svg{max-height:none}
+.hm svg{max-width:560px;margin-inline:auto}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .verdict{border-left:2.5px solid var(--accent);background:rgba(77,163,255,.05);
   padding:13px 17px;border-radius:0 10px 10px 0;margin:4px 0 20px;color:#cdd7e6}
 .verdict b{color:var(--accent)}
@@ -203,28 +278,41 @@ def simulator(requirement_source, arrivals, rules, pay, target_seconds,
 <div class="sim">
   <div class="controls">
     <div class="ctl">
-      <label for="sm-agents">Agents available <b id="sm-agents-out">{default_agents}</b></label>
-      <input type="range" id="sm-agents" min="{lo}" max="{hi}" value="{default_agents}" step="1">
+      <label for="sm-agents">Agents available</label>
+      <div class="box"><input type="number" id="sm-agents" min="{lo}" max="{hi}"
+        value="{default_agents}" step="1" inputmode="numeric" autocomplete="off">
+        <span class="u">people</span></div>
+      <p class="rg">{lo}–{hi}</p>
     </div>
     <div class="ctl">
-      <label for="sm-aht">Handle time <b id="sm-aht-out">4:50</b></label>
-      <input type="range" id="sm-aht" min="120" max="600" value="290" step="10">
+      <label for="sm-aht">Handle time</label>
+      <div class="box"><input type="number" id="sm-aht" min="120" max="900"
+        value="290" step="5" inputmode="numeric" autocomplete="off">
+        <span class="u">sec</span></div>
+      <p class="rg">Toronto 311 measures 290 over 1.01M calls</p>
     </div>
     <div class="ctl">
-      <label for="sm-sla">Service target <b id="sm-sla-out">80%</b></label>
-      <input type="range" id="sm-sla" min="50" max="95" value="80" step="5">
+      <label for="sm-sla">Answer target</label>
+      <div class="box"><input type="number" id="sm-sla" min="40" max="99"
+        value="80" step="1" inputmode="numeric" autocomplete="off">
+        <span class="u">% in 30s</span></div>
+      <p class="rg">NYC commits to 80%</p>
     </div>
     <div class="ctl">
-      <label for="sm-shrink">Shrinkage <b id="sm-shrink-out">30%</b></label>
-      <input type="range" id="sm-shrink" min="0" max="45" value="30" step="1">
+      <label for="sm-shrink">Shrinkage</label>
+      <div class="box"><input type="number" id="sm-shrink" min="0" max="60"
+        value="30" step="1" inputmode="numeric" autocomplete="off">
+        <span class="u">%</span></div>
+      <p class="rg">Breaks, training, sickness, holiday</p>
     </div>
     <div class="ctl">
       <label for="sm-rules">Working-time rules</label>
-      <select id="sm-rules">
+      <div class="box"><select id="sm-rules">
         <option value="spain">Spain — statutory floor</option>
         <option value="spain-callcentre">Spain — contact centre agreement</option>
         <option value="eu-minimum">EU Working Time Directive floor</option>
-      </select>
+      </select></div>
+      <p class="rg">What the roster is allowed to do</p>
     </div>
   </div>
 
@@ -254,3 +342,88 @@ def simulator(requirement_source, arrivals, rules, pay, target_seconds,
 </div>
 <script>window.SHIFTMESH_DATA = {json.dumps(payload, separators=(",", ":"))};</script>
 """
+
+
+# ── the rules, laid out ──────────────────────────────────────────────────
+
+RULE_NOTES = {
+    "max_weekly_hours": (
+        "Hours an agent may be rostered in a week",
+        "ET art. 34.1 — forty hours averaged over the year", "statute"),
+    "max_shift_hours": (
+        "Longest single shift",
+        "ET art. 34.3 — nine hours of actual work, unless the agreement says otherwise",
+        "statute"),
+    "min_shift_hours": (
+        "Shortest shift worth rostering",
+        "No legal minimum. Below this, travel time dominates the shift", "choice"),
+    "min_rest_hours": (
+        "Between the end of one shift and the start of the next",
+        "ET art. 34.3 — twelve hours. The rule that quietly shapes the whole roster",
+        "statute"),
+    "min_weekly_rest_hours": (
+        "One uninterrupted break each week",
+        "ET art. 37.1 — a day and a half", "statute"),
+    "max_overtime_hours_week": (
+        "Overtime permitted on top of the contracted week",
+        "ET art. 35.2 caps overtime at eighty hours a year; this is a weekly working "
+        "approximation of it", "statute"),
+    "max_work_days": (
+        "Days an agent may be rostered out of seven",
+        "Not in the statute. Five of seven is the shape of a normal contract", "choice"),
+    "allow_split_shifts": (
+        "Two blocks in one day with a gap between them",
+        "Legal in Spain and common in contact centres. Its cost is measured rather "
+        "than assumed", "agreement"),
+    "max_start_spread_hours": (
+        "How far an agent may start from their own anchor hour",
+        "No legal basis at all — a promise to the people working the roster, and the "
+        "only row here that is pure preference", "choice"),
+}
+
+BASIS_LABEL = {
+    "statute": ("Estatuto de los Trabajadores", "#4da3ff"),
+    "agreement": ("Collective agreement", "#a78bfa"),
+    "choice": ("Modelling choice", "#8b9bb4"),
+}
+
+
+def rules_table(presets: dict) -> str:
+    """Every rule, in every preset, with what it is and where it comes from."""
+    names = list(presets)
+    rows = []
+    for field_, (what, source, basis) in RULE_NOTES.items():
+        label, colour = BASIS_LABEL[basis]
+        values = []
+        for n in names:
+            v = getattr(presets[n], field_)
+            if isinstance(v, bool):
+                v = "yes" if v else "no"
+            elif field_ == "max_start_spread_hours" and v >= 12:
+                v = "unbounded"
+            values.append(str(v))
+        rows.append([
+            what,
+            *values,
+            f'<span style="color:{colour}">{escape(label)}</span>',
+            source,
+        ])
+
+    header = ["Rule", *[n.replace("-", " ") for n in names], "Basis", "Where it comes from"]
+    body = ["<thead><tr>"]
+    for i, h in enumerate(header):
+        cls = ' class="r"' if 1 <= i <= len(names) else ""
+        body.append(f"<th{cls}>{escape(h)}</th>")
+    body.append("</tr></thead><tbody>")
+    for row in rows:
+        body.append("<tr>")
+        for i, cell in enumerate(row):
+            cls = ' class="r"' if 1 <= i <= len(names) else ""
+            # the basis and source columns carry markup on purpose
+            text = cell if i >= len(names) + 1 else escape(cell)
+            body.append(f"<td{cls}>{text}</td>")
+        body.append("</tr>")
+    body.append("</tbody>")
+    return ('<figure class="tb"><figcaption><b>Every rule the roster obeys</b>'
+            '<span>and whether it is law, bargaining, or a decision somebody made'
+            '</span></figcaption><table>' + "".join(body) + "</table></figure>")

@@ -310,3 +310,150 @@ def stat(label: str, value: str, note: str = "", tone: str = "") -> str:
             f'<span class="v">{escape(value)}</span>'
             + (f'<span class="n">{escape(note)}</span>' if note else "")
             + "</div>")
+
+# ── stacked bars ─────────────────────────────────────────────────────────
+
+PINK = "#ff5ca8"        # overtime — the one anybody will look for
+NIGHT = "#a78bfa"       # night premium
+SUNDAY = "#ffb454"      # Sunday premium
+
+
+def stacked_bars(labels: list[str], parts: list[tuple[str, str, list[float]]],
+                 title: str, subtitle: str = "", unit: str = "",
+                 width: int = 1000, height: int = 260) -> str:
+    """One bar per item, split into its components.
+
+    ``parts`` is ``[(name, colour, values), ...]`` — the pieces are drawn from
+    the bottom up in the order given, so the base rate sits underneath and the
+    premiums stack on top of it where they can be seen. A flat bar tells you
+    what an agent cost; a stacked one tells you *why*, which is the only version
+    anyone can act on.
+    """
+    left, right, top, bottom = 62, 12, 30, 46
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    n = len(labels)
+    totals = [sum(p[2][i] for p in parts) for i in range(n)]
+    peak = (max(totals) if totals else 1) or 1
+    slot = plot_w / max(1, n)
+    bw = min(46, slot * 0.68)
+
+    out = [
+        f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
+        + (f"<span>{escape(subtitle)}</span>" if subtitle else "")
+        + "</figcaption>",
+        f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">',
+    ]
+    for k in range(5):
+        gy = top + plot_h * k / 4
+        out.append(f'<line class="grid" x1="{left}" y1="{gy:.1f}" x2="{width - right}" y2="{gy:.1f}"/>')
+        out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" text-anchor="end">'
+                   f"{peak * (1 - k / 4):,.0f}</text>")
+
+    for i, label in enumerate(labels):
+        cx = left + slot * (i + 0.5)
+        y = top + plot_h
+        for name, colour, values in parts:
+            v = values[i]
+            if v <= 0:
+                continue
+            h = (v / peak) * plot_h
+            y -= h
+            out.append(
+                f'<rect x="{cx - bw / 2:.1f}" y="{y:.1f}" width="{bw:.1f}" '
+                f'height="{max(0.8, h):.1f}" fill="{colour}" opacity="0.92">'
+                f"<title>{escape(label)} — {escape(name)}: {v:,.0f}{escape(unit)}</title></rect>"
+            )
+        if n <= 34:
+            out.append(f'<text class="ax" x="{cx:.1f}" y="{top + plot_h + 16:.0f}" '
+                       f'text-anchor="middle">{escape(label)}</text>')
+        out.append(f'<text class="val" x="{cx:.1f}" y="{y - 6:.1f}" text-anchor="middle">'
+                   f"{totals[i]:,.0f}</text>")
+
+    out.append("</svg>")
+    legend = " ".join(
+        f'<span><i style="--c:{c}"></i>{escape(nm)}</span>' for nm, c, _ in reversed(parts)
+    )
+    out.append(f'<div class="legend">{legend}</div></figure>')
+    return "\n".join(out)
+
+
+# ── how the search converged ─────────────────────────────────────────────
+
+def convergence_chart(trace: list[tuple[float, float, float]], budget: float,
+                      title: str, subtitle: str = "",
+                      width: int = 1000, height: int = 300) -> str:
+    """The objective coming down and the bound coming up, against the clock.
+
+    This is the picture of what a branch-and-bound search actually does, and it
+    is the one thing a roster report normally omits. The upper line is the best
+    week found so far; the lower line is the proof that nothing better than that
+    value exists. They close on each other, and whatever gap is left when the
+    clock stops is exactly how much you do not know.
+    """
+    if not trace:
+        return ""
+    left, right, top, bottom = 70, 16, 34, 40
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    span = max(budget, max(t for t, _, _ in trace)) or 1.0
+    peak = max(max(o for _, o, _ in trace), 1.0) * 1.06
+
+    x = lambda t: left + (t / span) * plot_w
+    y = lambda v: top + plot_h - (v / peak) * plot_h
+
+    out = [
+        f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
+        + (f"<span>{escape(subtitle)}</span>" if subtitle else "")
+        + "</figcaption>",
+        f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">',
+    ]
+    for k in range(5):
+        gy = top + plot_h * k / 4
+        out.append(f'<line class="grid" x1="{left}" y1="{gy:.1f}" x2="{width - right}" y2="{gy:.1f}"/>')
+        out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" text-anchor="end">'
+                   f"{peak * (1 - k / 4):,.0f}</text>")
+    for k in range(6):
+        gx = left + plot_w * k / 5
+        out.append(f'<text class="ax" x="{gx:.1f}" y="{top + plot_h + 18:.0f}" '
+                   f'text-anchor="middle">{span * k / 5:,.0f}s</text>')
+
+    # Step lines: the incumbent only changes when a better week is found.
+    def steps(values):
+        pts = []
+        last = None
+        for t, o, b in trace:
+            v = values(o, b)
+            if last is not None:
+                pts.append(f"{x(t):.1f},{y(last):.1f}")
+            pts.append(f"{x(t):.1f},{y(v):.1f}")
+            last = v
+        if last is not None:
+            pts.append(f"{x(span):.1f},{y(last):.1f}")
+        return " ".join(pts)
+
+    upper, lower = steps(lambda o, b: o), steps(lambda o, b: b)
+    out.append(f'<polygon points="{upper} {x(span):.1f},{y(0):.1f} {left},{y(0):.1f}" '
+               f'fill="{ACCENT}" opacity="0.06"/>')
+    out.append(f'<polyline points="{lower}" fill="none" stroke="{ACCENT_2}" stroke-width="2"/>')
+    out.append(f'<polyline points="{upper}" fill="none" stroke="{ACCENT}" stroke-width="2"/>')
+
+    for t, o, b in trace:
+        out.append(f'<circle cx="{x(t):.1f}" cy="{y(o):.1f}" r="2.2" fill="{ACCENT}" '
+                   f'opacity="0.85"><title>{t:,.1f}s — objective {o:,.0f}, '
+                   f"bound {b:,.0f}</title></circle>")
+
+    last_t, last_o, last_b = trace[-1]
+    gap = abs(last_o - last_b) / max(abs(last_o), 1e-9)
+    out.append(f'<line x1="{x(last_t):.1f}" y1="{y(last_o):.1f}" x2="{x(last_t):.1f}" '
+               f'y2="{y(last_b):.1f}" stroke="{WARM}" stroke-width="1.4" '
+               f'stroke-dasharray="3 3"/>')
+    out.append(f'<text class="val" x="{x(last_t) - 8:.1f}" '
+               f'y="{(y(last_o) + y(last_b)) / 2:.1f}" text-anchor="end" fill="{WARM}">'
+               f"{gap * 100:.0f}% gap</text>")
+
+    out.append("</svg>")
+    out.append(f'<div class="legend"><span><i style="--c:{ACCENT}"></i>best roster found</span>'
+               f'<span><i style="--c:{ACCENT_2}"></i>proof nothing better exists below this</span>'
+               f'<span><i style="--c:{WARM}"></i>what is still unknown</span></div></figure>')
+    return "\n".join(out)

@@ -79,6 +79,15 @@ class CostBreakdown:
 
     per_agent: list[float] = field(default_factory=list)
 
+    # The same money, split so a chart can say where it went rather than only
+    # how much there was. A flat bar per agent answers "what did they cost";
+    # these answer "why", which is the version anyone can act on.
+    per_agent_base: list[float] = field(default_factory=list)
+    per_agent_night: list[float] = field(default_factory=list)
+    per_agent_sunday: list[float] = field(default_factory=list)
+    per_agent_holiday: list[float] = field(default_factory=list)
+    per_agent_overtime: list[float] = field(default_factory=list)
+
     @property
     def total(self) -> float:
         return self.base + self.night + self.overtime + self.sunday + self.holiday
@@ -118,6 +127,7 @@ def price_roster(roster: Roster, pay: PayRules | None = None) -> CostBreakdown:
     for agent in range(roster.n_agents):
         agent_cost = 0.0
         week_hours = 0
+        mine = {"base": 0.0, "night": 0.0, "sunday": 0.0, "holiday": 0.0, "overtime": 0.0}
 
         for day in range(len(DAYS)):
             shift = roster.assignment[(agent, day)]
@@ -134,31 +144,44 @@ def price_roster(roster: Roster, pay: PayRules | None = None) -> CostBreakdown:
             out.night_hours += nights
 
             cost = days_ * pay.loaded_hour + nights * pay.night_hour
-            out.base += days_ * pay.loaded_hour + nights * pay.loaded_hour
-            out.night += nights * (pay.night_hour - pay.loaded_hour)
+            flat = days_ * pay.loaded_hour + nights * pay.loaded_hour
+            uplift = nights * (pay.night_hour - pay.loaded_hour)
+            out.base += flat
+            out.night += uplift
+            mine["base"] += flat
+            mine["night"] += uplift
 
             if day == 6:
                 out.sunday_shifts += 1
                 out.sunday += pay.sunday_premium_shift
+                mine["sunday"] += pay.sunday_premium_shift
                 cost += pay.sunday_premium_shift
             if day in pay.holidays:
                 out.holiday_shifts += 1
                 out.holiday += pay.holiday_premium_shift
+                mine["holiday"] += pay.holiday_premium_shift
                 cost += pay.holiday_premium_shift
 
             agent_cost += cost
 
         extra = max(0, week_hours - contracted)
         if extra:
-            uplift = extra * pay.ordinary_hour * pay.overtime_uplift * (
+            overtime_uplift = extra * pay.ordinary_hour * pay.overtime_uplift * (
                 1.0 + pay.employer_social_security
             )
+            uplift = overtime_uplift
             out.overtime_hours += extra
             out.overtime += uplift
             out.base_hours -= extra
+            mine["overtime"] += uplift
             agent_cost += uplift
 
         out.per_agent.append(agent_cost)
+        out.per_agent_base.append(mine["base"])
+        out.per_agent_night.append(mine["night"])
+        out.per_agent_sunday.append(mine["sunday"])
+        out.per_agent_holiday.append(mine["holiday"])
+        out.per_agent_overtime.append(mine["overtime"])
 
     return out
 

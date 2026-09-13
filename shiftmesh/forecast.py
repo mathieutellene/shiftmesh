@@ -25,7 +25,7 @@ from __future__ import annotations
 import csv
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -109,6 +109,24 @@ def to_week_matrix(week: np.ndarray) -> list[list[float]]:
 
 # ── features ─────────────────────────────────────────────────────────────
 
+def feature_names() -> list[str]:
+    """What each column of the design matrix is, in the order it is built.
+
+    Kept beside ``_design`` and asserted equal to its width in the tests, so a
+    feature added without a name fails rather than quietly shifting every label
+    in the report by one.
+    """
+    names = ["intercept"]
+    for k in range(1, 5):
+        names += [f"day sin×{k}", f"day cos×{k}",
+                  f"weekend day sin×{k}", f"weekend day cos×{k}"]
+    for k in range(1, 4):
+        names += [f"week sin×{k}", f"week cos×{k}"]
+    names += [f"is {d}" for d in ["Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]]
+    names += ["trend (weeks)", "same hour last week", "same hour 2 weeks ago"]
+    return names
+
+
 def _design(t: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Feature matrix for hour indices ``t``, given the full history ``y``.
 
@@ -175,6 +193,7 @@ class Forecaster:
     uplift: float = 0.0
     coef_: np.ndarray | None = None
     smear_: float = 1.0
+    fit_: dict = field(default_factory=dict)
 
     def fit(self, y: np.ndarray, upto: int) -> "Forecaster":
         """Fit on ``y[:upto]``, using only hours that have two weeks behind them."""
@@ -189,6 +208,26 @@ class Forecaster:
 
         residuals = target - X @ self.coef_
         self.smear_ = float(np.mean(np.exp(residuals)))
+
+        # Diagnostics, kept because a model nobody can inspect is a model
+        # nobody should trust.
+        ss_res = float(np.sum(residuals ** 2))
+        ss_tot = float(np.sum((target - target.mean()) ** 2))
+        self.fit_ = {
+            "rows": int(X.shape[0]),
+            "features": int(X.shape[1]),
+            "weeks": round(X.shape[0] / HOURS_PER_WEEK, 1),
+            "r2_log": 1.0 - ss_res / ss_tot if ss_tot else 0.0,
+            "residual_sd": float(np.std(residuals, ddof=1)),
+            "residual_mean": float(np.mean(residuals)),
+            "smearing": self.smear_,
+            # Standardised effect: a coefficient times the spread of its column,
+            # which is the only way to compare a dummy with a harmonic.
+            "effects": sorted(
+                zip(feature_names(), (self.coef_ * X.std(axis=0)).tolist()),
+                key=lambda kv: -abs(kv[1]),
+            ),
+        }
         return self
 
     def predict(self, y: np.ndarray, start: int, hours: int = HOURS_PER_WEEK) -> np.ndarray:
@@ -431,3 +470,63 @@ def tune_uplift(
         rows[-1].uplift,
     )
     return chosen, rows
+
+
+def backtest_weekly(
+    y: np.ndarray,
+    min_train_weeks: int = 8,
+    ridge: float = 1.0,
+) -> dict[str, list[float]]:
+    """Per-week error for each method, rather than one pooled number.
+
+    A single MAE hides the thing worth knowing: whether a model is steadily
+    better or merely better on average while being badly wrong in a handful of
+    weeks. The series is what a chart needs.
+    """
+    n_weeks = len(y) // HOURS_PER_WEEK
+    out = {"ridge seasonal": [], "seasonal naive": [], "4-week mean": [], "week": []}
+    for w in range(min_train_weeks, n_weeks):
+        start = w * HOURS_PER_WEEK
+        actual = y[start:start + HOURS_PER_WEEK]
+        model = Forecaster(ridge=ridge).fit(y, upto=start)
+        mae = lambda p: float(np.mean(np.abs(p - actual)))
+        out["ridge seasonal"].append(mae(model.predict(y, start)))
+        out["seasonal naive"].append(mae(seasonal_naive(y, start)))
+        out["4-week mean"].append(mae(seasonal_mean(y, start)))
+        out["week"].append(w)
+    return out
+
+
+def learning_curve(
+    y: np.ndarray,
+    sizes: tuple[int, ...] = (6, 10, 16, 24, 32, 40),
+    test_weeks: int = 6,
+    ridge: float = 1.0,
+) -> list[tuple[int, float]]:
+    """Test error against how much history the model was given.
+
+    The question everybody asks of a forecast — "would more data help?" — has an
+    answer, and it is usually "it stopped helping a while ago". Each point trains
+    on the last ``size`` weeks before the test window and scores the same weeks,
+    so the only thing changing is how much history was used.
+    """
+    n_weeks = len(y) // HOURS_PER_WEEK
+    out = []
+    for size in sizes:
+        if size + test_weeks + 2 > n_weeks:
+            continue
+        errors = []
+        for w in range(n_weeks - test_weeks, n_weeks):
+            start = w * HOURS_PER_WEEK
+            actual = y[start:start + HOURS_PER_WEEK]
+            # train on `size` weeks immediately before this one
+            first = max(2, w - size)
+            window = y[first * HOURS_PER_WEEK:start]
+            if len(window) < 3 * HOURS_PER_WEEK:
+                continue
+            model = Forecaster(ridge=ridge).fit(y, upto=start)
+            model.fit_ = {}
+            errors.append(float(np.mean(np.abs(model.predict(y, start) - actual))))
+        if errors:
+            out.append((size, float(np.mean(errors))))
+    return out

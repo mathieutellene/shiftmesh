@@ -248,3 +248,49 @@ def test_forecast_next_week_reads_real_history_not_the_padding(history):
     tampered = history.copy()
     tampered[-HOURS_PER_WEEK:] *= 3.0          # the week the lags will read
     assert not np.allclose(clean, forecast_next_week(tampered))
+
+
+def test_every_feature_has_a_name(history):
+    """A column added without a label shifts every name in the report by one."""
+    from shiftmesh.forecast import _design, feature_names
+
+    t = np.arange(2 * HOURS_PER_WEEK, 2 * HOURS_PER_WEEK + 50)
+    assert _design(t, history).shape[1] == len(feature_names())
+
+
+def test_the_fit_reports_what_it_was_given(history):
+    """The diagnostics the report renders have to be the fit's own, not guesses."""
+    upto = 20 * HOURS_PER_WEEK
+    model = Forecaster().fit(history, upto=upto)
+    f = model.fit_
+    assert f["rows"] == upto - 2 * HOURS_PER_WEEK
+    assert f["features"] == len(__import__("shiftmesh.forecast", fromlist=["x"]).feature_names())
+    assert 0.5 < f["r2_log"] <= 1.0
+    assert f["residual_mean"] == pytest.approx(0.0, abs=1e-9)
+    assert f["smearing"] == model.smear_
+    assert len(f["effects"]) == f["features"]
+    # sorted by absolute effect, largest first
+    sizes = [abs(v) for _, v in f["effects"]]
+    assert sizes == sorted(sizes, reverse=True)
+
+
+def test_weekly_backtest_returns_one_error_per_scored_week(history):
+    from shiftmesh.forecast import backtest_weekly
+
+    weeks = len(history) // HOURS_PER_WEEK
+    out = backtest_weekly(history, min_train_weeks=8)
+    assert len(out["week"]) == weeks - 8
+    for key in ("ridge seasonal", "seasonal naive", "4-week mean"):
+        assert len(out[key]) == weeks - 8
+        assert all(v >= 0 for v in out[key])
+    # and it should agree with the pooled backtest on ordering
+    assert np.mean(out["ridge seasonal"]) < np.mean(out["seasonal naive"])
+
+
+def test_the_learning_curve_is_measured_not_assumed(history):
+    from shiftmesh.forecast import learning_curve
+
+    pts = learning_curve(history, sizes=(6, 12, 20), test_weeks=4)
+    assert pts, "no point on the curve could be measured"
+    assert all(err > 0 for _, err in pts)
+    assert [n for n, _ in pts] == sorted(n for n, _ in pts)

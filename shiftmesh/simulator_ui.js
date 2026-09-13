@@ -140,13 +140,31 @@
   }
 
   // ── state ───────────────────────────────────────────────────────────────
+  /* A typed box can hold anything, including nothing, and a half-finished
+     number must not reach the model. Clamp on the way out and leave the field
+     alone while it is being typed in. */
+  const num = (id, lo, hi, fallback) => {
+    const raw = $(id).value;
+    if(raw === "" || isNaN(+raw)) return fallback;
+    return Math.min(hi, Math.max(lo, +raw));
+  };
   const read = () => ({
-    agents: +$("sm-agents").value,
-    aht: +$("sm-aht").value,
-    targetSla: +$("sm-sla").value / 100,
-    shrinkage: +$("sm-shrink").value / 100,
+    agents: Math.round(num("sm-agents", +$("sm-agents").min, +$("sm-agents").max,
+                           +$("sm-agents").defaultValue)),
+    aht: num("sm-aht", 30, 3600, 290),
+    targetSla: num("sm-sla", 1, 99.9, 80) / 100,
+    shrinkage: num("sm-shrink", 0, 90, 30) / 100,
     rulesKey: $("sm-rules").value,
   });
+
+  function clampBoxes(){
+    for(const id of ["sm-agents","sm-aht","sm-sla","sm-shrink"]){
+      const el = $(id);
+      if(el.value === "") continue;
+      const v = Math.min(+el.max, Math.max(+el.min, +el.value));
+      if(v !== +el.value) el.value = v;
+    }
+  }
 
   let curvePoints = [], lastSignature = "";
 
@@ -185,7 +203,9 @@
     lastSignature = signature;
 
     const token = ++curveToken;
-    const lo = +$("sm-agents").min, hi = +$("sm-agents").max;
+    const here = read().agents;
+    const lo = Math.max(1, Math.min(+$("sm-agents").min, here - 6));
+    const hi = Math.max(+$("sm-agents").max, here + 6);
     const pending = [];
     let next = lo;
 
@@ -224,11 +244,6 @@
 
     const needed = needFor(r);
     const contacts = DATA.arrivals.flat().reduce((a, b) => a + b, 0);
-
-    $("sm-agents-out").textContent = v.agents;
-    $("sm-aht-out").textContent = `${Math.floor(v.aht / 60)}:${String(v.aht % 60).padStart(2, "0")}`;
-    $("sm-sla-out").textContent = `${Math.round(v.targetSla * 100)}%`;
-    $("sm-shrink-out").textContent = `${Math.round(v.shrinkage * 100)}%`;
 
     const tone = r.stats.coveragePct >= 99.5 ? "good"
       : r.stats.coveragePct >= 97 ? "warn" : "bad";
@@ -301,7 +316,7 @@
     if (!$("sm-agents")) return;
     ["sm-agents", "sm-aht", "sm-sla", "sm-shrink", "sm-rules"].forEach((id) => {
       $(id).addEventListener("input", render);
-      $(id).addEventListener("change", render);
+      $(id).addEventListener("change", () => { clampBoxes(); render(); });
     });
     render();
   }

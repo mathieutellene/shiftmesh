@@ -37,7 +37,7 @@ forecasts a week, sizes each channel, solves a roster and writes
 python scripts/solve.py --agents 24 --time 45     # just the roster, in the terminal
 python scripts/forecast.py                        # just the forecast, and its backtest
 python scripts/price_rules.py --time 60           # what each working-time rule costs
-python -m pytest tests/ -q                        # 192 tests
+python -m pytest tests/ -q                        # 201 tests
 ```
 
 The page is not a screenshot. **Move the agent count and the matrix rebuilds**,
@@ -70,7 +70,63 @@ is a different kind of problem and not one a laptop should pretend to solve.
 
 ---
 
-## 2. Three channels, three models
+## 2. The forecast, and what it is actually made of
+
+Most write-ups of a forecast stop at one number. This one shows the work,
+because the model is the part people are entitled to be sceptical about.
+
+| | |
+|---|---|
+| Trained on | **6,384 hourly observations** — 38 whole weeks before the first scored one |
+| Features | **32 columns**: 4 daily harmonics, the same 4 interacted with a weekend flag, 3 weekly harmonics, 6 day-of-week levels, a trend, and the same hour 1 and 2 weeks back |
+| Fit | **R² 0.975** in log space, residual sd 0.188, residuals centred to 4e-15 |
+| Smearing | **1.0178** — Duan's retransformation correction, measured not assumed |
+
+Fitted on `log1p` so the seasonality is multiplicative and a prediction can
+never come out negative. It is deliberately small — 6,384 rows against 32
+parameters is about 200 rows a column, and anything heavier fits the noise in
+the shoulders of the morning peak.
+
+**What the model leans on**, by coefficient × the spread of its own column,
+which is the only way to compare a dummy with a harmonic:
+
+```
+day cos×1              -0.769     the two-humped day
+day sin×1              -0.385
+day sin×2              -0.291
+is Sat                 -0.246     weekends are a different shape, not a smaller one
+is Sun                 -0.223
+same hour last week    +0.152     the lag everyone reaches for first, ranked sixth
+```
+
+The first daily harmonic alone outweighs every day-of-week level put together.
+That is the morning rush, the lunch dip and the evening rush, and it is why a
+model without a seasonal basis has to learn the day's shape from the lags and
+never quite manages it.
+
+**Scored week by week, not pooled.** A single MAE hides whether a model is
+steadily better or merely better on average while being badly wrong in a few
+weeks. Over 44 scored weeks, refitting before each one:
+
+| | mean | best week | worst week |
+|---|---:|---:|---:|
+| ridge seasonal | **4.44** | 2.92 | 7.82 |
+| 4-week mean | 4.59 | 3.04 | 7.02 |
+| seasonal naive | 5.75 | 4.22 | 8.12 |
+
+**And a learning curve**, because "would more data help?" has an answer. Error
+bottoms out after a few months of history and flattens: the weekly shape is
+learned quickly and the extra months mostly add drift the trend term already
+handles. Worth knowing before anyone warehouses three years of interval data.
+
+The report draws all of this. The headline finding is still the one that matters
+most — **the model with the best forecast error staffs the worst** — and the two
+corrections that follow from it, smearing and an empirically tuned uplift, are
+in section 3.
+
+---
+
+## 3. Three channels, three models
 
 The most expensive mistake in this field is not a bad forecast. It is running
 every channel through Erlang C because Erlang C is the formula everyone knows.
@@ -88,21 +144,20 @@ it stops applying.
 **Erlang A is worth the dozen lines.** Erlang C assumes nobody hangs up, so it
 overstaffs by 6–8% at 3% abandonment — and, worse, it returns infinity in
 overload, which on bursty real arrivals happens in real intervals. The
-implementation here reproduces Mandelbaum and Zeltyn's published head-to-head
-table: **3.09%** against their 3.1% abandonment, **3.71s** against their 3.7s,
-**93%** against their 93% occupancy.
+implementation reproduces Mandelbaum and Zeltyn's published head-to-head table:
+**3.09%** against their 3.1% abandonment, **3.71s** against their 3.7s, **93%**
+against their 93% occupancy.
 
-**Chat concurrency saturates, and the usual shortcut misses it.** Practice
-divides handle time by the number of open windows. The finite-source model says
-effective concurrency tends to `1 + r`, where `r` is the customer's composing
-time divided by the agent's — so an agent who types as much as the customer
-cannot pass two conversations' worth of throughput however many windows are open.
-The implementation reproduces the source patent's worked example: `r = 0.75`,
-500s over one window, **886.8s over three**, a concurrency of 1.69 rather than 3.
+**Chat concurrency saturates.** Practice divides handle time by the number of
+open windows. The finite-source model says effective concurrency tends to
+`1 + r`, where `r` is the customer's composing time divided by the agent's — so
+an agent who types as much as the customer cannot pass two conversations' worth
+of throughput however many windows are open. It reproduces the source patent's
+worked example: `r = 0.75`, 500s over one window, **886.8s over three**.
 
-**Tickets are not a queue at all.** Nobody is on the line, the centre decides when
-work happens, and unfinished work is not a lost customer but a *backlog* that
-arrives at tomorrow along with tomorrow's own. That is conservation:
+**Tickets are not a queue at all.** Nobody is on the line, the centre decides
+when work happens, and unfinished work is a *backlog* that arrives at tomorrow
+along with tomorrow's own. That is conservation:
 
 ```
 agents = (backlog + arrivals) × AHT / (window × occupancy × (1 − shrinkage))
@@ -112,42 +167,55 @@ No queueing formula appears, and that is the point.
 
 ---
 
-## 3. Move it yourself
+## 4. The rules, and whether they are actually the law
 
-`shiftmesh/simulator.js` is Erlang C, the shift catalogue, the rules audit and
-the cost model ported to the browser, so the page can answer *what if we were
-four people short* without a terminal. Change the headcount, the handle time, the
-service promise, the shrinkage or the jurisdiction, and everything downstream
-rebuilds: the distribution matrix, the coverage grid, the cost, and a curve of
-every headcount in range with the trade-off drawn out.
+A roster is only interesting if it is legal, and "legal" turns out to be three
+different things wearing the same coat. The report lays every rule out with its
+basis, because several of the numbers people assume are statute are bargaining:
 
-It reports the number people actually want, which is not coverage:
+| rule | value | basis |
+|---|---|---|
+| Weekly hours | 40 | **Statute** — ET art. 34.1 |
+| Longest shift | 9h | **Statute** — ET art. 34.3, unless the agreement says otherwise |
+| Rest between shifts | 12h | **Statute** — ET art. 34.3 |
+| Uninterrupted weekly rest | 36h | **Statute** — ET art. 37.1 |
+| Overtime ceiling | 4h/week | **Statute** — ET art. 35.2 caps it at 80h a year |
+| Days worked of seven | 5 | **Choice** — not in the statute, just the shape of a contract |
+| Split shifts | off | **Agreement** — legal and common; its cost is measured, not assumed |
+| Start-time band | unbounded | **Choice** — no legal basis at all, a promise to the people working it |
 
-> **Covered**, and it takes 62 people to do it — 11 more than the 51 the raw
-> hours suggest, which is what the rest rules and the shift shapes cost.
-> Dropping to 61 would save €72 a week without losing a point of coverage.
-
-What runs in the browser is the **greedy** roster, not CP-SAT — a solver does not
-fit in a page. That is stated on the panel rather than glossed: the greedy is
-instant and legal, the audit runs live beside it, and it leaves more spare hours
-than the solver does. The gap between them is what the sixty seconds of search
-buys.
-
-Two things were checked rather than assumed. The JavaScript Erlang C returns a
-requirement grid **identical to the Python one, cell for cell**, and that grid is
-pinned in `tests/test_simulator.py` so a change on one side fails the build. And
-because there is no Node here to run a real cross-check, the tests instead scan
-the JavaScript for every field it reads and fail if Python does not send it —
-which is how these two actually drift.
+The rule that catches people out is the twelve hours between shifts. It is
+statute, it is unglamorous, and it shapes the week more than the forty-hour
+limit does: it is what stops a late finish being followed by an early start,
+which is exactly the pattern a naive optimiser reaches for when demand peaks
+twice a day.
 
 ---
 
-## 4. The roster
+## 5. The search, not just the answer
+
+CP-SAT does not walk to an answer, it closes on one from both sides: a portfolio
+of eight workers proposes rosters from above while a bound climbs from below.
+The report draws that, second by second — because the shape of it is the honest
+statement of how good the answer is.
+
+On the demo instance — **24,360 boolean variables**, 145 shifts a day across 24
+agents and 7 days — the search finds **47 successively better rosters** in 45
+seconds, taking the objective down about a third from the first legal week it
+found. The bound barely moves. That asymmetry is the whole story: proving a
+roster optimal is far harder than finding a good one, so the gap stays wide even
+after the roster has stopped improving.
+
+Which is why the word *optimal* does not appear anywhere in this repository as a
+claim about its own output.
+
+---
+
+## 6. The roster
 
 Weekly rostering is the nurse-rostering problem: for each of *n* agents and each
 of 7 days, choose one shift out of 145 such that hourly coverage meets demand and
-nobody breaks the law. The search space is 145^(7n) — for 24 agents, about
-10^363.
+nobody breaks the law.
 
 **Rest is linear, not pairwise.** The obvious way to forbid "a shift ending at
 22:00 followed by one starting at 06:00" is to enumerate every illegal pair. With
@@ -189,13 +257,36 @@ in 0.06 seconds**. The solver, started cold, reached 51% in forty-five.
 **The parallel portfolio is not a speed-up, it is the whole solver.** Pinning
 CP-SAT to one worker does not make the same answer arrive more slowly; it makes
 no answer arrive at all below about three minutes, and the roster it eventually
-returns is no better than the warm start it was handed. `--deterministic` exists
-so that claim can be checked rather than believed — at the price of a worse
-roster, which is the honest trade.
+returns is no better than the warm start it was handed.
 
 ---
 
-## 5. What it costs
+## 7. Move it yourself
+
+`shiftmesh/simulator.js` is Erlang C, the shift catalogue, the rules audit and
+the cost model ported to the browser, so the page can answer *what if we were
+four people short* without a terminal. Type a headcount, a handle time, a service
+promise, a shrinkage or a jurisdiction, and everything downstream rebuilds: the
+distribution matrix, the coverage grid, the cost, and a curve of every headcount
+in range with the trade-off drawn out.
+
+It reports the number people actually want, which is not coverage:
+
+> **Covered**, and it takes 62 people to do it — 11 more than the 51 the raw
+> hours suggest, which is what the rest rules and the shift shapes cost.
+> Dropping to 61 would save €72 a week without losing a point of coverage.
+
+What runs in the browser is the **greedy** roster, not CP-SAT — a solver does not
+fit in a page. That is stated on the panel rather than glossed.
+
+The JavaScript Erlang C returns a requirement grid **identical to the Python one,
+cell for cell**, pinned in `tests/test_simulator.py`. There is no Node here to run
+a real cross-check, so the tests instead scan the JavaScript for every field it
+reads and fail if Python does not send it — which is how these two actually drift.
+
+---
+
+## 8. What it costs
 
 An hour of rostered agent time in Spain costs **€12.84**:
 
@@ -217,7 +308,7 @@ and both are things the solver would trade away if the objective priced them.
 
 ---
 
-## 6. Every number, and where it came from
+## 9. Every number, and where it came from
 
 `shiftmesh/benchmarks.py` holds each externally sourced figure with a citation and
 a confidence, and the report renders it as a table. Two entries were looked for
@@ -278,7 +369,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-192 tests across twelve files, about four minutes. The ones worth reading:
+201 tests across twelve files, about four minutes. The ones worth reading:
 
 - **Erlang C** against the textbook form written with real factorials, at six
   loads to nine significant figures — and then at a load where that form

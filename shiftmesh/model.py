@@ -51,6 +51,28 @@ DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 HOURS = 24
 
 
+class _Trace(cp_model.CpSolverSolutionCallback):
+    """Records every improved roster the search finds, as it finds it.
+
+    CP-SAT does not walk to an answer, it circles one: a portfolio of workers
+    proposes solutions from above while the bound climbs from below, and the
+    two squeeze the gap shut. A report that prints only the final roster hides
+    all of that, and hides the one number that says whether the answer is any
+    good — how far apart the two were when the clock ran out.
+
+    Each entry is (seconds, objective, best bound).
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.points: list[tuple[float, float, float]] = []
+
+    def on_solution_callback(self) -> None:
+        self.points.append(
+            (self.WallTime(), self.ObjectiveValue(), self.BestObjectiveBound())
+        )
+
+
 @dataclass(frozen=True)
 class Weights:
     """What the solver is being asked to care about, and how much.
@@ -85,6 +107,12 @@ class Roster:
     rules: WorkRules
     weights: Weights
     log: list[str] = field(default_factory=list)
+
+    trace: list[tuple[float, float, float]] = field(default_factory=list)
+    """(seconds, objective, bound) for every improved solution the search found."""
+
+    model_stats: dict = field(default_factory=dict)
+    """How big the model was once CP-SAT had presolved it."""
 
     @property
     def optimality_gap(self) -> float:
@@ -347,7 +375,8 @@ def solve(
     # covered week in fifteen without it. Every other default is left alone.
     solver.parameters.cp_model_probing_level = 0
 
-    status = solver.Solve(m)
+    trace = _Trace()
+    status = solver.Solve(m, trace)
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         if warm_start:
@@ -387,6 +416,15 @@ def solve(
         n_agents=n_agents,
         rules=rules,
         weights=weights,
+        trace=trace.points,
+        model_stats={
+            "shifts": len(shifts),
+            "booleans": len(x),
+            "agents": n_agents,
+            "days": n_days,
+            "solutions": len(trace.points),
+            "workers": workers,
+        },
     )
 
 

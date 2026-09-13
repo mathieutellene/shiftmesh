@@ -17,7 +17,12 @@
     return "#" + [0, 2, 4].map((i) =>
       to(Math.round(p(a, i + 1) + (p(b, i + 1) - p(a, i + 1)) * t))).join("");
   }
-  const EXACT = "#2b3648", SHORT = "#ff8fa3", SPARE = "#2d5f9e", ACCENT = "#4da3ff";
+  // Keep in step with the palette block in shiftmesh/viz.py: this grid and the
+  // static one sit on the same page, so a drift here is two keys for one legend.
+  // Each written as its own literal, not aliased: the test that keeps this in
+  // step with viz.py greps for the hex, and an alias would hide a drift.
+  const EXACT = "#2b3648", ACCENT = "#4da3ff";
+  const SHORT = "#ffb454", SPARE = "#4da3ff";
   const volumeColour = (v, peak) =>
     peak <= 0 ? "#131a26" : lerp("#101826", ACCENT, Math.pow(v / peak, 0.65));
   const balanceColour = (delta, worst) =>
@@ -59,7 +64,12 @@
           : `${DAY_NAMES[d]} ${String(h).padStart(2, "0")}:00 — ${fmt(v)}${opts.unit || ""}`;
         out += `<rect x="${left + d * cw}" y="${y}" width="${cw - 2}" height="${ch - 2}" rx="3" fill="${fill}"><title>${title}</title></rect>`;
         if (v || opts.reference) {
-          out += `<text class="cell" x="${left + d * cw + (cw - 2) / 2}" y="${y + ch / 2 + 3.5}" text-anchor="middle" fill="${inkFor(fill)}">${fmt(v)}</text>`;
+          // Signed difference on the face in balance mode, and the ink as an
+          // inline style: an SVG fill attribute loses the cascade to text.cell.
+          const label = opts.reference
+            ? (v - opts.reference[d][h] >= 0 ? "+" : "") + fmt(v - opts.reference[d][h])
+            : fmt(v);
+          out += `<text class="cell" x="${left + d * cw + (cw - 2) / 2}" y="${y + ch / 2 + 3.5}" text-anchor="middle" style="fill:${inkFor(fill)}">${label}</text>`;
         }
       }
     }

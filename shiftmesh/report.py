@@ -51,7 +51,12 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
     radial-gradient(1100px 700px at 12% -5%,  rgba(77,163,255,.10), transparent 60%),
     radial-gradient(900px 640px at 92% 12%,  rgba(34,211,166,.07), transparent 58%),
     radial-gradient(1000px 700px at 60% 105%, rgba(124,107,255,.08), transparent 62%),
-    linear-gradient(180deg,#0b0f17 0%,#0d121d 55%,#0b0f17 100%)}
+    linear-gradient(180deg,#0b0f17 0%,#0d121d 55%,#0b0f17 100%);
+  background-size:200% 200%;animation:drift 34s ease-in-out infinite alternate}
+/* Slow enough that it is never caught moving, only noticed as not being flat.
+   One compositor-friendly property, and off entirely for anyone who asked. */
+@keyframes drift{from{background-position:48% 50%}to{background-position:52% 50%}}
+@media (prefers-reduced-motion:reduce){ body::before{animation:none} }
 body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
   background-image:
     linear-gradient(rgba(255,255,255,.020) 1px, transparent 1px),
@@ -148,6 +153,55 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 .eq .cm{color:var(--muted);font-style:italic}
 .tb td a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.35)}
 .tb td a:hover{border-bottom-color:var(--accent);color:#8cc4ff}
+
+/* ── the roster, row by row ─────────────────────────────────────────────
+   Each agent is one <g>. The invisible .agrow rect underneath gives the
+   whole row a hit area, so a click does not have to land on a block. */
+g.ag{cursor:pointer}
+g.ag .agrow{fill:transparent}
+g.ag:hover .agrow{fill:rgba(77,163,255,.09)}
+g.ag:focus{outline:none}
+g.ag:focus-visible .agrow{fill:rgba(77,163,255,.16);stroke:var(--accent);stroke-width:1}
+.legend .hint{color:var(--muted);font-style:italic}
+
+#agdlg[hidden]{display:none}
+#agdlg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px}
+.agback{position:absolute;inset:0;background:rgba(4,7,12,.72);backdrop-filter:blur(3px)}
+.agcard{position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:20px 22px 18px;max-width:min(760px,94vw);
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.agcard header{display:flex;align-items:center;gap:14px;margin-bottom:2px}
+.agcard h3{margin:0;font-size:19px}
+.agcard header button{margin-left:auto;background:transparent;border:1px solid var(--line);
+  color:var(--muted);border-radius:8px;width:30px;height:30px;font-size:19px;
+  line-height:1;cursor:pointer}
+.agcard header button:hover{color:var(--text);border-color:var(--accent)}
+.agsub{color:var(--muted);margin:0 0 14px;font-size:13px}
+/* Days down, hours across — the direction of the roster row that was clicked.
+   flex:none throughout: these are fixed-size cells, and letting flex shrink
+   them squeezed the week into a 359px sliver of a 760px dialog. */
+.aggrid{display:flex;flex-direction:column;gap:3px}
+.agrowr{display:flex;gap:3px;align-items:center}
+.agday{flex:none;width:34px;font-size:11px;color:var(--muted);text-align:right;
+  padding-right:4px}
+.aghdr{height:14px}
+.aghr{flex:none;width:22px;font-size:9.5px;color:var(--muted);text-align:center;
+  font-variant-numeric:tabular-nums}
+.agc{flex:none;width:22px;height:19px;border-radius:3px;background:#18202f}
+.agc.on{background:var(--accent)}
+.agc.on.night{background:#f0abfc}
+@media (max-width:700px){ .agc,.aghr{width:13px} .agc{height:15px} }
+
+/* Where the numbers come from, said once, at the top, with a link. */
+.srcbadge{display:inline-flex;align-items:center;gap:10px;margin:0 0 18px;
+  padding:7px 13px 7px 8px;border:1px solid var(--line);border-radius:99px;
+  background:rgba(19,26,38,.72);font-size:12.5px;color:var(--muted);
+  text-decoration:none;transition:border-color .2s,color .2s}
+.srcbadge:hover{border-color:var(--accent);color:var(--text)}
+.srcbadge svg{display:block;border-radius:7px}
+.srcbadge b{color:var(--text);font-weight:600}
+@media print{ body::before,body::after{display:none} }
+@media (max-width:620px){ .agc{width:24px} }
 .eq sub{font-size:9.5px}
 .note.warn b{color:var(--short)}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
@@ -162,7 +216,7 @@ def _js(name: str) -> str:
 
 
 def page(title: str, lede: str, body: str, footer: str,
-         interactive: bool = False) -> str:
+         interactive: bool = False, source: str = "") -> str:
     """One file. The scripts are inlined so it still works from a USB stick."""
     css = CSS + (SIMULATOR_CSS if interactive else "")
     scripts = ""
@@ -176,7 +230,7 @@ def page(title: str, lede: str, body: str, footer: str,
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{escape(title)}</title><style>{css}</style></head>
 <body><div class="wrap">
-<header><h1>{escape(title)}</h1><p class="lede">{lede}</p></header>
+<header>{source}<h1>{escape(title)}</h1><p class="lede">{lede}</p></header>
 {body}
 <footer>{footer}</footer>
 </div>{scripts}</body></html>"""

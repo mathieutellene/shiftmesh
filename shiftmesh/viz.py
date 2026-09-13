@@ -7,17 +7,27 @@ to explain.
 
 The palette is the one constraint worth stating. A staffing grid is read for
 *where the trouble is*, so understaffing and overstaffing must never be confused
-by someone with colour-vision deficiency. Deuteranopia collapses the red-to-blue
-hue difference almost entirely, so the two ends have to separate in *lightness*
-as well — 0.66 against 0.35 in relative luminance, which survives the collapse.
-The first version of this palette did not: a red at 0.505 and a blue at 0.483
-looked obviously different to me and nearly identical to a red-green colour
-blind reader, which is exactly the failure worth catching in a test rather than
-in a meeting.
+by someone with colour-vision deficiency. Deuteranopia collapses a red-to-blue
+hue difference almost entirely, so the two ends also have to separate in
+*lightness*. The first version of this palette did not: a red at 0.505 and a
+blue at 0.483 looked obviously different to me and nearly identical to a
+red-green colour blind reader — the failure worth catching in a test rather
+than in a meeting.
+
+The current ends are orange 0.741 against blue 0.594, a separation of 0.148.
+That is half what the previous pink-and-blue pair managed, and it would not be
+defensible on its own. It is defensible here because colour is no longer the
+only channel: every cell in the balance grid now carries the signed difference
+on its face, so "-2" and "+2" are legible with no colour vision at all. Colour
+ranks the severity; the number states the fact. Do not reintroduce a
+colour-only variant of this grid without restoring the lightness gap.
 
 Because the short end is genuinely light, cell labels flip to dark ink on it.
-White text on a 0.66-luminance ground is 1.5:1, which is not text, it is a
-rumour of text.
+White text on a 0.74-luminance ground is barely over 1.4:1, which is not text,
+it is a rumour of text. That flip has to be emitted as an inline *style*: an
+SVG ``fill`` presentation attribute loses the cascade to any author rule, and
+a single ``text.cell{fill:...}`` in the report stylesheet silently painted
+every one of a thousand cells white for as long as it existed.
 """
 
 from __future__ import annotations
@@ -36,8 +46,12 @@ MUTED = "#8b9bb4"
 ACCENT = "#4da3ff"      # forecast, primary series
 ACCENT_2 = "#22d3a6"    # actual, secondary series
 WARM = "#ffb454"        # attention
-SHORT = "#ff8fa3"       # understaffed — light, warm, unmistakable
-SPARE = "#2d5f9e"       # overstaffed — dark, cool
+SHORT = WARM            # understaffed — the orange of the roster gantt
+SPARE = ACCENT          # overstaffed — the blue of the roster gantt
+MAGENTA = "#f0abfc"     # roster: a block that touches night hours. 0.751, a
+                        # clear step above ACCENT's 0.594 — a deeper magenta
+                        # lands within 0.01 of the blue and vanishes under
+                        # deuteranopia, which is the whole failure mode here.
 EXACT = "#2b3648"       # on the nose
 
 
@@ -152,21 +166,42 @@ class Heatmap:
             for d in range(7):
                 x = left + d * cw
                 value = self.grid[d][h]
+                fill = self._cell_colour(d, h)
                 out.append(
                     f'<rect x="{x}" y="{y}" width="{cw - 2}" height="{ch - 2}" rx="3" '
-                    f'fill="{self._cell_colour(d, h)}">'
+                    f'fill="{fill}">'
                     f"<title>{escape(self._tooltip(d, h))}</title></rect>"
                 )
                 if value or self.reference is not None:
-                    label = f"{value:,.{self.decimals}f}"
-                    ink = ink_for(self._cell_colour(d, h))
+                    if self.colour == "balance" and self.reference is not None:
+                        # The question this grid answers is "how far off are we",
+                        # so the face carries the answer. It used to print the
+                        # headcount on the floor — the input, not the finding —
+                        # and left the sign, the one part legible without colour
+                        # vision, in a tooltip nobody hovers on a printout.
+                        delta = value - self.reference[d][h]
+                        label = f"{delta:+,.{self.decimals}f}"
+                    else:
+                        label = f"{value:,.{self.decimals}f}"
+                    # inline style, not a fill attribute: a presentation
+                    # attribute loses the cascade to any author rule
                     out.append(
                         f'<text class="cell" x="{x + (cw - 2) / 2:.0f}" '
                         f'y="{y + ch / 2 + 3.5:.0f}" text-anchor="middle" '
-                        f'fill="{ink}">{label}</text>'
+                        f'style="fill:{ink_for(fill)}">{label}</text>'
                     )
 
-        out.append("</svg></figure>")
+        out.append("</svg>")
+        # A diverging grid with no key is a puzzle. Only the balance variant
+        # needs one — the volume variant is a single hue and reads as a quantity.
+        if self.colour == "balance" and self.reference is not None:
+            out.append(
+                f'<div class="legend">'
+                f'<span><i style="--c:{SHORT}"></i>−X short of the requirement</span>'
+                f'<span><i style="--c:{EXACT}"></i>+0 exactly covered</span>'
+                f'<span><i style="--c:{SPARE}"></i>+X more on the floor than needed</span>'
+                f'</div>')
+        out.append("</figure>")
         return "\n".join(out)
 
 
@@ -478,28 +513,77 @@ def stacked_bars(labels: list[str], parts: list[tuple[str, str, list[float]]],
 
 
 # ── how the search converged ─────────────────────────────────────────────
-
 def convergence_chart(trace: list[tuple[float, float, float]], budget: float,
                       title: str, subtitle: str = "",
-                      width: int = 1000, height: int = 300) -> str:
-    """The objective coming down and the bound coming up, against the clock.
+                      width: int = 1000, height: int = 360) -> str:
+    """What a branch-and-bound search actually does, in two strips.
 
-    This is the picture of what a branch-and-bound search actually does, and it
-    is the one thing a roster report normally omits. The upper line is the best
-    week found so far; the lower line is the proof that nothing better than that
-    value exists. They close on each other, and whatever gap is left when the
-    clock stops is exactly how much you do not know.
+    A solver holds two numbers. The *incumbent* is the best roster it has
+    actually built; the *bound* is the best proof it has that no roster can
+    score below some value. The incumbent falls, the bound rises, and the space
+    between them is what the clock did not resolve. Whatever is left when time
+    runs out is exactly how much you do not know.
+
+    The first version of this chart drew both on one axis anchored at zero,
+    scaled to the largest objective. In a real run the incumbent moves from
+    286,195 to 285,331 — a span of 864 on an axis 303,367 tall — so the line
+    that carries the entire story travelled less than one pixel, while the
+    bound sat on the zero gridline and could not be told apart from the axis.
+    Two series 225x apart cannot share a linear scale; the shared thing here is
+    the clock, so the strips share the x-axis and nothing else.
+
+    Numbers on the y-axes are penalty scores, which are only meaningful against
+    each other, so both strips are framed on their own data and say so.
     """
     if not trace:
         return ""
-    left, right, top, bottom = 70, 16, 34, 40
+
+    left, right, top, bottom = 78, 16, 30, 44
+    gap_between = 40
     plot_w = width - left - right
-    plot_h = height - top - bottom
+    strip_a = 150                                  # incumbent
+    strip_b = height - top - bottom - strip_a - gap_between
+    top_b = top + strip_a + gap_between
+
     span = max(budget, max(t for t, _, _ in trace)) or 1.0
-    peak = max(max(o for _, o, _ in trace), 1.0) * 1.06
+    objs = [o for _, o, _ in trace]
+    bounds = [b for _, _, b in trace]
+
+    def frame(values: list[float]) -> tuple[float, float]:
+        """Frame an axis on its own data, with padding that cannot invent values.
+
+        A penalty score is never negative, so padding below a minimum of zero
+        would put an impossible number on the axis — the bound strip printed a
+        tick at −229 before this clamp.
+        """
+        lo, hi = min(values), max(values)
+        if hi - lo < 1e-9:
+            lo, hi = lo - max(1.0, abs(lo) * 0.02), hi + max(1.0, abs(hi) * 0.02)
+        else:
+            pad = (hi - lo) * 0.18
+            lo, hi = lo - pad, hi + pad
+        if min(values) >= 0:
+            lo = max(0.0, lo)
+        return lo, hi
+
+    o_lo, o_hi = frame(objs)
+    b_lo, b_hi = frame(bounds)
 
     x = lambda t: left + (t / span) * plot_w
-    y = lambda v: top + plot_h - (v / peak) * plot_h
+    ya = lambda v: top + strip_a * (1 - (v - o_lo) / (o_hi - o_lo))
+    yb = lambda v: top_b + strip_b * (1 - (v - b_lo) / (b_hi - b_lo))
+
+    def steps(pick, ymap) -> str:
+        pts, last = [], None
+        for t, o, b in trace:
+            v = pick(o, b)
+            if last is not None:
+                pts.append(f"{x(t):.1f},{ymap(last):.1f}")
+            pts.append(f"{x(t):.1f},{ymap(v):.1f}")
+            last = v
+        if last is not None:
+            pts.append(f"{x(span):.1f},{ymap(last):.1f}")
+        return " ".join(pts)
 
     out = [
         f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
@@ -507,52 +591,52 @@ def convergence_chart(trace: list[tuple[float, float, float]], budget: float,
         + "</figcaption>",
         f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">',
     ]
-    for k in range(5):
-        gy = top + plot_h * k / 4
-        out.append(f'<line class="grid" x1="{left}" y1="{gy:.1f}" x2="{width - right}" y2="{gy:.1f}"/>')
-        out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" text-anchor="end">'
-                   f"{peak * (1 - k / 4):,.0f}</text>")
-    for k in range(6):
-        gx = left + plot_w * k / 5
-        out.append(f'<text class="ax" x="{gx:.1f}" y="{top + plot_h + 18:.0f}" '
-                   f'text-anchor="middle">{span * k / 5:,.0f}s</text>')
 
-    # Step lines: the incumbent only changes when a better week is found.
-    def steps(values):
-        pts = []
-        last = None
-        for t, o, b in trace:
-            v = values(o, b)
-            if last is not None:
-                pts.append(f"{x(t):.1f},{y(last):.1f}")
-            pts.append(f"{x(t):.1f},{y(v):.1f}")
-            last = v
-        if last is not None:
-            pts.append(f"{x(span):.1f},{y(last):.1f}")
-        return " ".join(pts)
+    for label, y0, h, lo, hi, colour in (
+        ("Best roster found — it can only fall", top, strip_a, o_lo, o_hi, ACCENT),
+        ("Best proof — no roster can score below this", top_b, strip_b, b_lo, b_hi, ACCENT_2),
+    ):
+        for k in range(3):
+            gy = y0 + h * k / 2
+            out.append(f'<line class="grid" x1="{left}" y1="{gy:.1f}" '
+                       f'x2="{width - right}" y2="{gy:.1f}"/>')
+            out.append(f'<text class="ax" x="{left - 8}" y="{gy + 4:.1f}" '
+                       f'text-anchor="end">{hi - (hi - lo) * k / 2:,.0f}</text>')
+        out.append(f'<text class="ax" x="{left}" y="{y0 - 8:.0f}" '
+                   f'style="fill:{colour}">{escape(label)}</text>')
 
-    upper, lower = steps(lambda o, b: o), steps(lambda o, b: b)
-    out.append(f'<polygon points="{upper} {x(span):.1f},{y(0):.1f} {left},{y(0):.1f}" '
-               f'fill="{ACCENT}" opacity="0.06"/>')
-    out.append(f'<polyline points="{lower}" fill="none" stroke="{ACCENT_2}" stroke-width="2"/>')
-    out.append(f'<polyline points="{upper}" fill="none" stroke="{ACCENT}" stroke-width="2"/>')
+    out.append(f'<polyline points="{steps(lambda o, b: o, ya)}" fill="none" '
+               f'stroke="{ACCENT}" stroke-width="2.4"/>')
+    out.append(f'<polyline points="{steps(lambda o, b: b, yb)}" fill="none" '
+               f'stroke="{ACCENT_2}" stroke-width="2.4"/>')
 
     for t, o, b in trace:
-        out.append(f'<circle cx="{x(t):.1f}" cy="{y(o):.1f}" r="2.2" fill="{ACCENT}" '
-                   f'opacity="0.85"><title>{t:,.1f}s — objective {o:,.0f}, '
-                   f"bound {b:,.0f}</title></circle>")
+        out.append(f'<circle cx="{x(t):.1f}" cy="{ya(o):.1f}" r="2.4" fill="{ACCENT}">'
+                   f'<title>{t:,.1f}s — best roster {o:,.0f}</title></circle>')
 
-    last_t, last_o, last_b = trace[-1]
-    gap = abs(last_o - last_b) / max(abs(last_o), 1e-9)
-    out.append(f'<line x1="{x(last_t):.1f}" y1="{y(last_o):.1f}" x2="{x(last_t):.1f}" '
-               f'y2="{y(last_b):.1f}" stroke="{WARM}" stroke-width="1.4" '
-               f'stroke-dasharray="3 3"/>')
-    out.append(f'<text class="val" x="{x(last_t) - 8:.1f}" '
-               f'y="{(y(last_o) + y(last_b)) / 2:.1f}" text-anchor="end" fill="{WARM}">'
-               f"{gap * 100:.0f}% gap</text>")
+    for k in range(6):
+        gx = left + plot_w * k / 5
+        out.append(f'<text class="ax" x="{gx:.1f}" y="{height - 24:.0f}" '
+                   f'text-anchor="middle">{span * k / 5:,.0f}s</text>')
+    out.append(f'<text class="ax" x="{left + plot_w / 2:.0f}" y="{height - 7:.0f}" '
+               f'text-anchor="middle">seconds of search — budget {budget:,.0f}s</text>')
+
+    # The gap, stated as the quantity it is. The old label divided the gap by
+    # the incumbent, which on a bound near zero saturates at "100% gap" and
+    # tells a reader nothing they can act on.
+    _, last_o, last_b = trace[-1]
+    unproven = last_o - last_b
+    out.append(f'<text class="val" x="{width - right:.0f}" y="{top_b - 14:.0f}" '
+               f'text-anchor="end" style="fill:{WARM}">'
+               f'unproven: {unproven:,.0f} of {last_o:,.0f} — the two strips never met'
+               f'</text>')
 
     out.append("</svg>")
-    out.append(f'<div class="legend"><span><i style="--c:{ACCENT}"></i>best roster found</span>'
-               f'<span><i style="--c:{ACCENT_2}"></i>proof nothing better exists below this</span>'
-               f'<span><i style="--c:{WARM}"></i>what is still unknown</span></div></figure>')
+    out.append(
+        f'<div class="legend">'
+        f'<span><i style="--c:{ACCENT}"></i>best roster found (incumbent)</span>'
+        f'<span><i style="--c:{ACCENT_2}"></i>best proof so far (lower bound)</span>'
+        f'<span class="hint">each strip is framed on its own values, not on zero — '
+        f'the two are {max(1.0, last_o / max(last_b, 1.0)):,.0f}x apart and cannot '
+        f'share a scale</span></div></figure>')
     return "\n".join(out)

@@ -12,6 +12,7 @@ week, how many people that needs, who works when, and what it costs.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import sys
 from pathlib import Path
@@ -63,6 +64,7 @@ from shiftmesh.report import (  # noqa: E402
 )
 from shiftmesh.rules import covered_hours, enumerate_shifts  # noqa: E402
 from shiftmesh.viz import (  # noqa: E402
+    MAGENTA,
     NIGHT,
     PINK,
     SUNDAY,
@@ -81,6 +83,102 @@ from shiftmesh.sources import (  # noqa: E402
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 CACHE = Path("data/nyc311/contacts-2024.csv")
+
+# Where the numbers come from, at the top, linked. Drawn inline rather than
+# fetched: an <img> to a city server would put a request on every reader's
+# browser to load an asset this page does not control, and the mark below is
+# this repository's own rendering of the dataset it uses — attribution, not
+# the City of New York's trademark.
+SOURCE_BADGE = (
+    f'<a class="srcbadge" href="{DATASET_PAGE}" target="_blank" '
+    f'rel="noopener noreferrer">'
+    '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'
+    '<rect width="26" height="26" rx="7" fill="#4da3ff" opacity=".16"/>'
+    '<rect x=".5" y=".5" width="25" height="25" rx="6.5" fill="none" '
+    'stroke="#4da3ff" stroke-opacity=".45"/>'
+    '<text x="13" y="17.5" text-anchor="middle" '
+    'style="fill:#4da3ff;font-size:10.5px;font-weight:700">311</text>'
+    "</svg>"
+    "<span>Every arrival on this page is a row in <b>NYC Open Data</b> — "
+    "311 Service Requests ↗</span></a>"
+)
+
+# One agent's week, opened from the roster. The gantt answers "who is on at
+# 3am on Thursday"; it cannot answer "what does A41's week actually look like",
+# because one row six pixels tall is not a week you can read. This is that row,
+# unfolded into the hour-by-day grid the rest of the report uses.
+AGENT_MODAL = """
+<div id="agdlg" hidden>
+  <div class="agback" data-close></div>
+  <div class="agcard" role="dialog" aria-modal="true" aria-labelledby="agttl">
+    <header><h3 id="agttl"></h3><button type="button" data-close
+      aria-label="Close">&times;</button></header>
+    <p class="agsub"></p>
+    <div class="aggrid"></div>
+    <div class="legend">
+      <span><i style="--c:#4da3ff"></i>on the floor</span>
+      <span><i style="--c:#f0abfc"></i>night hour (22:00&ndash;06:00)</span>
+      <span><i style="--c:#18202f"></i>off</span>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var el = document.getElementById('roster-data');
+  var dlg = document.getElementById('agdlg');
+  if (!el || !dlg) return;
+  var DATA = JSON.parse(el.textContent);
+  var DAY = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var grid = dlg.querySelector('.aggrid');
+  var last = null;
+
+  function draw(a){
+    // Days down, hours across — the same direction as the roster row that was
+    // clicked, so the shape a reader just saw six pixels tall is the shape they
+    // get back full size. Hours-down would have matched the report's other
+    // grids but made a 359x684 sliver of a dialog that is 760 wide.
+    var cells = DATA.grids[a];
+    var html = '<div class="agrowr aghdr"><span class="agday"></span>';
+    for (var h = 0; h < 24; h++)
+      html += '<span class="aghr">' + (h % 3 === 0 ? (h < 10 ? '0' + h : h) : '') + '</span>';
+    html += '</div>';
+    for (var d = 0; d < 7; d++){
+      html += '<div class="agrowr"><span class="agday">' + DAY[d] + '</span>';
+      for (var h = 0; h < 24; h++){
+        var on = cells[d * 24 + h] === '1';
+        var night = h >= 22 || h < 6;
+        var cls = on ? (night ? 'on night' : 'on') : 'off';
+        html += '<span class="agc ' + cls + '" title="' + DAY[d] + ' ' +
+                (h < 10 ? '0' + h : h) + ':00 — ' + (on ? 'working' : 'off') + '"></span>';
+      }
+      html += '</div>';
+    }
+    grid.innerHTML = html;
+    dlg.querySelector('#agttl').textContent = 'Agent ' + (a + 1);
+    dlg.querySelector('.agsub').textContent =
+      DATA.hours[a] + ' hours across ' + DATA.days[a] + ' days — ' +
+      (168 - DATA.hours[a]) + ' hours off';
+  }
+
+  function open(a, src){ last = src; draw(a); dlg.hidden = false;
+    dlg.querySelector('[data-close]').focus(); }
+  function close(){ dlg.hidden = true; if (last) last.focus(); }
+
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-close]')) { close(); return; }
+    var g = e.target.closest('g.ag');
+    if (g) open(+g.dataset.agent, g);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && !dlg.hidden) { close(); return; }
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var g = document.activeElement && document.activeElement.closest &&
+            document.activeElement.closest('g.ag');
+    if (g) { e.preventDefault(); open(+g.dataset.agent, g); }
+  });
+})();
+</script>
+"""
 
 
 def js_rules() -> dict:
@@ -590,7 +688,9 @@ has to keep them."""))
     body.append(roster_gantt(roster))
     body.append(Heatmap([[float(v) for v in row] for row in covered],
                         "Coverage against requirement",
-                        "blue is spare, red is short, flat is exact",
+                        "every cell is the signed difference from what the hour needed: "
+                        "+0 is exactly covered, −X is orange and short of it, "
+                        "+X is blue and more than it",
                         colour="balance",
                         reference=[[float(v) for v in row] for row in roster.required]
                         ).render())
@@ -605,12 +705,15 @@ gap it stopped at is the honest measure of how much is still unknown.</p>""")
         body.append(convergence_chart(
             roster.trace, args.time,
             "The search, second by second",
-            f"{roster.model_stats.get('booleans', 0):,} boolean variables, "
-            f"{roster.model_stats.get('workers', 8)} workers"))
+            "penalty score against wall-clock seconds — the roster it has falls, "
+            "the proof it has rises, and they never touch"))
 
         first_t, first_o, _ = roster.trace[0]
         last_t, last_o, last_b = roster.trace[-1]
         body.append(stats([
+            stat("Model size", f"{roster.model_stats.get('booleans', 0):,}",
+                 f"boolean variables, {roster.model_stats.get('workers', 8)} "
+                 f"search workers"),
             stat("Rosters found", f"{len(roster.trace)}", "each better than the last", "key"),
             stat("First at", f"{first_t:,.1f}s", f"objective {first_o:,.0f}"),
             stat("Improvement", f"{100 * (first_o - last_o) / max(first_o, 1):.0f}%",
@@ -760,6 +863,7 @@ top."""))
         "out how many people that needs, builds a roster that obeys Spanish "
         "working-time law, and puts a price on it.",
         "\n".join(body), footer, interactive=True,
+        source=SOURCE_BADGE,
     )
 
 
@@ -781,8 +885,19 @@ def roster_gantt(roster) -> str:
                    f'x2="{x:.1f}" y2="{top + n * ch:.0f}"/>')
         out.append(f'<text x="{x + 3:.1f}" y="{top - 11}">{DAYS[d]}</text>')
 
+    grids = []
     for a in range(n):
         y = top + a * ch
+        # Everything belonging to one agent goes in one focusable group, so a
+        # click anywhere on the row — label, any block, the hours total — opens
+        # that agent. Before this, a row was a loose <text> and N unwrapped
+        # sibling <rect>s with nothing tying them together.
+        out.append(
+            f'<g class="ag" data-agent="{a}" tabindex="0" role="button" '
+            f'aria-label="Agent {a + 1}, {roster.hours_worked(a)} hours — '
+            f'open their week">')
+        out.append(f'<rect class="agrow" x="{left - 30}" y="{y:.0f}" '
+                   f'width="{168 * cw + 66:.0f}" height="{ch:.0f}"/>')
         out.append(f'<text x="{left - 6}" y="{y + ch - 3:.0f}" text-anchor="end">'
                    f"A{a + 1}</text>")
         cells = [0] * 168
@@ -801,18 +916,36 @@ def roster_gantt(roster) -> str:
                             for k in range(run))
                 out.append(
                     f'<rect x="{x:.1f}" y="{y + 1:.0f}" width="{run * cw - 1.2:.1f}" '
-                    f'height="{ch - 3}" rx="2.5" fill="{WARM if night else ACCENT}" '
+                    f'height="{ch - 3}" rx="2.5" fill="{MAGENTA if night else ACCENT}" '
                     f'opacity="{0.9 if night else 0.8}">'
                     f"<title>A{a + 1}: {run}h from "
                     f"{DAYS[((i - run) // 24) % 7]} {(i - run) % 24:02d}:00</title></rect>")
                 run = 0
         out.append(f'<text x="{left + 168 * cw + 4:.0f}" y="{y + ch - 3:.0f}">'
                    f"{roster.hours_worked(a)}h</text>")
+        out.append("</g>")
+        # The 168-cell array was built to find contiguous runs and then thrown
+        # away. It is exactly the hour-by-day matrix a click needs.
+        grids.append(cells)
 
     out.append("</svg>")
     out.append(f'<div class="legend"><span><i style="--c:{ACCENT}"></i>day</span>'
-               f'<span><i style="--c:{WARM}"></i>includes night hours</span></div>')
+               f'<span><i style="--c:{MAGENTA}"></i>includes night hours</span>'
+               f'<span class="hint">click any row for that agent’s week</span>'
+               f'</div>')
     out.append("</figure>")
+
+    # The per-agent week, as data rather than as a second drawing. One flat
+    # array of 168 zeros and ones per agent: index i is day i//24, hour i%24.
+    payload = {
+        "hours": [roster.hours_worked(a) for a in range(n)],
+        "days": [sum(1 for d in range(7)
+                     if covered_hours(roster.assignment[(a, d)])) for a in range(n)],
+        "grids": ["".join(str(c) for c in g) for g in grids],
+    }
+    out.append('<script type="application/json" id="roster-data">'
+               + json.dumps(payload, separators=(",", ":")) + "</script>")
+    out.append(AGENT_MODAL)
     return "\n".join(out)
 
 

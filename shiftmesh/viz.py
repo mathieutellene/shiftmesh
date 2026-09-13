@@ -7,9 +7,17 @@ to explain.
 
 The palette is the one constraint worth stating. A staffing grid is read for
 *where the trouble is*, so understaffing and overstaffing must never be confused
-by someone with colour-vision deficiency. The two diverge in lightness as well
-as hue, which is what makes them separable under deuteranopia, and the neutral
-midpoint is genuinely neutral rather than a pale version of one end.
+by someone with colour-vision deficiency. Deuteranopia collapses the red-to-blue
+hue difference almost entirely, so the two ends have to separate in *lightness*
+as well — 0.66 against 0.35 in relative luminance, which survives the collapse.
+The first version of this palette did not: a red at 0.505 and a blue at 0.483
+looked obviously different to me and nearly identical to a red-green colour
+blind reader, which is exactly the failure worth catching in a test rather than
+in a meeting.
+
+Because the short end is genuinely light, cell labels flip to dark ink on it.
+White text on a 0.66-luminance ground is 1.5:1, which is not text, it is a
+rumour of text.
 """
 
 from __future__ import annotations
@@ -28,8 +36,8 @@ MUTED = "#8b9bb4"
 ACCENT = "#4da3ff"      # forecast, primary series
 ACCENT_2 = "#22d3a6"    # actual, secondary series
 WARM = "#ffb454"        # attention
-SHORT = "#ff5c7a"       # understaffed — light, warm, unmistakable
-SPARE = "#3b82f6"       # overstaffed — dark, cool
+SHORT = "#ff8fa3"       # understaffed — light, warm, unmistakable
+SPARE = "#2d5f9e"       # overstaffed — dark, cool
 EXACT = "#2b3648"       # on the nose
 
 
@@ -43,6 +51,19 @@ def _lerp(a: str, b: str, t: float) -> str:
         round(ag + (bg - ag) * t),
         round(ab + (bb - ab) * t),
     )
+
+
+def relative_luminance(hex_colour: str) -> float:
+    """WCAG relative luminance, used to decide what ink a cell can carry."""
+    r, g, b = (int(hex_colour[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def ink_for(background: str) -> str:
+    """Dark ink on a light cell, light ink on a dark one."""
+    if relative_luminance(background) > 0.45:
+        return "rgba(10,14,22,.85)"
+    return "rgba(255,255,255,.78)"
 
 
 def volume_colour(value: float, peak: float) -> str:
@@ -138,9 +159,11 @@ class Heatmap:
                 )
                 if value or self.reference is not None:
                     label = f"{value:,.{self.decimals}f}"
+                    ink = ink_for(self._cell_colour(d, h))
                     out.append(
                         f'<text class="cell" x="{x + (cw - 2) / 2:.0f}" '
-                        f'y="{y + ch / 2 + 3.5:.0f}" text-anchor="middle">{label}</text>'
+                        f'y="{y + ch / 2 + 3.5:.0f}" text-anchor="middle" '
+                        f'fill="{ink}">{label}</text>'
                     )
 
         out.append("</svg></figure>")

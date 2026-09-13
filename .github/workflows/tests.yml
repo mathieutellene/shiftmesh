@@ -33,3 +33,6 @@ jobs:
 
       - name: Forecast a week end to end
         run: python scripts/forecast.py --weeks 20
+
+      - name: Build the report from the cached data
+        run: python scripts/report.py --time 20 --out /tmp/report.html

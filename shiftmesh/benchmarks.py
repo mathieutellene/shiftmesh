@@ -81,6 +81,18 @@ NYC_ANNUAL_CALLS = Benchmark(
     "Five-year series: FY21 21,715k, FY22 18,231k, FY23 17,886k, FY24 17,458k, FY25 17,377k.",
 )
 
+NYC_SPANISH_CALLS = Benchmark(
+    484_000, "calls/year",
+    "calls to NYC 311's Spanish-language line in Fiscal 2025",
+    "NYC Mayor's Management Report FY2025, '311 Spanish language calls (000)' = 484",
+    "https://www.nyc.gov/assets/operations/downloads/pdf/mmr2025/311.pdf",
+    "published",
+    "2.8% of all 311 calls, and the reason this desk is the one the report "
+    "rosters: it is a real, named, separately reported operation of about "
+    "twenty-five people, where the whole line is twelve hundred. Five-year "
+    "series: FY21 648k, FY22 529k, FY23 598k, FY24 575k, FY25 484k.",
+)
+
 NYC_COMPLETED_REQUESTS = Benchmark(
     3_766_000, "requests/year",
     "service requests completed by NYC 311 in Fiscal 2025",
@@ -208,7 +220,7 @@ OVERTIME_UPLIFT = Benchmark(
 
 ALL: list[Benchmark] = [
     VOICE_AHT, VOICE_SLA, VOICE_SLA_SECONDS, VOICE_ASA,
-    NYC_ANNUAL_CALLS, NYC_COMPLETED_REQUESTS, NYC_TEXT_CONTACTS,
+    NYC_ANNUAL_CALLS, NYC_SPANISH_CALLS, NYC_COMPLETED_REQUESTS, NYC_TEXT_CONTACTS,
     TICKET_AHT, TICKET_ON_TIME, CHAT_COMPOSE_RATIO,
     GROSS_ANNUAL, ANNUAL_HOURS, EMPLOYER_SS,
     NIGHT_PREMIUM, SUNDAY_PREMIUM, HOLIDAY_PREMIUM, OVERTIME_UPLIFT,

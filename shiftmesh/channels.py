@@ -157,9 +157,18 @@ def _agent_idle(windows: int, compose_ratio: float) -> float:
     A finite-source queue: the agent is the single server and the open
     conversations are the sources, each of which goes away to compose for a
     while and comes back needing attention.
+
+    The terms ``r^j / j!`` are built by recursion rather than evaluated, for the
+    same reason Erlang C is: written out, ``math.factorial(200)`` is an integer
+    too large to turn into a float, and the ratio it appears in is perfectly
+    ordinary. Each step multiplies by ``r/j``, so nothing ever grows.
     """
-    terms = [compose_ratio ** j / math.factorial(j) for j in range(windows + 1)]
-    return terms[-1] / sum(terms)
+    term = 1.0
+    total = 1.0
+    for j in range(1, windows + 1):
+        term *= compose_ratio / j
+        total += term
+    return term / total
 
 
 def effective_concurrency(windows: int, compose_ratio: float) -> float:

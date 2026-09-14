@@ -244,7 +244,12 @@ def main() -> int:
                         "NYC 311's Spanish-language line, which the city reports "
                         "separately. Pass 17377000 for the whole operation.")
     p.add_argument("--agents", type=int, default=0, help="0 picks a sensible number")
-    p.add_argument("--time", type=float, default=60.0, help="solver budget, seconds")
+    # 60s published a roster that 600s improves roughly twenty-five fold — 27
+    # hours short against 1. The build is not on anyone's critical path, so the
+    # page should carry the better roster and not the faster one.
+    p.add_argument("--time", type=float, default=600.0,
+                   help="solver budget, seconds. The published page is built at "
+                        "the default; 60 is enough to try a change quickly.")
     p.add_argument("--voice-aht", type=float, default=B.VOICE_AHT.value)
     p.add_argument("--ticket-aht", type=float, default=B.TICKET_AHT.value)
     p.add_argument("--window-hours", type=float, default=24.0)

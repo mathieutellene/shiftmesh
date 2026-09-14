@@ -156,6 +156,7 @@ def solve(
     seed: int = 0,
     warm_start: bool = True,
     deterministic: bool = False,
+    break_symmetry: bool = False,
 ) -> Roster:
     """Build a weekly roster for ``n_agents`` against an hourly requirement.
 
@@ -337,6 +338,21 @@ def solve(
     unfairness = m.NewIntVar(0, rules.with_overtime(), "hours_spread")
     m.Add(unfairness == hi - lo)
 
+    # ── symmetry ─────────────────────────────────────────────────────────
+    # Nothing in this model tells one agent from another, so every roster has
+    # n! relabellings that are the same roster. Ordering agents by hours worked
+    # collapses that, and it does raise the lower bound — 1,270 to 1,681 on the
+    # published week. But it is OFF by default because measurement says so: at
+    # 300s across two seeds it roughly doubles the shortfall (5h and 14h short
+    # without it, 12h and 22h with). The ordering removes improving moves that
+    # large-neighbourhood search relies on — it cannot give one agent an extra
+    # shift without relabelling the rest — and on this model that costs more
+    # than the tighter bound is worth. Kept because the bound matters if the
+    # objective is ever reformulated.
+    if break_symmetry:
+        for a in range(n_agents - 1):
+            m.Add(week_hours[a] >= week_hours[a + 1])
+
     # ── objective ────────────────────────────────────────────────────────
     m.Minimize(
         weights.understaffing * sum(under_total)
@@ -351,6 +367,20 @@ def solve(
     if warm_start:
         index_of = {s: i for i, s in enumerate(shifts)}
         hint = greedy_roster(required, n_agents, rules)
+
+        if break_symmetry:
+            # The hint has to satisfy the ordering or CP-SAT throws the whole
+            # thing away, and this hint is worth a great deal: without it the
+            # search finds almost nothing in a minute. The greedy roster hands
+            # agents out in its own order, so relabel them by hours worked —
+            # same roster, agents renamed to match the constraint.
+            worked = {a: sum(shift_hours(sh) for (ag, _), sh in hint.items()
+                             if ag == a)
+                      for a in range(n_agents)}
+            order = sorted(range(n_agents), key=lambda a: -worked[a])
+            relabel = {old: new for new, old in enumerate(order)}
+            hint = {(relabel[a], d): sh for (a, d), sh in hint.items()}
+
         for (a, d), shift in hint.items():
             chosen = index_of[shift]
             for s in range(len(shifts)):

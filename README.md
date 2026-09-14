@@ -88,8 +88,8 @@ because the model is the part people are entitled to be sceptical about.
 |---|---|
 | Trained on | **6,384 hourly observations** — 38 whole weeks before the first scored one |
 | Features | **32 columns**: 4 daily harmonics, the same 4 interacted with a weekend flag, 3 weekly harmonics, 6 day-of-week levels, a trend, and the same hour 1 and 2 weeks back |
-| Fit | **R² 0.975** in log space, residual sd 0.188, residuals centred to 4e-15 |
-| Smearing | **1.0178** — Duan's retransformation correction, measured not assumed |
+| Fit | **R² 0.834** in log space, residual sd 0.273, residuals centred to 6e-15 |
+| Smearing | **1.0350** — Duan's retransformation correction, measured not assumed |
 
 Fitted on `log1p` so the seasonality is multiplicative and a prediction can
 never come out negative. It is deliberately small — 6,384 rows against 32
@@ -100,18 +100,24 @@ the shoulders of the morning peak.
 which is the only way to compare a dummy with a harmonic:
 
 ```
-day cos×1              -0.769     the two-humped day
-day sin×1              -0.385
-day sin×2              -0.291
-is Sat                 -0.246     weekends are a different shape, not a smaller one
-is Sun                 -0.223
-same hour last week    +0.152     the lag everyone reaches for first, ranked sixth
+day cos×1              -0.408     the two-humped day
+day sin×1              -0.205
+weekend day cos×1      +0.180     Saturday is a different shape, not a smaller one
+day sin×2              -0.160
+is Sat                 -0.145
+is Sun                 -0.122
+...
+same hour last week    +0.097     the lag everyone reaches for first, ranked ninth
 ```
 
-The first daily harmonic alone outweighs every day-of-week level put together.
-That is the morning rush, the lunch dip and the evening rush, and it is why a
-model without a seasonal basis has to learn the day's shape from the lags and
-never quite manages it.
+The single largest effect is the first daily harmonic — the morning rush, the
+lunch dip, the evening rush. It does not outweigh the day-of-week levels as a
+group (0.408 against 0.490 summed), but it beats any one of them by a factor of
+three, and the weekend interaction ranking third is the more interesting result:
+Saturday is not a quiet weekday, it is a differently shaped one.
+
+The lag ranking ninth is worth sitting with. A forecaster reaching for "same
+hour last week" first is reaching for the ninth most useful thing in the model.
 
 **Scored week by week, not pooled.** A single MAE hides whether a model is
 steadily better or merely better on average while being badly wrong in a few
@@ -119,9 +125,16 @@ weeks. Over 44 scored weeks, refitting before each one:
 
 | | mean | best week | worst week |
 |---|---:|---:|---:|
-| ridge seasonal | **4.44** | 2.92 | 7.82 |
-| 4-week mean | 4.59 | 3.04 | 7.02 |
-| seasonal naive | 5.75 | 4.22 | 8.12 |
+| ridge seasonal | **10.55** | 6.90 | 20.53 |
+| 4-week mean | 10.93 | 6.91 | 19.48 |
+| seasonal naive | 13.47 | 8.43 | 22.20 |
+
+Read that honestly: against a four-week moving average the model is **3.5%
+better on mean error and wins 23 weeks out of 44**. That is a coin flip with a
+thumb on it, not a rout. It beats the seasonal naive comfortably, and the value
+it adds over the moving average is mostly that it degrades less badly in the
+weeks the average gets wrong — which matters for staffing, where the bad weeks
+are the expensive ones.
 
 **And a learning curve**, because "would more data help?" has an answer. Error
 bottoms out after a few months of history and flattens: the weekly shape is

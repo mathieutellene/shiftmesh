@@ -240,7 +240,7 @@ claim about its own output.
 *One row per agent, 168 columns, Monday 00:00 on the left. Blue is daytime and magenta is
 the part of a block that falls inside 22:00–06:00 — coloured hour by hour rather than
 block by block, which matters: colouring whole blocks put 45% of the week in magenta on a
-roster that works 22% of its hours at night.*
+roster that works 23% of its hours at night.*
 
 Weekly rostering is the nurse-rostering problem: for each of *n* agents and each
 of 7 days, choose one shift out of 145 such that hourly coverage meets demand and

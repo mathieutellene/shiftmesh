@@ -399,6 +399,86 @@ def learning_curve_chart(points: list[tuple[int, float]], title: str,
     return "\n".join(out)
 
 
+def decomposition_chart(blocks: list[tuple[str, list[float]]], title: str,
+                        subtitle: str = "", width: int = 1000) -> str:
+    """Every feature block as the multiplier it is, side by side.
+
+    The model is written in ``log1p``, so its parts add there and multiply in
+    calls. That makes each block a factor on the base level, and a factor is
+    something a reader can check against what they already know about a phone
+    line: three times as busy at ten in the morning, a fifth as busy at four.
+
+    Drawn as small multiples on a shared ×1 line rather than stacked, because
+    the question each one answers is "how much does this move it", and that is
+    a comparison between blocks, not a running total. Each panel carries its
+    own range, since the daily factor spans 0.2–3.0 and the weekly one
+    0.87–1.11; on one scale the second would be a flat line.
+    """
+    if not blocks:
+        return ""
+
+    cols = min(3, len(blocks))
+    rows = -(-len(blocks) // cols)
+    pw, ph = width / cols, 104
+    height = rows * ph + 18
+    pad_l, pad_t, pad_b = 44, 30, 20
+
+    out = [
+        f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
+        + (f"<span>{escape(subtitle)}</span>" if subtitle else "")
+        + "</figcaption>",
+        f'<svg viewBox="0 0 {width} {height:.0f}" role="img" '
+        f'aria-label="{escape(title)}">',
+    ]
+
+    for i, (name, values) in enumerate(blocks):
+        cx, cy = (i % cols) * pw, (i // cols) * ph
+        iw = pw - pad_l - 14
+        ih = ph - pad_t - pad_b
+        lo, hi = min(values), max(values)
+        flat = hi - lo < 1e-9
+        if flat:                       # a constant block: centre its one value
+            lo, hi = lo * 0.85, hi * 1.15
+        else:
+            pad = (hi - lo) * 0.18
+            lo, hi = lo - pad, hi + pad
+
+        x = lambda j: cx + pad_l + iw * (j / max(1, len(values) - 1))
+        y = lambda v: cy + pad_t + ih * (1 - (v - lo) / (hi - lo))
+
+        out.append(f'<text class="ax" x="{cx + pad_l:.0f}" y="{cy + 16:.0f}" '
+                   f'style="fill:{TEXT}">{escape(name)}</text>')
+
+        # the ×1 line: above it the block multiplies up, below it down
+        if lo < 1.0 < hi:
+            out.append(f'<line x1="{cx + pad_l}" y1="{y(1.0):.1f}" '
+                       f'x2="{cx + pad_l + iw:.1f}" y2="{y(1.0):.1f}" '
+                       f'stroke="{MUTED}" stroke-width="1" stroke-dasharray="3 4" '
+                       f'opacity=".55"/>')
+            out.append(f'<text class="ax" x="{cx + pad_l - 6:.0f}" '
+                       f'y="{y(1.0) + 3.5:.1f}" text-anchor="end">×1</text>')
+
+        for v, anchor in ((hi, "top"), (lo, "bot")):
+            yy = y(v) + (9 if anchor == "top" else -3)
+            out.append(f'<text class="ax" x="{cx + pad_l - 6:.0f}" y="{yy:.1f}" '
+                       f'text-anchor="end" opacity=".75">×{v:.2f}</text>')
+
+        pts = " ".join(f"{x(j):.1f},{y(v):.1f}" for j, v in enumerate(values))
+        out.append(f'<polyline points="{pts}" fill="none" stroke="{ACCENT}" '
+                   f'stroke-width="1.8" stroke-linejoin="round"/>')
+
+        span = (max(values) / min(values)) if min(values) > 0 else 0
+        out.append(f'<text class="val" x="{cx + pw - 16:.0f}" y="{cy + 16:.0f}" '
+                   f'text-anchor="end">'
+                   + ("constant" if flat else f"{span:.1f}× across the week")
+                   + "</text>")
+
+    out.append("</svg>")
+    out.append('<div class="legend"><span class="hint">every panel is a factor on '
+               'the base level, over one week — multiply them together and you have '
+               'the forecast</span></div></figure>')
+    return "\n".join(out)
+
 # ── tables ───────────────────────────────────────────────────────────────
 
 def table(headers: list[str], rows: list[list[object]], title: str = "",

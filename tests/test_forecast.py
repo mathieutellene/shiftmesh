@@ -10,6 +10,7 @@ from shiftmesh.forecast import (
     backtest,
     forecast_next_week,
     learning_curve,
+    feature_names,
     load_history_csv,
     score,
     seasonal_mean,
@@ -338,3 +339,33 @@ def test_the_learning_curve_actually_varies_the_history_it_learns_from():
     errors = [e for _, e in curve]
     assert len(set(round(e, 6) for e in errors)) > 1, \
         "every training size returned the same error — history is not being varied"
+
+
+def test_the_decomposition_multiplies_back_to_the_model():
+    """The chart is only honest if its panels are the model.
+
+    Each block is drawn as a factor on the base level, so the product of the
+    factors times the smearing has to be exactly what ``level`` returns. If it
+    drifts, the picture is an illustration of a model rather than the model,
+    and a reader checking one panel against the forecast would be misled.
+    """
+    history = synthetic_history(40)
+    start = 35 * HOURS_PER_WEEK
+    model = Forecaster().fit(history, upto=start)
+
+    blocks = model.decompose(history, start)
+    assert [n for n, _ in blocks] == [n for n, _, _ in Forecaster.BLOCKS]
+
+    product = np.ones(HOURS_PER_WEEK)
+    for _, factor in blocks:
+        product = product * factor
+    assert np.allclose(product * model.smear_, model.level(history, start))
+
+
+def test_every_design_column_belongs_to_exactly_one_block():
+    """A column left out of BLOCKS would vanish from the picture silently."""
+    covered = []
+    for _, lo, hi in Forecaster.BLOCKS:
+        covered.extend(range(lo, hi))
+    assert covered == list(range(len(feature_names()))), \
+        "the blocks must tile the design matrix exactly, with no gap or overlap"

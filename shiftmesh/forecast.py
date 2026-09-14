@@ -260,6 +260,42 @@ class Forecaster:
         t = np.arange(start, start + hours)
         return np.exp(_design(t, y) @ self.coef_) * self.smear_
 
+    # The design matrix in the order _design builds it. Named here so the
+    # decomposition below and the report's chart cannot disagree about which
+    # columns are "the daily shape".
+    BLOCKS: tuple[tuple[str, int, int], ...] = (
+        ("base level", 0, 1),
+        ("hour of the day", 1, 17),
+        ("drift across the week", 17, 23),
+        ("which day it is", 23, 29),
+        ("trend", 29, 30),
+        ("the same hour, a week ago", 30, 32),
+    )
+
+    def decompose(self, y: np.ndarray, start: int,
+                  hours: int = HOURS_PER_WEEK) -> list[tuple[str, np.ndarray]]:
+        """Each block of features as the multiplier it actually is.
+
+        The fit is in ``log1p``, so the blocks add there and *multiply* in
+        calls: the model is a base level times a factor for the hour of the
+        day, times a factor for the day of the week, and so on. That is the
+        thing to show. "×1.9 at ten in the morning, ×0.3 at four" is a sentence
+        anyone can check against their own experience of a phone line; four
+        summed harmonics is not.
+
+        Returned per block, not cumulatively. A running total would invite
+        reading the error down the sequence, and that reading is wrong — ridge
+        fits every coefficient at once, so a partial sum is not a smaller model
+        that was then improved. It is a piece of one model, and only the whole
+        of it predicts anything.
+        """
+        if self.coef_ is None:
+            raise RuntimeError("fit first")
+        t = np.arange(start, start + hours)
+        X = _design(t, y)
+        return [(name, np.exp(X[:, lo:hi] @ self.coef_[lo:hi]))
+                for name, lo, hi in self.BLOCKS]
+
     @staticmethod
     def _apply(level: np.ndarray, uplift: float) -> np.ndarray:
         """Turn a ``log1p`` level into calls at a given uplift."""

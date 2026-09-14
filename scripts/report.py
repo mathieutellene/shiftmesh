@@ -70,6 +70,7 @@ from shiftmesh.viz import (  # noqa: E402
     SUNDAY,
     bar_chart,
     convergence_chart,
+    decomposition_chart,
     learning_curve_chart,
     stacked_bars,
 )
@@ -450,30 +451,34 @@ wait for an agent to be awake.</p>""")
         f"is deliberately positive: that is the cushion being bought, not an error. "
         f"Read the first as quality and the third as policy.", "key"))
 
-    body.append(f"""<h3>The model, written out</h3>
-<p>It is one equation. <code>h</code> is the hour of the day, <code>w</code> the
-hour of the week, <code>t</code> the hour index since the history starts:</p>
-<div class="eq">
-log1p(calls<sub>t</sub>) &nbsp;=&nbsp; β<sub>0</sub>
-<br>&nbsp;&nbsp;+ Σ<sub>k=1..4</sub> [ a<sub>k</sub> sin(2πk·h/24) + b<sub>k</sub> cos(2πk·h/24) ]
-&nbsp;&nbsp;<span class="cm">— the shape of a day, four harmonics</span>
-<br>&nbsp;&nbsp;+ weekend<sub>t</sub> · Σ<sub>k=1..4</sub> [ c<sub>k</sub> sin(2πk·h/24) + d<sub>k</sub> cos(2πk·h/24) ]
-&nbsp;&nbsp;<span class="cm">— Saturday is a different shape, not a smaller one</span>
-<br>&nbsp;&nbsp;+ Σ<sub>k=1..3</sub> [ e<sub>k</sub> sin(2πk·w/168) + f<sub>k</sub> cos(2πk·w/168) ]
-&nbsp;&nbsp;<span class="cm">— the slide from Monday to Friday</span>
-<br>&nbsp;&nbsp;+ Σ<sub>d=Tue..Sun</sub> g<sub>d</sub>·1[dow<sub>t</sub>=d]
-&nbsp;&nbsp;<span class="cm">— six day levels, against Monday</span>
-<br>&nbsp;&nbsp;+ τ·(t/168)
-&nbsp;&nbsp;<span class="cm">— trend, read as growth per week</span>
-<br>&nbsp;&nbsp;+ λ<sub>1</sub> log1p(calls<sub>t−168</sub>) + λ<sub>2</sub> log1p(calls<sub>t−336</sub>)
-&nbsp;&nbsp;<span class="cm">— same hour one and two weeks ago</span>
-<br><br>calls<sub>t</sub> &nbsp;=&nbsp; (exp(fit) − 1) &nbsp;×&nbsp; {f['smearing']:.4f}
-&nbsp;<span class="cm">smearing</span>&nbsp; ×&nbsp; {1 + uplift:.2f}
-&nbsp;<span class="cm">uplift</span>
-</div>
-<p>{f['features']} coefficients, fitted in closed form by ridge — one
-<code>np.linalg.solve</code>, no iteration, no gradient descent, no random seed.
-Given the same history it returns the same numbers every time.</p>
+    # The equation was written out in full here and it did not land. Sigma
+    # notation over four harmonics is a specification, not an explanation —
+    # it tells a reader who already knows what the model is that it is that.
+    # The blocks are drawn instead: the fit is in log space, so every block is
+    # a multiplier on the base level, and a multiplier is checkable against
+    # what anyone already knows about a phone line.
+    body.append(decomposition_chart(
+        [(name, list(values)) for name, values in model.decompose(calls, target * HOURS_PER_WEEK)],
+        "How the forecast is built",
+        f"week {target} of 52 — the {f['features']} coefficients, grouped into the "
+        "six things they describe"))
+    body.append(note(
+        "Read it as one sentence: an average hour on this desk is about "
+        f"<b>{math.exp(model.coef_[0]) * model.smear_:,.0f} calls</b>, and the "
+        "model multiplies that by where you are in the day, in the week, which "
+        "day it is, how the line has trended, and what the same hour did a week "
+        "ago. Multiply the six panels together and you have the forecast. "
+        "Nothing else is in there.", "key"))
+    body.append(f"""<h3>Why multiply rather than add</h3>
+<p>The fit happens on <code>log1p(calls)</code>, and a sum in log space is a
+product in calls. That is the right shape for a queue: a Monday peak is
+<em>twice</em> a Monday trough, not <em>ninety calls above</em> it, and the
+factor holds whether the line is busy that month or quiet. Fitting on the
+calls themselves would also let a prediction go negative on a dead hour, which
+{f['features']} free coefficients will happily do.</p>
+<p>{f['features']} coefficients, solved in closed form — one
+<code>np.linalg.solve</code>, no iteration, no gradient descent, no random
+seed. The same history returns the same numbers every time.</p>
 
 <h3>Is it "pure ML"?</h3>
 <p>No, and the distinction is worth being honest about. Nothing here

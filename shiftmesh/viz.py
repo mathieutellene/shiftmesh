@@ -237,10 +237,21 @@ def line_chart(series: list[Series], title: str, subtitle: str = "",
     def y(v: float) -> float:
         return top + plot_h - (v / peak) * plot_h
 
+    # Everything a hover readout needs, carried on the figure itself, so there
+    # is no second copy of the geometry to drift from the one that drew it.
+    import json as _json
+    meta = escape(_json.dumps({
+        "l": left, "t": top, "w": plot_w, "h": plot_h, "peak": peak, "n": n,
+        "unit": unit, "days": bool(day_ticks and n >= 168),
+        "s": [{"n": sr.label, "c": sr.colour,
+               "v": [round(float(v), 2) for v in sr.values]} for sr in series],
+    }, separators=(",", ":")))
+
     out = [
-        f'<figure class="ch"><figcaption><b>{escape(title)}</b>'
+        f'<figure class="ch live" data-plot="{meta}">'
+        f'<figcaption><b>{escape(title)}</b>'
         + (f"<span>{escape(subtitle)}</span>" if subtitle else "")
-        + "</figcaption>",
+        + '</figcaption><div class="hovwrap">',
         f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}">',
     ]
 
@@ -266,7 +277,10 @@ def line_chart(series: list[Series], title: str, subtitle: str = "",
         out.append(f'<polyline points="{points}" fill="none" stroke="{s.colour}" '
                    f'stroke-width="1.8" stroke-linejoin="round"{dash}/>')
 
+    out.append(f'<line class="hovline" x1="0" y1="{top}" x2="0" '
+               f'y2="{top + plot_h}" opacity="0"/>')
     out.append("</svg>")
+    out.append('<div class="hovbox" hidden></div></div>')
     legend = " ".join(
         f'<i style="--c:{s.colour}"></i>{escape(s.label)}' for s in series
     )

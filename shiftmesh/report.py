@@ -160,6 +160,20 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
 .wbar i{display:block;height:7px;border-radius:4px;background:var(--accent);
   opacity:.75;min-width:3px}
 .wbar b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+
+/* Hover readout. The SVG tooltips were the browser's own: a second of delay,
+   one series at a time, and nothing on a touch screen. */
+.hovwrap{position:relative}
+.hovline{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.hovbox{position:absolute;top:8px;pointer-events:none;background:rgba(9,13,21,.94);
+  border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12.5px;
+  line-height:1.5;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:2}
+.hovbox b{display:block;color:var(--muted);font-weight:500;font-size:11.5px;
+  margin-bottom:3px}
+.hovbox i{display:inline-block;width:9px;height:9px;border-radius:2px;
+  margin-right:6px;vertical-align:-1px}
+.hovbox span{font-variant-numeric:tabular-nums;float:right;margin-left:18px;
+  color:var(--text)}
 .tb td a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.35)}
 .tb td a:hover{border-bottom-color:var(--accent);color:#8cc4ff}
 
@@ -243,7 +257,7 @@ def page(title: str, lede: str, body: str, footer: str,
 <p class="lede">{lede}</p></header>
 {body}
 <footer>{footer}</footer>
-</div>{scripts}</body></html>"""
+</div>{CHART_HOVER_JS}{scripts}</body></html>"""
 
 
 # Below this, a block is too short to survive being split: two columns of two
@@ -698,3 +712,64 @@ def objective_table(rows: list[dict]) -> str:
             'minimising</b><span>one weighted sum — the weights are the design '
             'decision, and they span four orders of magnitude</span></figcaption>'
             '<table>' + "".join(body) + "</table></figure>")
+
+
+# A crosshair and a readout on every line chart. The charts carry their own
+# geometry in data-plot, so this needs nothing from the build that drew them —
+# and the SVG <title> tooltips it replaces were the browser's: a second of
+# delay, one series at a time, and nothing at all on a touch screen.
+CHART_HOVER_JS = """
+<script>
+(function(){
+  var DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  document.querySelectorAll('figure.ch.live[data-plot]').forEach(function(fig){
+    var m;
+    try { m = JSON.parse(fig.dataset.plot); } catch (e) { return; }
+    var svg = fig.querySelector('svg'),
+        line = fig.querySelector('.hovline'),
+        box  = fig.querySelector('.hovbox'),
+        wrap = fig.querySelector('.hovwrap');
+    if (!svg || !line || !box || !wrap) return;
+    var vb = svg.viewBox.baseVal;
+
+    function hide(){ box.hidden = true; line.setAttribute('opacity', 0); }
+
+    function move(ev){
+      var r = wrap.getBoundingClientRect();
+      if (!r.width) return;
+      var ux = (ev.clientX - r.left) / r.width * vb.width;     // into view units
+      var i = Math.round((ux - m.l) / m.w * (m.n - 1));
+      if (!(i >= 0 && i < m.n)) { hide(); return; }
+
+      var gx = m.l + m.w * (i / (m.n - 1));
+      line.setAttribute('x1', gx); line.setAttribute('x2', gx);
+      line.setAttribute('opacity', 1);
+
+      var label = m.days
+        ? DAYS[Math.floor(i / 24) % 7] + ' ' + String(i % 24).padStart(2,'0') + ':00'
+        : 'point ' + (i + 1);
+      var html = '<b>' + label + '</b>';
+      m.s.forEach(function(sr){
+        if (sr.v[i] === undefined) return;
+        html += '<div><i style="background:' + sr.c + '"></i>' + sr.n +
+                // en-US explicitly: toLocaleString() follows the reader's locale and a
+        // Spanish browser rendered 60.82 as "60,82" beside a page that formats
+        // thousands with commas everywhere else.
+        '<span>' + sr.v[i].toLocaleString('en-US', {maximumFractionDigits: 1}) +
+        (m.unit || '') + '</span></div>';
+      });
+      box.innerHTML = html;
+      box.hidden = false;
+
+      // keep it inside the figure rather than letting it run off the edge
+      var px = gx / vb.width * r.width;
+      box.style.left = Math.min(Math.max(6, px + 14), r.width - box.offsetWidth - 6) + 'px';
+    }
+
+    wrap.addEventListener('pointermove', move);
+    wrap.addEventListener('pointerdown', move);
+    wrap.addEventListener('pointerleave', hide);
+  });
+})();
+</script>
+"""

@@ -81,6 +81,23 @@ NYC_ANNUAL_CALLS = Benchmark(
     "Five-year series: FY21 21,715k, FY22 18,231k, FY23 17,886k, FY24 17,458k, FY25 17,377k.",
 )
 
+SHRINKAGE = Benchmark(
+    0.30, "of paid time",
+    "paid hours an agent is not available to take contacts",
+    "assumed by this project; no single published figure covers it",
+    "",
+    "assumed",
+    "Breaks, training, meetings, sickness, holiday and after-call work. Every "
+    "workforce team measures its own and they differ widely; 30% is a common "
+    "planning figure rather than a measured one, and nothing here measures it. "
+    "It bites harder than it looks: staffing divides by (1 - shrinkage), so 30% "
+    "is a x1.43 multiplier on every hour Erlang C asks for, and it stacks with "
+    "HEADCOUNT_UPLIFT for x1.69 over the theoretical minimum. Both are "
+    "assumptions. An operation with its own number should pass --shrinkage and "
+    "read the difference; the simulator on the page moves it live for the same "
+    "reason.",
+)
+
 HEADCOUNT_UPLIFT = Benchmark(
     1.18, "x the theoretical floor",
     "how far above demand-divided-by-a-contracted-week to set the headcount",
@@ -241,7 +258,7 @@ ALL: list[Benchmark] = [
     TICKET_AHT, TICKET_ON_TIME, CHAT_COMPOSE_RATIO,
     GROSS_ANNUAL, ANNUAL_HOURS, EMPLOYER_SS,
     NIGHT_PREMIUM, SUNDAY_PREMIUM, HOLIDAY_PREMIUM, OVERTIME_UPLIFT,
-    HEADCOUNT_UPLIFT,
+    SHRINKAGE, HEADCOUNT_UPLIFT,
 ]
 
 WEAKEST = [b for b in ALL if b.confidence == "assumed"]

@@ -254,7 +254,9 @@ def main() -> int:
     p.add_argument("--ticket-aht", type=float, default=B.TICKET_AHT.value)
     p.add_argument("--window-hours", type=float, default=24.0)
     p.add_argument("--occupancy", type=float, default=0.85)
-    p.add_argument("--shrinkage", type=float, default=0.30)
+    p.add_argument("--shrinkage", type=float, default=B.SHRINKAGE.value,
+                   help="paid time an agent is not taking contacts. An "
+                        "assumption, not a measurement — see benchmarks.py")
     p.add_argument("--rules", choices=sorted(PRESETS), default="spain")
     p.add_argument("--out", type=Path, default=Path("docs/index.html"))
     p.add_argument("--save-requirement", type=Path,
@@ -383,7 +385,11 @@ city's own API. Nothing here is generated.""", single=True))
         f"<b>{request_rate:.1%}</b> of calls leave a phone-originated request behind, "
         "so sizing a phone floor straight from the open data would understaff it by "
         f"about {call_multiple:.0f}&times;. The hourly <i>shape</i> below is real; the "
-        "voice <i>level</i> is scaled to the city's own published call count, and the "
+        "voice <i>level</i> is scaled to the city's own published call count — which "
+        "assumes that share holds at every hour of the day, and if callers at "
+        "3am are likelier to leave a request than callers at noon, the shape is "
+        "tilted by however much that differs. The city does not publish calls by "
+        "hour, so it cannot be checked here. And the "
         "web and app rows are self-service submissions that reach an agent only as "
         "deferred work, never as a queue.", "key"))
 

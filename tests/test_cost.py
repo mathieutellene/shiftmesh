@@ -13,6 +13,7 @@ from shiftmesh import PRESETS, Weights, solve
 from shiftmesh import benchmarks as B
 from shiftmesh.cost import PayRules, annualise, cost_per_contact, is_night, price_roster
 from shiftmesh.model import HOURS
+from shiftmesh.rules import covered_hours
 
 RULES = PRESETS["spain"]
 
@@ -27,7 +28,29 @@ def office_hours(agents: int = 2) -> list[list[int]]:
 
 @pytest.fixture(scope="module")
 def roster():
-    return solve(office_hours(), 4, RULES, Weights(), time_limit=10.0)
+    """A 09:00-17:00 weekday roster, asserted rather than hoped for.
+
+    These are tests of price_roster, not of the solver, and they were solving
+    for the roster they then priced. On a loaded machine the search runs out of
+    its ten seconds, returns the greedy fallback, and the fallback is free to
+    place a night shift — at which point a test called "a daytime weekday
+    roster pays no premiums" fails on a roster that is not a daytime weekday
+    roster. Diagnosing that from the assertion takes a while, and it says
+    nothing about the pricing code the test exists to cover.
+
+    The solve stays, because a hand-built assignment would not catch a change
+    in what solve() returns. What is new is the guard: if the roster is not the
+    shape the rest of this module assumes, say so here instead of failing
+    somewhere confusing.
+    """
+    r = solve(office_hours(), 4, RULES, Weights(), time_limit=10.0)
+    worked = {h % HOURS for a in range(r.n_agents) for d in range(7)
+              for h in covered_hours(r.assignment[(a, d)])}
+    assert worked <= set(range(9, 17)), (
+        f"fixture is not a daytime roster: hours {sorted(worked - set(range(9, 17)))} "
+        f"(status {r.status}) — the solver did not find one in its budget"
+    )
+    return r
 
 
 def test_the_hourly_cost_is_the_arithmetic_it_claims():

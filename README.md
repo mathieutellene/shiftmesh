@@ -74,6 +74,13 @@ is a different kind of problem and not one a laptop should pretend to solve.
 
 ## 2. The forecast, and what it is actually made of
 
+![The week's calls hour by hour, the forecast drawn over them, and the signed error underneath](docs/media/forecast.png)
+
+*Week 40, forecast against what arrived, with the residual below it. The bars under the
+line are the whole argument for the uplift: they sit above the axis more often than
+below on purpose, because an hour short costs a queue and an hour spare costs an hour of
+salary.*
+
 Most write-ups of a forecast stop at one number. This one shows the work,
 because the model is the part people are entitled to be sceptical about.
 
@@ -214,6 +221,13 @@ claim about its own output.
 ---
 
 ## 6. The roster
+
+![Sixty-seven agents down, one column per hour across the week, night hours in magenta](docs/media/roster.png)
+
+*One row per agent, 168 columns, Monday 00:00 on the left. Blue is daytime and magenta is
+the part of a block that falls inside 22:00–06:00 — coloured hour by hour rather than
+block by block, which matters: colouring whole blocks put 45% of the week in magenta on a
+roster that works 22% of its hours at night.*
 
 Weekly rostering is the nurse-rostering problem: for each of *n* agents and each
 of 7 days, choose one shift out of 145 such that hourly coverage meets demand and

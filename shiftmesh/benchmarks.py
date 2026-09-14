@@ -81,6 +81,23 @@ NYC_ANNUAL_CALLS = Benchmark(
     "Five-year series: FY21 21,715k, FY22 18,231k, FY23 17,886k, FY24 17,458k, FY25 17,377k.",
 )
 
+HEADCOUNT_UPLIFT = Benchmark(
+    1.18, "x the theoretical floor",
+    "how far above demand-divided-by-a-contracted-week to set the headcount",
+    "assumed by this project; not taken from any published figure",
+    "",
+    "assumed",
+    "The floor — total agent-hours over the contracted week — assumes hours can "
+    "be sliced freely. They cannot: shifts are contiguous 4-9h blocks, demand is "
+    "not flat so the peak sets the headcount and the trough wastes it, and the "
+    "day and rest rules take usable capacity out. Some margin is therefore "
+    "necessary. This particular margin is not derived and not sourced. It puts "
+    "67 agents on the floor of 57, and every euro on the page scales with it. "
+    "Deriving it properly means searching for the smallest headcount that still "
+    "covers the week, which scripts/price_rules.py can do and which takes about "
+    "an hour; until that is run and recorded, read this as the assumption it is.",
+)
+
 NYC_SPANISH_CALLS = Benchmark(
     484_000, "calls/year",
     "calls to NYC 311's Spanish-language line in Fiscal 2025",
@@ -224,6 +241,7 @@ ALL: list[Benchmark] = [
     TICKET_AHT, TICKET_ON_TIME, CHAT_COMPOSE_RATIO,
     GROSS_ANNUAL, ANNUAL_HOURS, EMPLOYER_SS,
     NIGHT_PREMIUM, SUNDAY_PREMIUM, HOLIDAY_PREMIUM, OVERTIME_UPLIFT,
+    HEADCOUNT_UPLIFT,
 ]
 
 WEAKEST = [b for b in ALL if b.confidence == "assumed"]

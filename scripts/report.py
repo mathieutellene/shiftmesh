@@ -333,7 +333,8 @@ def main() -> int:
 
     # ── 4. the roster ────────────────────────────────────────────────────
     rules = PRESETS[args.rules]
-    agents = args.agents or int(total_hours / rules.max_weekly_hours * 1.18) + 1
+    agents = args.agents or int(
+        total_hours / rules.max_weekly_hours * B.HEADCOUNT_UPLIFT.value) + 1
     print(f"solving for {agents} agents, {args.time:.0f}s …", flush=True)
     roster = solve(need_total, agents, rules, Weights(), time_limit=args.time)
     s = summarise(roster)
@@ -846,6 +847,29 @@ top."""))
              f"vs €{pay.loaded_hour:,.2f} base"),
     ]))
 
+    # Everything above prices hours actually rostered. That is right for staff
+    # paid by the hour and wrong for staff on a contract, and the difference is
+    # not small — the headcount is deliberately above demand, so a good part of
+    # the contracted week is never scheduled. Saying which of the two this is
+    # costs one paragraph; leaving a reader to assume costs the whole figure.
+    demand_h = sum(sum(r) for r in need_total)
+    contracted_h = agents * roster.rules.max_weekly_hours
+    unrostered = contracted_h - money.rostered_hours
+    salaried = contracted_h * pay.loaded_hour
+    body.append(note(
+        f"<b>This prices {money.rostered_hours:,.0f} rostered hours, not "
+        f"{contracted_h:,.0f} contracted ones.</b> {agents} agents on a "
+        f"{roster.rules.max_weekly_hours}h week is {contracted_h:,.0f} hours of "
+        f"contract against {demand_h:,.0f} hours of demand, so "
+        f"<b>{unrostered:,.0f} hours</b> are paid for on a fixed contract and "
+        f"never scheduled — the headcount sits above demand on purpose, and the "
+        f"surplus has to land somewhere. On hourly staff the figure above is the "
+        f"bill. On Spanish permanent contracts it is "
+        f"<b>€{salaried:,.0f}</b> a week instead, "
+        f"€{(salaried - money.total) * 52 / 1e3:,.0f}k a year more. Which of the "
+        f"two applies is a question about the operation, not about the model.",
+        "key"))
+
     # Every agent, not the first 32. Truncating hid half the roster, and the
     # half it hid is where the overtime and night bands actually cluster.
     n_show = len(money.per_agent)
@@ -894,7 +918,7 @@ top."""))
     footer = (
         f'Built by <a href="https://github.com/mathieutellene/shiftmesh">shiftmesh</a> '
         f'from <a href="{DATASET_PAGE}">NYC 311 open data</a>. '
-        f'Roster solved with CP-SAT in {s.wall_time:.0f}s. '
+        f'Roster built by a greedy heuristic and improved by CP-SAT for {s.wall_time:.0f}s. '
         "No operational data from any employer appears anywhere in this project."
     )
     desk = (f"its Spanish-language desk — {args.annual_calls:,.0f} calls a year, "

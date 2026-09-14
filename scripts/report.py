@@ -677,8 +677,9 @@ has to keep them."""))
         stat("Shifts to choose from", f"{shift_counts[args.rules]:,}",
              f"per agent per day, under {args.rules}", "key"),
         stat("Agent-days to fill", f"{agents * 7:,}", f"{agents} agents × 7 days"),
-        stat("Possible rosters", f"10^{int(agents * 7 * math.log10(shift_counts[args.rules])):,}",
-             "before a single rule is applied"),
+        stat("Possible rosters",
+             f"10<sup>{int(agents * 7 * math.log10(shift_counts[args.rules])):,}</sup>",
+             "before a single rule is applied", raw_value=True),
         stat("Rules enforced", f"{len(RULE_NOTES)}", "audited from the assignment, not the model"),
     ]))
 
@@ -689,8 +690,8 @@ has to keep them."""))
     body.append(Heatmap([[float(v) for v in row] for row in covered],
                         "Coverage against requirement",
                         "every cell is the signed difference from what the hour needed: "
-                        "+0 is exactly covered, −X is orange and short of it, "
-                        "+X is blue and more than it",
+                        "−X is orange-red and short of it, +0 is exactly covered, "
+                        "+X is mint and more than it",
                         colour="balance",
                         reference=[[float(v) for v in row] for row in roster.required]
                         ).render())
@@ -911,15 +912,33 @@ def roster_gantt(roster) -> str:
                 run += 1
                 continue
             if run:
-                x = left + (i - run) * cw
-                night = any(((i - run + k) % 24) >= 22 or ((i - run + k) % 24) < 6
-                            for k in range(run))
-                out.append(
-                    f'<rect x="{x:.1f}" y="{y + 1:.0f}" width="{run * cw - 1.2:.1f}" '
-                    f'height="{ch - 3}" rx="2.5" fill="{MAGENTA if night else ACCENT}" '
-                    f'opacity="{0.9 if night else 0.8}">'
-                    f"<title>A{a + 1}: {run}h from "
-                    f"{DAYS[((i - run) // 24) % 7]} {(i - run) % 24:02d}:00</title></rect>")
+                start = i - run
+                # Split the block at the night boundary instead of colouring the
+                # whole of it. Painting a block magenta because *any* of its
+                # hours touched 22:00-06:00 put 1,053 hours of magenta on a
+                # roster that works 519 night hours — a shift ending at 23:00
+                # went fully magenta for its last hour. The cost model counts
+                # the hours, so the picture claimed twice the night the invoice
+                # did, and the two sat on the same page.
+                seg = 0
+                for k in range(run + 1):
+                    h_abs = start + k
+                    cur = (h_abs % 24 >= 22 or h_abs % 24 < 6) if k < run else None
+                    prev = ((start + k - 1) % 24 >= 22
+                            or (start + k - 1) % 24 < 6) if k else None
+                    if k and cur != prev:
+                        x = left + (h_abs - seg) * cw
+                        out.append(
+                            f'<rect x="{x:.1f}" y="{y + 1:.0f}" '
+                            f'width="{seg * cw - 1.2:.1f}" height="{ch - 3}" rx="2.5" '
+                            f'fill="{MAGENTA if prev else ACCENT}" '
+                            f'opacity="{0.92 if prev else 0.8}">'
+                            f"<title>A{a + 1}: {seg}h from "
+                            f"{DAYS[((h_abs - seg) // 24) % 7]} "
+                            f"{(h_abs - seg) % 24:02d}:00"
+                            f"{' — night hours' if prev else ''}</title></rect>")
+                        seg = 0
+                    seg += 1
                 run = 0
         out.append(f'<text x="{left + 168 * cw + 4:.0f}" y="{y + ch - 3:.0f}">'
                    f"{roster.hours_worked(a)}h</text>")

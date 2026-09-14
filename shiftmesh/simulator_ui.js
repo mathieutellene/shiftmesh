@@ -22,7 +22,7 @@
   // Each written as its own literal, not aliased: the test that keeps this in
   // step with viz.py greps for the hex, and an alias would hide a drift.
   const EXACT = "#2b3648", ACCENT = "#4da3ff";
-  const SHORT = "#ffb454", SPARE = "#4da3ff";
+  const SHORT = "#f4511e", SPARE = "#5ee0c0";
   const volumeColour = (v, peak) =>
     peak <= 0 ? "#131a26" : lerp("#101826", ACCENT, Math.pow(v / peak, 0.65));
   const balanceColour = (delta, worst) =>

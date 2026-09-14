@@ -69,13 +69,17 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
    whole window. */
 .wrap{max-width:min(1560px, 94vw);margin:0 auto;padding:0 clamp(16px,2.4vw,34px) 90px}
 header{padding:66px 0 32px;border-bottom:1px solid var(--line);margin-bottom:34px}
+.htop{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:20px 34px;flex-wrap:wrap}
+.htop h1{margin-bottom:0}
+@media (max-width:780px){ .htop{flex-direction:column} }
 h1{margin:0 0 12px;font-size:clamp(30px,3.4vw,46px);letter-spacing:-.024em;
   font-weight:650;line-height:1.06;max-width:22ch}
 h2{margin:60px 0 6px;font-size:clamp(20px,1.7vw,25px);letter-spacing:-.016em;font-weight:620}
 h2 .num{color:var(--muted);font-weight:500;margin-right:10px;font-variant-numeric:tabular-nums}
 h3{margin:30px 0 8px;font-size:16.5px;font-weight:600;color:var(--text)}
 p{margin:11px 0;color:#cdd7e6}
-.lede{font-size:clamp(16px,1.25vw,21px);color:var(--muted);max-width:min(100%,86ch);margin:0;line-height:1.55}
+.lede{font-size:clamp(16px,1.25vw,21px);color:var(--muted);max-width:min(100%,86ch);margin:14px 0 0;line-height:1.55}
 .sub{color:var(--muted);margin:2px 0 18px}
 
 /* Prose that should sit beside something rather than above it. */
@@ -193,12 +197,12 @@ g.ag:focus-visible .agrow{fill:rgba(77,163,255,.16);stroke:var(--accent);stroke-
 @media (max-width:700px){ .agc,.aghr{width:13px} .agc{height:15px} }
 
 /* Where the numbers come from, said once, at the top, with a link. */
-.srcbadge{display:inline-flex;align-items:center;gap:10px;margin:0 0 18px;
+.srcbadge{display:inline-flex;align-items:center;gap:10px;margin:8px 0 0;flex:none;
   padding:7px 13px 7px 8px;border:1px solid var(--line);border-radius:99px;
   background:rgba(19,26,38,.72);font-size:12.5px;color:var(--muted);
   text-decoration:none;transition:border-color .2s,color .2s}
 .srcbadge:hover{border-color:var(--accent);color:var(--text)}
-.srcbadge svg{display:block;border-radius:7px}
+.srcbadge svg{display:block;flex:none;width:26px;height:26px;border-radius:7px}
 .srcbadge b{color:var(--text);font-weight:600}
 @media print{ body::before,body::after{display:none} }
 @media (max-width:620px){ .agc{width:24px} }
@@ -230,7 +234,8 @@ def page(title: str, lede: str, body: str, footer: str,
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{escape(title)}</title><style>{css}</style></head>
 <body><div class="wrap">
-<header>{source}<h1>{escape(title)}</h1><p class="lede">{lede}</p></header>
+<header><div class="htop"><h1>{escape(title)}</h1>{source}</div>
+<p class="lede">{lede}</p></header>
 {body}
 <footer>{footer}</footer>
 </div>{scripts}</body></html>"""
@@ -413,7 +418,7 @@ def simulator(requirement_source, arrivals, rules, pay, target_seconds,
   <div class="verdict" id="sm-verdict"></div>
 
   <figure><figcaption><b>The distribution matrix</b><span>one column per hour,
-    Monday 00:00 on the left — blue is daytime, amber includes night hours</span></figcaption>
+    Monday 00:00 on the left — blue is daytime, magenta is the night window (22:00–06:00), hour by hour</span></figcaption>
     <div id="sm-roster"></div>
     <div class="legend"><span><i style="--c:#4da3ff"></i>day</span>
       <span><i style="--c:#ffb454"></i>includes night hours</span></div>
@@ -522,51 +527,6 @@ def rules_table(presets: dict) -> str:
             '</span></figcaption><table>' + "".join(body) + "</table></figure>")
 
 
-def _convergence_warning(rows: list[dict], broken_rows: list[dict]) -> str:
-    """State how far from proved this table is, in the table's own words.
-
-    The temptation is to suppress a measurement this loose. Printing it with
-    the gap attached is better: the gap is the finding. A reader who knows the
-    optimum could be anywhere between the bound and the incumbent can see for
-    themselves that a hundred-euro difference between two rows is noise, and
-    that is a more useful thing to have learned than a clean table would have
-    taught them.
-    """
-    import math
-
-    gaps = [r["gap"] for r in rows
-            if isinstance(r.get("gap"), (int, float)) and not math.isnan(r["gap"])]
-    worst = max(gaps) if gaps else 0.0
-    proved = [r for r in rows if r.get("gap") == 0.0]
-
-    if worst < 0.05 and not broken_rows:
-        return ""
-
-    bits = []
-    if worst >= 0.05:
-        bits.append(
-            f"<b>The search never got close enough for these to be prices.</b> "
-            f"The worst row here stopped with a {worst * 100:.0f}% optimality gap: "
-            f"the solver had a roster in hand and a proof that no roster could be "
-            f"better than a bound {worst * 100:.0f}% away from it, and exhausted its "
-            f"budget in between. Only {len(proved)} of {len(rows)} rows were proved "
-            f"optimal. A difference of a few hundred euros between two rows is far "
-            f"inside that, so it says nothing about the rules.")
-    if broken_rows:
-        names = ", ".join(escape(r["rule"]) for r in broken_rows)
-        bits.append(
-            f"{'It also shows' if bits else '<b>These are not converged.</b> This shows'} "
-            f"in the ordering: {names} moved the wrong way against the baseline. A "
-            f"relaxation only ever adds legal rosters and a tightening only ever "
-            f"removes them, so at optimality neither can cross the baseline in that "
-            f"direction. One that did means the baseline — the row every other row is "
-            f"measured against — is itself the weaker solve.")
-    bits.append(
-        "What is exact here is the shift count: how many legal shift patterns each "
-        "rule admits is enumerated, not searched, so that column is the one to read.")
-    return '<p class="note warn">' + " ".join(bits) + "</p>"
-
-
 def rule_prices_table(rows: list[dict], agents: int) -> str:
     """What relaxing each rule buys you at the headcount you already have.
 
@@ -609,14 +569,27 @@ def rule_prices_table(rows: list[dict], agents: int) -> str:
     # worse-converged solve — and then no difference in the table is safe to
     # read. Marking only the offending row would leave the others looking sound.
     broken_rows = [r for r in rows[1:] if moved_the_wrong_way(r)]
-    body = ["<thead><tr>",
-            "<th>If this rule were relaxed</th>",
-            '<th class="r">Legal shifts</th>',
-            '<th class="r">Coverage</th>',
-            '<th class="r">vs baseline</th>',
-            '<th class="r">Spare hours</th>',
-            '<th class="r">Week costs</th>',
-            "<th>What it means</th></tr></thead><tbody>"]
+
+    # Either the searched numbers mean something or they do not. When they do
+    # not, the honest move is to leave them out rather than print them under a
+    # paragraph explaining why they cannot be read — a reader who is told to
+    # ignore a column will read it anyway, and a long apology for a number is
+    # worse than its absence. So the columns that come out of the search are
+    # dropped and the one that is enumerated stays.
+    import math as _math
+    _gaps = [r["gap"] for r in rows
+             if isinstance(r.get("gap"), (int, float)) and not _math.isnan(r["gap"])]
+    trusted = not broken_rows and (max(_gaps) if _gaps else 0.0) < 0.05
+
+    header = ["<th>If this rule were relaxed</th>",
+              '<th class="r">Legal shifts</th>']
+    if trusted:
+        header += ['<th class="r">Coverage</th>',
+                   '<th class="r">vs baseline</th>',
+                   '<th class="r">Spare hours</th>',
+                   '<th class="r">Week costs</th>']
+    header.append("<th>What it means</th>")
+    body = ["<thead><tr>"] + header + ["</tr></thead><tbody>"]
 
     for i, r in enumerate(rows):
         first = i == 0
@@ -644,19 +617,34 @@ def rule_prices_table(rows: list[dict], agents: int) -> str:
                     f"{'</b>' if first else ''}</td>")
         # Enumerated, not searched: the one number on this row that is exact.
         body.append(f'<td class="r">{r.get("shifts", 0):,}</td>')
-        body.append(f'<td class="r">{r["coverage"]:.2f}%</td>')
-        body.append(f'<td class="r" style="{tone}">{shown}</td>')
-        body.append(f'<td class="r">{r["spare_hours"]:,}h</td>')
-        body.append(f'<td class="r">€{r["cost"]:,.0f}</td>')
-        body.append(f"<td>{meaning}</td>")
+        if trusted:
+            body.append(f'<td class="r">{r["coverage"]:.2f}%</td>')
+            body.append(f'<td class="r" style="{tone}">{shown}</td>')
+            body.append(f'<td class="r">{r["spare_hours"]:,}h</td>')
+            body.append(f'<td class="r">€{r["cost"]:,.0f}</td>')
+        body.append(f"<td>{escape(r['note'])}</td>")
         body.append("</tr>")
     body.append("</tbody>")
 
-    warning = _convergence_warning(rows, broken_rows)
+    if trusted:
+        title = "What each rule buys, not what it costs"
+        sub = (f"one solve per row at {agents} agents. The solver spends freedom on "
+               "coverage, not on savings — so a looser rule reads as a dearer week "
+               "that covers more of the curve")
+        warning = ""
+    else:
+        title = "How much room each rule leaves"
+        sub = ("how many legal shift patterns the rule admits — counted, not "
+               "searched, so it is exact")
+        warning = (
+            '<p class="note key"><b>There is no price column, on purpose.</b> '
+            "Costing a rule means solving the week twice and comparing, and at "
+            "the budget this page runs on the solver does not get close enough "
+            "for the difference to mean anything. Rather than print euros and "
+            "ask you to disregard them, the table shows the part that is "
+            "certain: the size of the space each rule leaves the solver to "
+            "search.</p>")
 
-    return (warning + '<figure class="tb"><figcaption><b>What each rule buys, not what it '
-            'costs</b><span>one solve per row at ' + str(agents) + ' agents. The '
-            'solver spends freedom on coverage, not on savings — so a looser rule '
-            'reads as a dearer week that covers more of the curve'
-            '</span></figcaption><table>'
+    return (warning + f'<figure class="tb"><figcaption><b>{title}</b>'
+            f'<span>{sub}</span></figcaption><table>'
             + "".join(body) + "</table></figure>")

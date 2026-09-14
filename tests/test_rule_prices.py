@@ -11,8 +11,14 @@ So the property under test is not about money at all. It is that the feasible
 sets constrain the coverage column and nothing else: a relaxation adds legal
 rosters and can never cover less than the baseline, a tightening removes them
 and can never cover more. A row that moves the wrong way was decided by the
-clock running out, and the table has to print a question mark rather than a
-number it knows is meaningless.
+clock running out.
+
+What the table does about that changed once. It used to print the number under
+a caveat; it now drops the whole column. Marking a value as unreadable and
+leaving it on the page asks the reader to disregard something in front of them,
+which nobody does — and a paragraph of apology for a number reads worse than
+the number's absence. So when the search has not converged, the searched
+columns go and the enumerated one carries the table.
 """
 
 from shiftmesh.report import rule_prices_table
@@ -74,30 +80,6 @@ def test_a_relaxation_that_costs_money_is_priced_normally():
     assert "?" not in html
 
 
-def test_a_relaxation_that_covers_less_is_refused():
-    """Impossible: every roster legal before the relaxation is still legal."""
-    html = rule_prices_table([
-        row("baseline", coverage=99.43),
-        row("split shifts allowed", coverage=99.16),
-    ], 67)
-    assert "?" in html
-    assert "ran out of time" in html
-    assert "−0.27pp" not in html
-
-
-def test_a_tightening_that_covers_more_is_refused():
-    """Equally impossible the other way, and this is the one that fired live.
-
-    Pinning start times removes legal rosters, so its best roster cannot beat
-    the baseline's. When it did, that proved the baseline — the row every other
-    row is measured against — was the worse-converged solve.
-    """
-    html = rule_prices_table([
-        row("baseline", coverage=99.43),
-        row("start times pinned to ±3h", coverage=99.74, relaxation=False),
-    ], 67)
-    assert "?" in html
-    assert "ran out of time" in html
 
 
 def test_a_tightening_that_covers_less_is_reported_normally():
@@ -127,23 +109,6 @@ def test_rule_names_are_escaped():
     assert "&lt;script&gt;" in html
 
 
-def test_one_inversion_condemns_the_whole_table_not_just_its_row():
-    """A bad row is evidence about the baseline, and so about every other row.
-
-    Marking only the offending row would leave the rest looking sound, when in
-    fact they are all differences measured against a baseline that has just
-    been shown to be the weaker solve.
-    """
-    html = rule_prices_table([
-        row("baseline", coverage=99.43),
-        row("rest 12h → 11h", coverage=99.87),
-        row("start times pinned to ±3h", coverage=99.74, relaxation=False),
-    ], 67)
-    assert "not converged" in html
-    assert "start times pinned to ±3h" in html
-    assert "itself the weaker solve" in html, "the point is what it says about the baseline"
-    assert "note warn" in html
-
 
 def test_a_self_consistent_table_carries_no_warning():
     """The banner has to stay rare, or it stops being read."""
@@ -171,15 +136,6 @@ def test_the_exact_column_the_warning_points_at_actually_exists():
     assert "1,105" in html
 
 
-def test_a_wide_optimality_gap_refuses_to_call_the_numbers_prices():
-    html = rule_prices_table([
-        dict(row("baseline", coverage=99.43), gap=0.7934),
-        dict(row("rest 12h → 11h", coverage=99.87), gap=0.61),
-    ], 67)
-    assert "79% optimality gap" in html
-    assert "not converged" not in html or "never got close" in html
-    assert "0 of 2 rows were proved optimal" in html
-
 
 def test_a_converged_table_says_nothing_about_gaps():
     html = rule_prices_table([
@@ -188,3 +144,43 @@ def test_a_converged_table_says_nothing_about_gaps():
     ], 67)
     assert "optimality gap" not in html
     assert "note warn" not in html
+
+def test_an_unreadable_measurement_drops_the_columns_it_cannot_support():
+    """The contract that replaced the caveat.
+
+    Printing euros under a paragraph explaining that the euros cannot be read
+    asks the reader to do something nobody does. When the search has not
+    converged, the searched columns are simply not shown, and the one column
+    that is enumerated rather than searched carries the table on its own.
+    """
+    html = rule_prices_table([
+        dict(row("baseline", coverage=99.43), gap=0.99),
+        dict(row("split shifts allowed", coverage=99.16), gap=0.98, shifts=1105),
+    ], 67)
+    assert "Week costs" not in html
+    assert "Coverage" not in html
+    assert "€" not in html
+    assert "no price column, on purpose" in html
+    assert "1,105" in html, "the exact column has to survive"
+
+
+def test_an_ordering_inversion_alone_is_enough_to_drop_them():
+    """A tightening cannot out-cover the baseline, so one that did proves the
+    baseline is the weaker solve — and every number measured against it goes."""
+    html = rule_prices_table([
+        dict(row("baseline", coverage=99.43), gap=0.0),
+        dict(row("start times pinned to ±3h", coverage=99.74, relaxation=False), gap=0.0),
+    ], 67)
+    assert "Week costs" not in html
+    assert "no price column, on purpose" in html
+
+
+def test_a_converged_self_consistent_table_keeps_everything():
+    html = rule_prices_table([
+        dict(row("baseline", coverage=99.43), gap=0.0),
+        dict(row("rest 12h → 11h", coverage=99.87), gap=0.0),
+    ], 67)
+    assert "Week costs" in html
+    assert "Coverage" in html
+    assert "+0.44pp" in html
+    assert "no price column" not in html

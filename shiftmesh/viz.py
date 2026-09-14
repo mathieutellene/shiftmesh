@@ -14,13 +14,17 @@ blue at 0.483 looked obviously different to me and nearly identical to a
 red-green colour blind reader — the failure worth catching in a test rather
 than in a meeting.
 
-The current ends are orange 0.741 against blue 0.594, a separation of 0.148.
-That is half what the previous pink-and-blue pair managed, and it would not be
-defensible on its own. It is defensible here because colour is no longer the
-only channel: every cell in the balance grid now carries the signed difference
-on its face, so "-2" and "+2" are legible with no colour vision at all. Colour
-ranks the severity; the number states the fact. Do not reintroduce a
-colour-only variant of this grid without restoring the lightness gap.
+The current ends carry their meaning in the hue — orange-red for short, mint
+for spare, the way an alarm and an all-clear are coloured everywhere else — and
+still separate in lightness: 0.439 against 0.761, a gap of 0.322. The obvious
+picks for those two hues did not. A mid orange at 0.546 against a mid teal at
+0.634 is 0.088 apart, which the palette test rejects, and rightly: under
+deuteranopia that pair is one colour. Darkening the orange and lightening the
+mint keeps both hues and triples the gap.
+
+Every cell also carries the signed difference on its face, so "-2" and "+2"
+are legible with no colour vision at all. Colour ranks the severity; the number
+states the fact. Neither channel is load-bearing alone, which is the point.
 
 Because the short end is genuinely light, cell labels flip to dark ink on it.
 White text on a 0.74-luminance ground is barely over 1.4:1, which is not text,
@@ -46,8 +50,8 @@ MUTED = "#8b9bb4"
 ACCENT = "#4da3ff"      # forecast, primary series
 ACCENT_2 = "#22d3a6"    # actual, secondary series
 WARM = "#ffb454"        # attention
-SHORT = WARM            # understaffed — the orange of the roster gantt
-SPARE = ACCENT          # overstaffed — the blue of the roster gantt
+SHORT = "#f4511e"       # understaffed — deep orange-red, 0.439
+SPARE = "#5ee0c0"       # overstaffed  — mint green-blue, 0.761
 MAGENTA = "#f0abfc"     # roster: a block that touches night hours. 0.751, a
                         # clear step above ACCENT's 0.594 — a deeper magenta
                         # lands within 0.01 of the blue and vanishes under
@@ -432,10 +436,18 @@ def table(headers: list[str], rows: list[list[object]], title: str = "",
     return "\n".join(out)
 
 
-def stat(label: str, value: str, note: str = "", tone: str = "") -> str:
+def stat(label: str, value: str, note: str = "", tone: str = "",
+         raw_value: bool = False) -> str:
+    """One figure in the stats strip.
+
+    ``raw_value`` lets a caller pass markup for the value — a real exponent
+    needs ``<sup>``, and escaping it prints the tag at the reader instead.
+    Off by default, because every other value here is a number from data.
+    """
     cls = f" {tone}" if tone else ""
+    shown = value if raw_value else escape(value)
     return (f'<div class="stat{cls}"><span class="k">{escape(label)}</span>'
-            f'<span class="v">{escape(value)}</span>'
+            f'<span class="v">{shown}</span>'
             + (f'<span class="n">{escape(note)}</span>' if note else "")
             + "</div>")
 

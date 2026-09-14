@@ -3,8 +3,10 @@
 Workforce planning on real open data: forecast the contacts, size the floor,
 build a roster that obeys the law, and put a price on it.
 
-**[→ See the output](https://mathieutellene.github.io/shiftmesh/)** — one page,
-built by the command below, no server and no dependencies.
+### 📊 [Read the full report](https://mathieutellene.github.io/shiftmesh/)
+
+One page: the forecast, the staffing, the roster and the bill — built by the
+command below, with no server and no dependencies.
 
 ```
 open data ──▶ forecast ──▶ three staffing models ──▶ CP-SAT roster ──▶ cost

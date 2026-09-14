@@ -429,7 +429,10 @@ wait for an agent to be awake.</p>""")
         [Series(list(actual), "what actually arrived", ACCENT_2, fill=True),
          Series(list(plain), "forecast, unbiased", WARM, dashed=True),
          Series(list(predicted), f"forecast staffed to, +{uplift:.0%}", ACCENT)],
-        "Calls per hour, forecast against actual", week_label, unit="calls/hour"))
+        "Calls per hour, forecast against actual", week_label, unit="calls/hour",
+        residual=(list(predicted - actual),
+                  "forecast minus actual — above the line the hour was "
+                  "over-staffed, below it short")))
 
     f = model.fit_
     body.append(stats([

@@ -222,9 +222,19 @@ class Series:
 
 def line_chart(series: list[Series], title: str, subtitle: str = "",
                width: int = 1000, height: int = 260, unit: str = "",
-               day_ticks: bool = True) -> str:
-    """Several series on one axis. Used for forecast against actual."""
-    left, right, top, bottom = 56, 12, 30, 26
+               day_ticks: bool = True,
+               residual: tuple[list[float], str] | None = None) -> str:
+    """Several series on one axis. Used for forecast against actual.
+
+    ``residual`` adds a strip underneath, on the same x-axis, for the signed
+    difference between two of the series. Kept in the same figure on purpose:
+    the error and the thing it is an error *of* are one question, and putting
+    them in two figures makes a reader hold the first while scrolling to the
+    second.
+    """
+    res_h = 74 if residual else 0
+    height += res_h
+    left, right, top, bottom = 56, 12, 30, 26 + res_h
     plot_w = width - left - right
     plot_h = height - top - bottom
     n = max(len(s.values) for s in series)
@@ -276,6 +286,25 @@ def line_chart(series: list[Series], title: str, subtitle: str = "",
         dash = ' stroke-dasharray="5 4"' if s.dashed else ""
         out.append(f'<polyline points="{points}" fill="none" stroke="{s.colour}" '
                    f'stroke-width="1.8" stroke-linejoin="round"{dash}/>')
+
+    if residual:
+        values, caption = residual
+        r_top = top + plot_h + 44
+        r_mid = r_top + res_h / 2 - 14
+        span = max((abs(float(v)) for v in values), default=1.0) or 1.0
+        out.append(f'<text class="ax" x="{left}" y="{r_top - 12:.0f}" '
+                   f'style="fill:{TEXT}">{escape(caption)}</text>')
+        out.append(f'<line class="grid" x1="{left}" y1="{r_mid:.1f}" '
+                   f'x2="{width - right}" y2="{r_mid:.1f}"/>')
+        for i, v in enumerate(values):
+            yy = r_mid - (float(v) / span) * (res_h / 2 - 18)
+            out.append(f'<line x1="{x(i):.1f}" y1="{r_mid:.1f}" x2="{x(i):.1f}" '
+                       f'y2="{yy:.1f}" stroke="{ACCENT if v >= 0 else SHORT}" '
+                       f'stroke-width="1.6"/>')
+        out.append(f'<text class="ax" x="{left - 8}" y="{r_mid - res_h / 2 + 24:.0f}" '
+                   f'text-anchor="end">+{span:,.0f}</text>')
+        out.append(f'<text class="ax" x="{left - 8}" y="{r_mid + res_h / 2 - 12:.0f}" '
+                   f'text-anchor="end">−{span:,.0f}</text>')
 
     out.append(f'<line class="hovline" x1="0" y1="{top}" x2="0" '
                f'y2="{top + plot_h}" opacity="0"/>')

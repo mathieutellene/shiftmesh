@@ -155,6 +155,11 @@ tbody tr:hover{background:rgba(255,255,255,.022)}
   line-height:1.85;background:#0c1220;border:1px solid var(--line);border-radius:10px;
   padding:16px 18px;margin:14px 0;overflow-x:auto;color:var(--text);max-width:none}
 .eq .cm{color:var(--muted);font-style:italic}
+.tnote{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.wbar{display:flex;align-items:center;gap:9px;min-width:150px}
+.wbar i{display:block;height:7px;border-radius:4px;background:var(--accent);
+  opacity:.75;min-width:3px}
+.wbar b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 .tb td a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(77,163,255,.35)}
 .tb td a:hover{border-bottom-color:var(--accent);color:#8cc4ff}
 
@@ -648,3 +653,48 @@ def rule_prices_table(rows: list[dict], agents: int) -> str:
     return (warning + f'<figure class="tb"><figcaption><b>{title}</b>'
             f'<span>{sub}</span></figcaption><table>'
             + "".join(body) + "</table></figure>")
+
+
+def objective_table(rows: list[dict]) -> str:
+    """The six things the solver trades off, and what each one actually cost.
+
+    "Minimise cost" is not what this model does and saying so would be the
+    easy lie. It minimises one weighted sum whose weights span four orders of
+    magnitude, and the weights are the whole design: an uncovered hour is
+    priced at ten thousand against a paid hour at one, so the solver will
+    spend ten thousand hours of wages before it leaves one hour short.
+
+    The bar is log-scaled because the weights are. On a linear scale five of
+    the six terms are a hairline against understaffing, which is true of their
+    weight and useless as a picture.
+    """
+    if not rows:
+        return ""
+    import math as _m
+    total = sum(r["points"] for r in rows) or 1
+    top = max(r["weight"] for r in rows)
+
+    body = ["<thead><tr><th>What the solver is penalised for</th>"
+            '<th class="r">How much of it</th>'
+            '<th>Penalty each</th>'
+            '<th class="r">Points</th>'
+            '<th class="r">Share</th></tr></thead><tbody>']
+    for r in rows:
+        share = r["points"] / total
+        w = _m.log10(max(r["weight"], 1)) / _m.log10(max(top, 10))
+        body.append(
+            "<tr>"
+            f'<td>{escape(r["term"])}<span class="tnote">{escape(r["note"])}</span></td>'
+            f'<td class="r">{r["amount"]:,}</td>'
+            f'<td><span class="wbar"><i style="width:{w * 100:.0f}%"></i>'
+            f'<b>×{r["weight"]:,}</b></span></td>'
+            f'<td class="r">{r["points"]:,}</td>'
+            f'<td class="r"{" style=color:var(--accent)" if share > .5 else ""}>'
+            f'{share:.1%}</td></tr>')
+    body.append(f'<tr class="tot"><td>Total penalty on this roster</td>'
+                f'<td class="r"></td><td></td><td class="r">{total:,}</td>'
+                f'<td class="r">100%</td></tr></tbody>')
+    return ('<figure class="tb"><figcaption><b>What the optimiser is actually '
+            'minimising</b><span>one weighted sum — the weights are the design '
+            'decision, and they span four orders of magnitude</span></figcaption>'
+            '<table>' + "".join(body) + "</table></figure>")

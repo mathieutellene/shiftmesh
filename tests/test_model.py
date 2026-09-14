@@ -294,3 +294,44 @@ def test_the_model_reports_its_own_size(roster):
                                    .enumerate_shifts(RULES))
     assert stats_["booleans"] == stats_["shifts"] * stats_["agents"] * stats_["days"]
     assert stats_["solutions"] == len(roster.trace)
+
+
+def test_the_objective_breakdown_agrees_with_the_coverage_summary():
+    """Two independent paths to the same two numbers.
+
+    The breakdown walks the covered grid itself; summarise() has its own
+    counter. If they ever disagree, one of them is reading the roster wrong,
+    and the published table would be attributing the penalty to the wrong term.
+    """
+    from shiftmesh.model import objective_breakdown
+
+    roster = solve(office_hours(3), 5, RULES, Weights(), time_limit=10.0)
+    rows = {r["term"]: r for r in objective_breakdown(roster)}
+    s = summarise(roster)
+
+    assert rows["Hours short of the requirement"]["amount"] == s.understaffed_hours
+    assert rows["Hours more than needed"]["amount"] == s.overstaffed_hours
+    assert rows["Rostered hours"]["amount"] == sum(
+        roster.hours_worked(a) for a in range(roster.n_agents))
+
+
+def test_every_weight_reaches_the_breakdown():
+    """A term added to Weights but not to the table would be invisible."""
+    from dataclasses import fields
+    from shiftmesh.model import objective_breakdown
+
+    roster = solve(office_hours(2), 4, RULES, Weights(), time_limit=8.0)
+    used = {r["weight"] for r in objective_breakdown(roster, Weights())}
+    declared = {getattr(Weights(), f.name) for f in fields(Weights)}
+    assert declared <= used, "a weight exists that the breakdown never reports"
+
+
+def test_the_breakdown_works_on_a_roster_the_solver_did_not_produce():
+    """The greedy fallback records objective 0.0, which is a placeholder and
+    not a score. Recomputing from the assignment is the only way to price it."""
+    from shiftmesh.model import objective_breakdown
+
+    roster = solve(office_hours(2), 4, RULES, Weights(), time_limit=8.0)
+    roster.status, roster.objective = "GREEDY", 0.0
+    total = sum(r["points"] for r in objective_breakdown(roster))
+    assert total > 0, "a real roster always costs something in paid hours alone"

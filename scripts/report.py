@@ -27,6 +27,7 @@ except (AttributeError, OSError):  # pragma: no cover
     pass
 
 from shiftmesh import PRESETS, Weights, solve, summarise  # noqa: E402
+from shiftmesh.model import objective_breakdown  # noqa: E402
 from shiftmesh import benchmarks as B  # noqa: E402
 from shiftmesh.channels import Channel, erlang_a, sqrt_staffing  # noqa: E402
 from shiftmesh.cost import PayRules, annualise, cost_per_contact, price_roster  # noqa: E402
@@ -54,6 +55,7 @@ from shiftmesh.report import (  # noqa: E402
     prose,
     section,
     RULE_NOTES,
+    objective_table,
     rule_prices_table,
     rules_table,
     simulator,
@@ -700,6 +702,35 @@ has to keep them."""))
                         colour="balance",
                         reference=[[float(v) for v in row] for row in roster.required]
                         ).render())
+    # What the solver is optimising is a fair question and the page never
+    # answered it. "Minimise cost" is the easy lie: six terms, weights across
+    # four orders of magnitude, and which of them actually bound on this week
+    # is only visible after the fact.
+    body.append("<h3>What it was trying to do</h3>")
+    ob = objective_breakdown(roster, Weights())
+    body.append(objective_table(ob))
+    _worst = max(ob, key=lambda r: r["points"])
+    _share = _worst["points"] / max(1, sum(r["points"] for r in ob))
+    body.append(note(
+        f"<b>{_share:.0%} of the penalty on this roster is one term.</b> "
+        f"{escape(_worst['term'].lower())} — {_worst['amount']:,} of them, at "
+        f"×{_worst['weight']:,} each. Everything else together is the rest. "
+        "That is the model working as designed rather than a fault: the "
+        "ordering below understaffing is a genuine business choice, which is "
+        "why the weights are arguments and not constants, but understaffing "
+        "is not a preference and is priced so it cannot be traded away.",
+        "key"))
+    body.append(f"""<p>Two of these are the ones people ask about. <b>Start times
+away from each agent's own anchor</b> is the request to work roughly the same
+hours each day: the model gives every agent an anchor hour it chooses, then
+pays 6 points for each hour any shift starts away from it, measured around a
+clock face so 23:00 and 01:00 are two hours apart rather than twenty-two. The
+hard rule caps that deviation at {roster.rules.max_start_spread_hours}h; the penalty
+is what keeps it small inside the cap. <b>Spread between the longest and
+shortest week</b> is the one that stops a roster where four people work
+forty-eight hours and the rest work twenty — legal, cheap, and unacceptable,
+which is exactly what a soft penalty is for.</p>""")
+
     if roster.trace:
         body.append("<h3>How it got there</h3>")
         body.append(f"""<p>CP-SAT does not walk to an answer, it closes on one

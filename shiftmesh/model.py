@@ -446,3 +446,65 @@ def _roster_from(assignment, required, n_agents, rules, weights, status, wall_ti
         rules=rules,
         weights=weights,
     )
+
+
+def objective_breakdown(roster: Roster,
+                        weights: Weights | None = None) -> list[dict]:
+    """What the solver was actually trading off, term by term, in its own units.
+
+    The objective is one weighted sum and the weights span four orders of
+    magnitude, so "minimise cost" is nowhere near a description of it. An hour
+    of understaffing is priced at ten thousand and an hour of salary at one:
+    the solver will pay ten thousand hours of wages before it leaves one hour
+    uncovered. Reading that off the roster after the fact is the only way to
+    see which terms were live and which never bound.
+
+    Recomputed from the assignment rather than read out of the solver, so it
+    can be checked against a roster the solver did not produce — the greedy
+    fallback included.
+    """
+    w = weights or roster.weights
+    n, days = roster.n_agents, len(DAYS)
+
+    under = over = 0
+    for d in range(days):
+        for h in range(HOURS):
+            gap = roster.covered[d][h] - roster.required[d][h]
+            under += max(0, -gap)
+            over += max(0, gap)
+
+    week = [roster.hours_worked(a) for a in range(n)]
+    contracted = roster.rules.max_weekly_hours
+    overtime = sum(max(0, hrs - contracted) for hrs in week)
+
+    # The anchor is not stored, so recover it the way the model defines it: the
+    # hour that minimises the clock-face distance to this agent's own starts.
+    irregular = 0
+    for a in range(n):
+        starts = [s for d in range(days)
+                  for s, _ in (roster.assignment[(a, d)] or ())]
+        if not starts:
+            continue
+        irregular += min(
+            sum(min(abs(s - anchor), HOURS - abs(s - anchor)) for s in starts)
+            for anchor in range(HOURS)
+        )
+
+    unfair = (max(week) - min(week)) if week else 0
+
+    terms = [
+        ("Hours short of the requirement", under, w.understaffing,
+         "a roster that misses demand is not cheaper, it is broken"),
+        ("Hours more than needed", over, w.overstaffing,
+         "paid for and not used"),
+        ("Overtime hours", overtime, w.overtime_hour,
+         "above the contracted week"),
+        ("Start times away from each agent's own anchor", irregular,
+         w.irregularity,
+         "measured on a clock face, so 23:00 and 01:00 are two hours apart"),
+        ("Spread between the longest and shortest week", unfair, w.unfairness,
+         "nobody carries the week"),
+        ("Rostered hours", sum(week), w.paid_hour, "the wage bill itself"),
+    ]
+    return [{"term": t, "amount": a, "weight": wt, "points": a * wt, "note": nt}
+            for t, a, wt, nt in terms]

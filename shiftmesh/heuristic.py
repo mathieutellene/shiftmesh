@@ -57,9 +57,20 @@ def _weekly_rest_ok(days: dict[int, tuple], rules: WorkRules) -> bool:
 
 
 def greedy_roster(
-    required: list[list[int]], n_agents: int, rules: WorkRules
+    required: list[list[int]],
+    n_agents: int,
+    rules: WorkRules,
+    trace: list[tuple[int, int, int]] | None = None,
 ) -> Assignment:
-    """Fill the week one agent at a time, biggest hole first."""
+    """Fill the week one agent at a time, biggest hole first.
+
+    Pass ``trace`` and it records ``(agent, day, shift index)`` in the order the
+    shifts were actually placed. The order is the interesting part: this is a
+    constructive heuristic, so the sequence of decisions *is* the algorithm, and
+    replaying it shows a week assembling itself rather than a finished roster
+    that a reader has to take on trust. Indices point into
+    ``enumerate_shifts(rules)``, whose entry 0 is the empty shift.
+    """
     shifts = enumerate_shifts(rules)
     slots = [
         [((h // HOURS) % N_DAYS, h % HOURS) for h in covered_hours(s)] for s in shifts
@@ -123,6 +134,8 @@ def greedy_roster(
                 break
 
             d, si = best_shift
+            if trace is not None:
+                trace.append((a, d, si))
             days[d] = shifts[si]
             worked_hours += lengths[si]
             if anchor is None:

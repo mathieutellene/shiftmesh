@@ -61,16 +61,37 @@ class _Trace(cp_model.CpSolverSolutionCallback):
     good — how far apart the two were when the clock ran out.
 
     Each entry is (seconds, objective, best bound).
+
+    Given ``cells`` it also keeps the roster behind each of those points, as one
+    shift index per (agent, day). That is what turns the trace from a line on a
+    chart into something a reader can watch: the same 67x168 grid the report
+    draws, redrawn at every improvement. It costs one scan of the shift
+    booleans per solution — about 34,000 lookups, roughly a percent of a
+    ten-minute budget — so it is off unless asked for.
     """
 
-    def __init__(self):
+    def __init__(self, cells=None, n_shifts: int = 0):
         super().__init__()
         self.points: list[tuple[float, float, float]] = []
+        self.frames: list[tuple[int, ...]] = []
+        self._cells = cells
+        self._n_shifts = n_shifts
 
     def on_solution_callback(self) -> None:
         self.points.append(
             (self.WallTime(), self.ObjectiveValue(), self.BestObjectiveBound())
         )
+        if self._cells is None:
+            return
+        picked = []
+        for row in self._cells:
+            chosen = 0
+            for s in range(1, self._n_shifts):
+                if self.Value(row[s]):
+                    chosen = s
+                    break
+            picked.append(chosen)
+        self.frames.append(tuple(picked))
 
 
 @dataclass(frozen=True)
@@ -110,6 +131,16 @@ class Roster:
 
     trace: list[tuple[float, float, float]] = field(default_factory=list)
     """(seconds, objective, bound) for every improved solution the search found."""
+
+    frames: list[tuple[int, ...]] = field(default_factory=list)
+    """One shift index per (agent, day) behind each point of ``trace``.
+
+    Empty unless ``solve(capture=True)``. Row order is agent-major, so entry
+    ``a * n_days + d`` is what agent ``a`` was given on day ``d``.
+    """
+
+    shifts: list = field(default_factory=list)
+    """The catalogue ``frames`` indexes into. Index 0 is the empty shift."""
 
     model_stats: dict = field(default_factory=dict)
     """How big the model was once CP-SAT had presolved it."""
@@ -157,6 +188,7 @@ def solve(
     warm_start: bool = True,
     deterministic: bool = False,
     break_symmetry: bool = False,
+    capture: bool = False,
 ) -> Roster:
     """Build a weekly roster for ``n_agents`` against an hourly requirement.
 
@@ -405,7 +437,11 @@ def solve(
     # covered week in fifteen without it. Every other default is left alone.
     solver.parameters.cp_model_probing_level = 0
 
-    trace = _Trace()
+    # One row per (agent, day), in the order the report unpacks them.
+    cells = ([[x[(a, d, si)] for si in range(len(shifts))]
+              for a in range(n_agents) for d in range(n_days)]
+             if capture else None)
+    trace = _Trace(cells, len(shifts))
     status = solver.Solve(m, trace)
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -447,6 +483,8 @@ def solve(
         rules=rules,
         weights=weights,
         trace=trace.points,
+        frames=trace.frames,
+        shifts=list(shifts),
         model_stats={
             "shifts": len(shifts),
             "booleans": len(x),
@@ -455,6 +493,22 @@ def solve(
             "solutions": len(trace.points),
             "workers": workers,
         },
+    )
+
+
+def warm_start_roster(required, n_agents, rules, weights=None) -> Roster:
+    """The greedy roster alone, in the same object ``solve`` returns.
+
+    The page claims the solver is worth what it costs. That claim is only worth
+    printing if the alternative is measured rather than asserted, and measuring
+    it costs about sixty milliseconds — so the report builds this one too, and
+    quotes the two side by side. It is also exactly what the browser panel runs,
+    which makes it the right thing to compare a reader's own week against.
+    """
+    return _roster_from(
+        greedy_roster(required, n_agents, rules),
+        required, n_agents, rules, weights or Weights(),
+        status="GREEDY", wall_time=0.0,
     )
 
 

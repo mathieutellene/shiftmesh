@@ -231,6 +231,34 @@ after the roster has stopped improving.
 Which is why the word *optimal* does not appear anywhere in this repository as a
 claim about its own output.
 
+### Watch it, rather than take it
+
+The report replays the whole search. Not a screen recording — every frame is an
+assignment the search really held, scored the same way the final one is scored,
+and a test asserts the last frame is the roster the page publishes.
+
+The two acts are deliberately not equalised, because the inequality is the
+finding:
+
+| | greedy | CP-SAT |
+|---|---|---|
+| frames | 306 | 147 |
+| wall clock | 0.19 s | 586 s |
+| uncovered hours | 2,261 → 27 | 27 → 1 |
+| shifts moved per frame | 1 | 5.9 of 469 |
+
+Of 147 improving solutions, **19 move the uncovered-hours count at all** and
+**10 change no shift whatsoever** — the objective fell only because the
+solver settled an agent's anchor hour. The timeline marks which is which instead
+of hiding it. Ten minutes of search buys the last 26
+agent-hours, and the first 2,234 came free.
+
+CP-SAT's first reported solution is the warm start with **not one of the 11,256
+cells changed**. Its own `ObjectiveValue()` sits a few percent above what
+recomputing the objective from that identical assignment gives, because the free
+anchor variables are not yet settled — so every frame in both acts is scored by
+recomputation, and the handoff does not jump on a picture that did not move.
+
 ---
 
 ## 6. The roster
@@ -292,26 +320,42 @@ returns is no better than the warm start it was handed.
 
 ## 7. Move it yourself
 
-`shiftmesh/simulator.js` is Erlang C, the shift catalogue, the rules audit and
-the cost model ported to the browser, so the page can answer *what if we were
-four people short* without a terminal. Type a headcount, a handle time, a service
-promise, a shrinkage or a jurisdiction, and everything downstream rebuilds: the
-distribution matrix, the coverage grid, the cost, and a curve of every headcount
-in range with the trade-off drawn out.
+`shiftmesh/simulator.js` is Erlang C, the deferred-work model, the shift
+catalogue, the rules audit and the cost model ported to the browser, so the page
+can answer *what if we were four people short* without a terminal. Type a
+headcount, a handle time, a service promise, a shrinkage or a jurisdiction, and
+everything downstream rebuilds: the distribution matrix, the coverage grid, the
+cost, and a curve of every headcount in range with the trade-off drawn out.
 
-It reports the number people actually want, which is not coverage:
+It reports what the roster actually does, which is not a coverage percentage:
 
-> **Covered**, and it takes 62 people to do it — 11 more than the 51 the raw
-> hours suggest, which is what the rest rules and the shift shapes cost.
-> Dropping to 61 would save €72 a week without losing a point of coverage.
+> **27 agent-hours short** across 10 of 168 slots, worst 5 at once. 74 would
+> clear it. Solved in 66 ms, redrawn in 19 ms, in your browser.
 
-What runs in the browser is the **greedy** roster, not CP-SAT — a solver does not
-fit in a page. That is stated on the panel rather than glossed.
+Set the panel to the published week's own settings and it solves **the same
+2,270 agent-hours across both channels** that the roster above it solved — and
+comes up 27 hours short where the solver came up 1. That is the price of the
+warm start alone, and it is a sentence a reader can check rather than take.
+
+It reads that way because of a set of bugs worth naming. The panel used to be
+handed the voice forecast alone, so it quietly solved a week 236 agent-hours
+smaller than the one above it, and no setting of the controls could reproduce
+the published matrix: all 168 requirement cells were short, 100 of them by one
+and 68 by two. Its cost-per-contact divided by the forecast while the section
+above divided by what arrived — a 25% gap on the same words. And under the
+contact centre agreement its shift catalogue held 169 of the 1,604 patterns
+Python enumerates, every split shift missing, under a label reading *what the
+roster is allowed to do*.
+
+What runs in the browser is still the **greedy** roster, not CP-SAT — a solver
+does not fit in a page. That is stated on the panel rather than glossed.
 
 The JavaScript Erlang C returns a requirement grid **identical to the Python one,
-cell for cell**, pinned in `tests/test_simulator.py`. There is no Node here to run
-a real cross-check, so the tests instead scan the JavaScript for every field it
-reads and fail if Python does not send it — which is how these two actually drift.
+cell for cell**, pinned in `tests/test_simulator.py`, and so is the shift
+catalogue for all three presets. There is no Node here to run a real
+cross-check, so the tests instead scan the JavaScript for every field it reads,
+enumerate both catalogues and diff them, and assert that `docs/index.html`
+contains the current browser source — which is how these two actually drift.
 
 ---
 
@@ -327,13 +371,44 @@ An hour of rostered agent time in Spain costs **€12.84**:
 On top of that, per the sector agreement: night work **+€1.96/hour**, Sundays
 **+€15.33/shift**, public holidays **+€44.51/shift**, daytime overtime **+25%**.
 Premiums land on the *ordinary* hour, not the loaded one — which is how the
-agreement writes it, and the other order quietly inflates every night shift by a
-third.
+agreement writes it. The other order — premium onto the already-loaded rate —
+never loads the premium, so it pays €1.96 for a night hour where the agreement
+pays €2.59: short by the whole 32.15% of employer contributions on it, €326 on
+this week's night hours. The README said the opposite of this for a while, in
+four places, and the test that pins it had an assertion pointing one way and a
+docstring pointing the other.
 
 The report prices the week, splits it by premium, and shows cost per agent. The
 spread between the cheapest and dearest agent is entirely night hours and Sunday
 shifts — everyone is on the same grade. Both are scheduling choices with a price,
 and both are things the solver would trade away if the objective priced them.
+
+### Where the money goes, and why
+
+A grid of euros per hour would be the headcount grid multiplied by a
+near-constant — it correlates **+0.99** with a heatmap three sections earlier,
+and a reader would see that instantly. So the report divides by the arrivals
+instead and prints **what a contact costs, hour by hour**. That grid correlates
+−0.60 with headcount, sums to the same €31,205 the table above it prints, and
+unfolds the page's own cost-per-contact figure into the 168 hours that made it.
+
+It carries one finding:
+
+> The night takes **17.7%** of the contacts and **22.6%** of the rostered hours
+> — and **26.2%** of the bill. A contact between 22:00 and 06:00 costs €4.71;
+> the same contact by day costs €2.85.
+>
+> Set every premium in the agreement to zero and **54.0% of that gap is still
+> there.** The premiums are the smaller half of it. The rest is the queue: an
+> hour with a handful of calls still needs enough people to answer them inside
+> thirty seconds, so the night runs 3.4 contacts per agent-hour against 4.6 by
+> day.
+
+Two of the five cost lines are not hourly and had to be given a convention,
+which `cost.spend_grid` states rather than buries: the flat Sunday and holiday
+premiums are spread across the hours of the shift that earned them, and overtime
+across every hour its agent worked. Neither changes a total. Both change where
+one appears, and the grid is held against the invoice to the cent in a test.
 
 ---
 
@@ -374,7 +449,10 @@ assumed, because no public-sector figure exists. The report says so on the page.
 | `benchmarks.py` | every outside number, with its source |
 | `viz.py` | heatmaps, charts and tables as plain SVG |
 | `report.py` | the page they all assemble into |
+| `replay.py` | the search recorded frame by frame, so it can be replayed |
 | `simulator.js` | the same pipeline, ported to the browser |
+| `simulator_ui.js` | the controls, and everything that redraws when one moves |
+| `replay_ui.js` | the player: two acts of the search on one playhead |
 
 ### The audit is not the model
 
@@ -398,7 +476,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-201 tests across twelve files, about four minutes. The ones worth reading:
+239 tests across fourteen files, about three minutes. The ones worth reading:
 
 - **Erlang C** against the textbook form written with real factorials, at six
   loads to nine significant figures — and then at a load where that form
@@ -414,7 +492,21 @@ python -m pytest tests/ -q
   same luminance are one colour to a red-green colour blind reader. The first
   version of this palette failed that test.
 - **The browser port** is checked for drift by scanning it for every field it
-  reads and failing if Python does not send it.
+  reads and failing if Python does not send it, and by enumerating the shift
+  catalogue in both languages and comparing it element by element. That second
+  one was added after the browser turned out to be building 169 of the 1,604
+  shifts the contact centre agreement allows — every split shift missing —
+  without moving a single headline number.
+- **The published page** is checked for containing the current browser source.
+  `docs/index.html` inlines those files, so editing one and not rebuilding
+  leaves the page at the repo's own URL running the old copy, and every other
+  test still passes because they all read the source rather than the page.
+- **The recorded search** is replayed frame by frame and asserted to end on the
+  roster the page publishes. An animation that drifts from its own result is
+  worse than no animation, because it looks like evidence.
+- **The cost grid** is summed and held against the invoice to the cent, with a
+  public holiday and overtime in play, because reallocating flat per-shift
+  premiums onto hours is exactly where money goes missing.
 - Several tests exist because the version before them could not fail.
 
 ---

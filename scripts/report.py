@@ -27,15 +27,23 @@ except (AttributeError, OSError):  # pragma: no cover
     pass
 
 from shiftmesh import PRESETS, Weights, solve, summarise  # noqa: E402
-from shiftmesh.model import objective_breakdown  # noqa: E402
+from shiftmesh.model import objective_breakdown, warm_start_roster  # noqa: E402
+from shiftmesh.heuristic import greedy_roster  # noqa: E402
+from shiftmesh.replay import record  # noqa: E402
 from shiftmesh import benchmarks as B  # noqa: E402
 from shiftmesh.channels import Channel, erlang_a, sqrt_staffing  # noqa: E402
-from shiftmesh.cost import PayRules, annualise, cost_per_contact, price_roster  # noqa: E402
+from shiftmesh.cost import (  # noqa: E402
+    PayRules,
+    annualise,
+    cost_per_contact,
+    is_night,
+    price_roster,
+    spend_grid,
+)
 from shiftmesh.erlang import traffic_intensity  # noqa: E402
 from shiftmesh.forecast import (  # noqa: E402
     Forecaster,
     HOURS_PER_WEEK,
-    backtest,
     backtest_weekly,
     learning_curve,
     tune_uplift,
@@ -58,6 +66,7 @@ from shiftmesh.report import (  # noqa: E402
     objective_table,
     rule_prices_table,
     rules_table,
+    replay_panel,
     simulator,
     sources_table,
     stat,
@@ -70,7 +79,6 @@ from shiftmesh.viz import (  # noqa: E402
     NIGHT,
     PINK,
     SUNDAY,
-    bar_chart,
     convergence_chart,
     decomposition_chart,
     learning_curve_chart,
@@ -197,6 +205,10 @@ def js_rules() -> dict:
             "minRest": r.min_rest_hours,
             "minWeeklyRest": r.min_weekly_rest_hours,
             "maxStartSpread": r.max_start_spread_hours,
+            "allowSplitShifts": r.allow_split_shifts,
+            "splitMinBlock": r.split_min_block_hours,
+            "splitGapMin": r.split_gap_hours_min,
+            "splitGapMax": r.split_gap_hours_max,
         }
     return out
 
@@ -338,7 +350,10 @@ def main() -> int:
     agents = args.agents or int(
         total_hours / rules.max_weekly_hours * B.HEADCOUNT_UPLIFT.value) + 1
     print(f"solving for {agents} agents, {args.time:.0f}s …", flush=True)
-    roster = solve(need_total, agents, rules, Weights(), time_limit=args.time)
+    greedy_steps: list[tuple[int, int, int]] = []
+    greedy_roster(need_total, agents, rules, trace=greedy_steps)
+    roster = solve(need_total, agents, rules, Weights(), time_limit=args.time,
+                   capture=True)
     s = summarise(roster)
     covered = recompute_coverage(roster)
     print(f"  {roster.status.lower()}  coverage {s.coverage_pct:.2f}%  "
@@ -357,6 +372,7 @@ def main() -> int:
         channels, need_voice, need_tickets, need_total,
         roster, s, covered, money, pay, contacts_week,
         call_multiple, request_rate, agents, desk_share, model,
+        greedy_steps,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(html, encoding="utf-8")
@@ -367,7 +383,8 @@ def main() -> int:
 def render(args, window, raw, calls, digital, every, target, actual, predicted,
            plain, uplift, uplift_rows, channels, need_voice, need_tickets,
            need_total, roster, s, covered, money, pay, contacts_week,
-           call_multiple, request_rate, agents, desk_share, model) -> str:
+           call_multiple, request_rate, agents, desk_share, model,
+           greedy_steps) -> str:
     body: list[str] = []
     week_label = f"week {target} of {args.weeks}, starting {window.start}"
 
@@ -424,12 +441,10 @@ wait for an agent to be awake.</p>""")
     body.append(section("02", "The forecast",
                         "A ridge regression on a seasonal basis, scored the way the "
                         "operation feels it rather than the way a paper would."))
-    err = float(np.mean(np.abs(predicted - actual)))
     # A mean absolute error in calls says nothing on its own: 5 calls an hour is
     # excellent against a mean of 300 and useless against a mean of 8. Three
     # percentages, because they answer three different questions.
     mean_hour = float(actual.mean())
-    err_pct = err / mean_hour * 100 if mean_hour else 0.0
     busy = actual >= 1.0
     smape = float(100 * np.mean(
         2 * np.abs(predicted[busy] - actual[busy])
@@ -586,7 +601,7 @@ clean {f['smearing']:.4f} rather than something that has absorbed a bias.</p></d
             "flattens after that: the weekly shape is learned quickly and the extra "
             "months mostly add drift the trend term already handles. Worth knowing "
             "before anyone is asked to warehouse three years of interval data."))
-    body.append(f"""<p>The uplift is deliberate. An unbiased forecast is wrong in
+    body.append("""<p>The uplift is deliberate. An unbiased forecast is wrong in
 the expensive direction half the time, because a missing agent costs a queue and
 a spare one costs an hour of salary. How far above the mean to staff is settled
 by backtesting rather than by taste:</p>""")
@@ -721,6 +736,34 @@ has to keep them."""))
     # answered it. "Minimise cost" is the easy lie: six terms, weights across
     # four orders of magnitude, and which of them actually bound on this week
     # is only visible after the fact.
+    # ── the search, played back ──────────────────────────────────────────
+    # The roster above is where the search stopped. It says nothing about how
+    # it got there, and how it got there is the argument this repository
+    # actually makes: a greedy pass builds the whole legal week in two tenths
+    # of a second, and ten minutes of CP-SAT then moves a few shifts at a time.
+    # Told in prose that is a claim; played back it is a thing to watch.
+    replay = record(roster, greedy_steps, need_total,
+                    PRESETS[args.rules], pay, Weights())
+    n_solver = len(replay["sizes"])
+    moved = sum(1 for f in range(1, n_solver)
+                if replay["short"][replay["split"] + f]
+                != replay["short"][replay["split"] + f - 1])
+    body.append("<h3>Watch it solve</h3>")
+    body.append(prose(
+        """Nothing here is a recording of a screen. Every frame is an
+assignment the search really held, scored the same way the table below scores
+the final one, and the last frame is the roster drawn above — a test asserts
+that, because an animation that drifts from its own result is worse than no
+animation.""",
+        f"""The two acts are deliberately not equalised. The greedy places
+{replay['split']} shifts in about a fifth of a second and takes the week from
+{replay['short'][0]:,} uncovered agent-hours to
+{replay['short'][replay['split'] - 1]:,}. CP-SAT then reports {n_solver}
+improving solutions over {args.time:.0f} seconds, of which {moved} move the
+uncovered count at all. Its first one is the greedy roster unchanged, which is
+why the score does not jump at the handoff."""))
+    body.append(replay_panel(json.dumps(replay, separators=(",", ":"))))
+
     body.append("<h3>What it was trying to do</h3>")
     ob = objective_breakdown(roster, Weights())
     body.append(objective_table(ob))
@@ -798,22 +841,54 @@ gap it stopped at is the honest measure of how much is still unknown.</p>""")
         "06", "Move the numbers yourself",
         "The same pipeline, running in your browser. Change how many people you "
         "have, or what you promise them, and watch the matrix rebuild."))
-    body.append(f"""<p>Everything above is one scenario. The panel below is the
+    body.append("""<p>Everything above is one scenario. The panel below is the
 whole thing — Erlang C, the shift catalogue, the rules audit and the cost model
 — ported to JavaScript and running on the page, so the question "what if we were
 four people short" takes a few milliseconds instead of a terminal.</p>""")
+    # Measure the alternative rather than asserting it. This is the same roster
+    # the panel below builds, on the same demand, so the sentence a reader can
+    # check by moving the controls is the sentence the page prints.
+    greedy = warm_start_roster(need_total, agents, PRESETS[args.rules])
+    gs = summarise(greedy)
+    if roster.status == "GREEDY":
+        # The search found nothing better than its own warm start, so the roster
+        # above IS this one. Claiming a difference here would have the page
+        # compare a thing to itself and print "27h, where the solver left 27h".
+        outcome = ("it is the roster above, exactly — this build gave the search "
+                   f"{args.time:.0f} seconds and it found nothing better than the "
+                   "warm start it began from")
+    elif gs.understaffed_hours:
+        outcome = (f"it leaves {gs.understaffed_hours}h of the week uncovered, "
+                   f"where the solver left {s.understaffed_hours}h. That gap is "
+                   f"what {args.time:.0f} seconds of search bought")
+    else:
+        outcome = (f"it covers the week too, but with {gs.overstaffed_hours}h of "
+                   f"paid time spare against the solver's {s.overstaffed_hours}h — "
+                   f"{gs.overstaffed_hours - s.overstaffed_hours}h of salary "
+                   f"buying nothing. Closing that gap is what "
+                   f"{args.time:.0f} seconds of search bought")
     body.append(note(
         "<b>This is the greedy roster, not the solver.</b> CP-SAT does not run in "
         "a browser, so the panel builds each week the way the warm start does: "
         "hand every agent the shift that closes the biggest remaining hole, if "
         "the rules still hold. That is instant and it is legal — the audit runs "
-        "live and will say so if it ever is not — but it leaves more spare hours "
-        f"than the solver. On this week the solver reached {s.overstaffed_hours}h "
-        "spare; the greedy alone lands higher, and the difference is what the "
-        "sixty seconds of search above bought."))
+        "live and will say so if it ever is not. It is also worse, and you can "
+        "check that rather than take it: set the controls to this week's own "
+        f"configuration — {agents} agents, {args.voice_aht:.0f}s handle time, "
+        f"{B.VOICE_SLA.value:.0%} in {B.VOICE_SLA_SECONDS.value:.0f}s, "
+        f"{args.shrinkage:.0%} shrinkage — and the panel solves the same "
+        f"{sum(sum(r) for r in need_total):,} agent-hours, both channels, that "
+        f"the roster above it solved. On that demand {outcome}."))
+    ticket_channel = channels["tickets"]
     body.append(simulator(
-        requirement_source=None,
         arrivals=[[round(v, 2) for v in predicted[d * 24:(d + 1) * 24]] for d in range(7)],
+        deferred={
+            "arrivals": week_grid(list(digital), target),
+            "aht": ticket_channel.aht_seconds,
+            "windowHours": ticket_channel.window_hours,
+            "occupancy": ticket_channel.occupancy,
+        },
+        contacts=contacts_week,
         rules=js_rules(),
         pay=js_pay(pay),
         target_seconds=B.VOICE_SLA_SECONDS.value,
@@ -852,6 +927,86 @@ top."""))
         stat("Blended hour", f"€{money.blended_hour:,.2f}",
              f"vs €{pay.loaded_hour:,.2f} base"),
     ]))
+
+    # ── where the money actually goes ────────────────────────────────────
+    # A grid of euros per slot would be the roster grid times a near-constant:
+    # it correlates +0.99 with the headcount heatmap three sections above, and
+    # a reader sees that instantly and trusts the page less for it. Dividing by
+    # the arrivals instead turns it into the one cost view whose shape is not
+    # already drawn: it is the €/contact tile above, unfolded into the 168
+    # hours that produced it, and it correlates -0.60 with headcount.
+    spend = spend_grid(roster, pay)
+    dig_week = week_grid(list(digital), target)
+    arrivals_grid = [[float(actual[d * 24 + h]) + dig_week[d][h] for h in range(24)]
+                     for d in range(7)]
+    rostered_night = sum(
+        1 for a in range(roster.n_agents) for d in range(7)
+        for h in covered_hours(roster.assignment[(a, d)]) if is_night(h))
+    rostered_day = int(money.rostered_hours) - rostered_night
+    per_contact = [[(spend[d][h] / arrivals_grid[d][h]) if arrivals_grid[d][h] > 0 else 0.0
+                    for h in range(24)] for d in range(7)]
+
+    # The outlier is real and it is a sampling artefact at the same time: an
+    # hour with four contacts divides a whole shift's wage by four. Quote the
+    # range over hours that carry enough traffic to mean something, let the
+    # extreme sit on the grid with its colour capped, and never headline it.
+    BUSY = 20.0
+    busy_vals = [per_contact[d][h] for d in range(7) for h in range(24)
+                 if arrivals_grid[d][h] >= BUSY]
+    # Saturate just above where the busy hours stop, rounded to something a
+    # legend can say out loud. Written down as a constant it would drift the
+    # first time the pay rules or the week moved.
+    ordered = sorted(busy_vals)
+    CONTACT_CAP = max(1.0, round(ordered[int(len(ordered) * 0.95)] + 0.4))
+    thin = sum(1 for d in range(7) for h in range(24)
+               if 0 < arrivals_grid[d][h] < BUSY)
+
+    night_spend = sum(spend[d][h] for d in range(7) for h in range(24) if is_night(h))
+    night_contacts = sum(arrivals_grid[d][h] for d in range(7) for h in range(24)
+                         if is_night(h))
+    day_spend, day_contacts = money.total - night_spend, contacts_week - night_contacts
+    night_each = night_spend / night_contacts if night_contacts else 0.0
+    day_each = day_spend / day_contacts if day_contacts else 0.0
+
+    # How much of that gap is the agreement, and how much is the queue? Reprice
+    # the same roster with every premium at zero: whatever survives is Erlang C
+    # refusing to staff four calls with half a person.
+    flat_pay = PayRules(night_premium_hour=0.0, sunday_premium_shift=0.0,
+                        holiday_premium_shift=0.0, overtime_uplift=0.0)
+    flat = spend_grid(roster, flat_pay)
+    flat_night = sum(flat[d][h] for d in range(7) for h in range(24) if is_night(h))
+    flat_total = sum(sum(r) for r in flat)
+    flat_night_each = flat_night / night_contacts if night_contacts else 0.0
+    flat_day_each = ((flat_total - flat_night) / day_contacts) if day_contacts else 0.0
+    gap = night_each - day_each
+    structural = (flat_night_each - flat_day_each) / gap if gap else 0.0
+
+    body.append(Heatmap(
+        per_contact, "What a contact costs, hour by hour",
+        f"€ per contact handled · brighter is dearer, capped at €{CONTACT_CAP:.2f} "
+        f"so one thin hour does not set the scale for 168 · "
+        f"€{min(busy_vals):,.2f}–€{max(busy_vals):,.2f} across hours with "
+        f"at least {BUSY:.0f} contacts",
+        unit="", decimals=2, cap=CONTACT_CAP).render())
+
+    body.append(note(
+        f"<b>The night takes {night_contacts / contacts_week:.1%} of the "
+        f"contacts and {rostered_night / max(money.rostered_hours, 1):.1%} of "
+        f"the rostered hours — and {night_spend / money.total:.1%} of the "
+        f"bill.</b> "
+        f"A contact between 22:00 and 06:00 costs €{night_each:,.2f}; the same "
+        f"contact by day costs €{day_each:,.2f}. Set every premium in the "
+        f"agreement to zero — night, Sunday, holiday, overtime — and "
+        f"{structural:.1%} of that gap is still there. The premiums are the "
+        f"smaller half of it. The rest is the queue: a quiet hour with a "
+        f"handful of calls still needs enough people to answer them inside "
+        f"thirty seconds, so the night runs "
+        f"{night_contacts / max(rostered_night, 1):,.1f} "
+        f"contacts per agent-hour against "
+        f"{day_contacts / max(rostered_day, 1):,.1f} by day. "
+        f"{thin} of the 168 hours carry fewer than {BUSY:.0f} contacts and are "
+        f"noisy by construction; the aggregate above is not, being "
+        f"{night_contacts:,.0f} contacts against {day_contacts:,.0f}."))
 
     # Everything above prices hours actually rostered. That is right for staff
     # paid by the hour and wrong for staff on a contract, and the difference is
@@ -1023,7 +1178,7 @@ def roster_gantt(roster) -> str:
 
     out.append("</svg>")
     out.append(f'<div class="legend"><span><i style="--c:{ACCENT}"></i>day</span>'
-               f'<span><i style="--c:{MAGENTA}"></i>includes night hours</span>'
+               f'<span><i style="--c:{MAGENTA}"></i>night hours</span>'
                f'<span class="hint">click any row for that agent’s week</span>'
                f'</div>')
     out.append("</figure>")

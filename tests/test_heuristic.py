@@ -58,3 +58,32 @@ def test_no_demand_means_nobody_is_rostered():
     empty = [[0] * HOURS for _ in range(7)]
     assignment = greedy_roster(empty, 3, RULES)
     assert all(shift == () for shift in assignment.values())
+
+
+def test_the_trace_replays_to_the_roster_it_returned():
+    """The animation is only honest if the frames rebuild the same week.
+
+    The report replays these placements in the browser to show the roster
+    assembling itself. If the recorded order and the returned assignment could
+    drift apart, the page would be animating a week that was never solved —
+    the most expensive kind of wrong, because it looks like evidence.
+    """
+    required = week(agents_per_hour=3)
+    steps: list[tuple[int, int, int]] = []
+    assignment = greedy_roster(required, 6, RULES, trace=steps)
+
+    from shiftmesh.rules import enumerate_shifts
+    shifts = enumerate_shifts(RULES)
+
+    replayed = {(a, d): () for a in range(6) for d in range(7)}
+    for agent, day, index in steps:
+        assert index != 0, "the empty shift is never a placement"
+        replayed[(agent, day)] = shifts[index]
+
+    assert replayed == assignment
+    assert len({(a, d) for a, d, _ in steps}) == len(steps), "a cell placed twice"
+
+
+def test_the_trace_is_optional_and_costs_nothing_when_absent():
+    required = week()
+    assert greedy_roster(required, 4, RULES) == greedy_roster(required, 4, RULES, trace=[])

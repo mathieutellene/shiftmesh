@@ -4,7 +4,7 @@ The figures come from the Spanish sector agreement, and every one of them is a
 place a real payroll differs — so the test that matters most is not that the
 total is some number, it is that each premium lands on the hours it should and
 on the base it should. Premiums go on the *ordinary* hour; putting them on the
-loaded one silently inflates every night shift by a third.
+loaded one silently drops employer contributions from the premium itself.
 """
 
 import pytest
@@ -12,8 +12,17 @@ import pytest
 from shiftmesh import PRESETS, Weights, solve
 from shiftmesh import benchmarks as B
 from shiftmesh.cost import PayRules, annualise, cost_per_contact, is_night, price_roster
-from shiftmesh.model import HOURS
+from shiftmesh.heuristic import greedy_roster
+from shiftmesh.metrics import recompute_coverage
+from shiftmesh.model import HOURS, _roster_from
 from shiftmesh.rules import covered_hours
+
+RULES = PRESETS["spain"]
+
+
+def as_roster(assignment, required, n_agents):
+    return _roster_from(assignment, required, n_agents, RULES, Weights(),
+                        status="GREEDY", wall_time=0.0)
 
 RULES = PRESETS["spain"]
 
@@ -63,13 +72,25 @@ def test_the_hourly_cost_is_the_arithmetic_it_claims():
 
 
 def test_the_night_premium_goes_on_the_ordinary_hour_not_the_loaded_one():
-    """The agreement writes it that way, and the other order costs 32% more."""
+    """The agreement writes it that way, and the other order underpays the premium.
+
+    Not a rounding difference and not in the direction the prose used to claim:
+    loading first and adding the premium afterwards leaves the premium bare, so
+    it is short by exactly the employer contribution on it — 32.15% of €1.96.
+    """
     pay = PayRules()
     expected = (pay.ordinary_hour + pay.night_premium_hour) * 1.3215
     assert pay.night_hour == pytest.approx(expected, rel=1e-9)
 
     wrong_way = pay.loaded_hour + pay.night_premium_hour
     assert pay.night_hour > wrong_way          # and they are not the same number
+
+    # Pin the direction and the size, because the prose around this quoted
+    # both of them backwards for a while and the assertion above did not care.
+    premium_as_written = pay.night_premium_hour * 1.3215
+    assert pay.night_hour - pay.loaded_hour == pytest.approx(premium_as_written, rel=1e-9)
+    assert premium_as_written / pay.night_premium_hour == pytest.approx(1.3215, rel=1e-9)
+    assert pay.night_hour / wrong_way == pytest.approx(1.0426, abs=5e-4)
 
 
 def test_defaults_come_from_the_sourced_benchmarks():
@@ -212,3 +233,52 @@ def test_overtime_lands_in_its_own_band_not_the_base(roster):
     roster.assignment.update(keep)
     assert money.per_agent_overtime[0] > 0
     assert money.per_agent_overtime[0] == pytest.approx(money.overtime, rel=1e-9)
+
+
+def test_the_spend_grid_accounts_for_every_euro_the_week_costs():
+    """A cost map that does not sum to the invoice is a decoration.
+
+    ``spend_grid`` reallocates flat per-shift premiums and per-agent overtime
+    onto hours of the floor. Reallocation is exactly where money goes missing,
+    so the grid is held against ``price_roster``'s own total to the cent.
+    """
+    from shiftmesh.cost import spend_grid
+
+    required = [[0] * 24 for _ in range(7)]
+    for d in range(7):
+        for h in range(24):
+            required[d][h] = 3 if 8 <= h < 20 else 1
+
+    pay = PayRules(holidays=(2,))
+    roster = as_roster(greedy_roster(required, 14, RULES), required, 14)
+    money = price_roster(roster, pay)
+    grid = spend_grid(roster, pay)
+
+    assert sum(sum(row) for row in grid) == pytest.approx(money.total, abs=1e-6)
+
+    # And it must land on hours that are actually worked, not smeared about.
+    floor = recompute_coverage(roster)
+    for d in range(7):
+        for h in range(24):
+            if floor[d][h] == 0:
+                assert grid[d][h] == 0.0, f"money charged to an empty slot {d} {h}"
+
+
+def test_the_sunday_premium_is_worth_less_per_hour_on_a_longer_shift():
+    """The agreement pays per shift, so the grid must show the incentive."""
+    from shiftmesh.cost import spend_grid
+
+    required = [[0] * 24 for _ in range(7)]
+    pay = PayRules()
+    short = {(0, d): () for d in range(7)}
+    short[(0, 6)] = ((10, 4),)
+    long_ = {(0, d): () for d in range(7)}
+    long_[(0, 6)] = ((10, 9),)
+
+    a = spend_grid(as_roster(short, required, 1), pay)
+    b = spend_grid(as_roster(long_, required, 1), pay)
+    per_hour_short = (a[6][10] - pay.loaded_hour)
+    per_hour_long = (b[6][10] - pay.loaded_hour)
+    assert per_hour_short == pytest.approx(pay.sunday_premium_shift / 4)
+    assert per_hour_long == pytest.approx(pay.sunday_premium_shift / 9)
+    assert per_hour_short > per_hour_long

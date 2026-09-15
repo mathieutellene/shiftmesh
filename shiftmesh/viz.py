@@ -118,6 +118,13 @@ class Heatmap:
     colour: str = "volume"           # "volume" or "balance"
     reference: list[list[float]] | None = None   # for "balance": what was needed
     decimals: int = 0
+    cap: float | None = None
+    """Saturate the colour ramp here instead of at the grid's own peak.
+
+    A single extreme cell otherwise sets the scale for all 168 and flattens
+    every real difference into the bottom of the ramp. The face still prints
+    the true value, so nothing is hidden — the outlier stops being the legend.
+    """
 
     def _cell_colour(self, day: int, hour: int) -> str:
         value = self.grid[day][hour]
@@ -129,8 +136,8 @@ class Heatmap:
                     for d in range(7) for h in range(24)),
             )
             return balance_colour(delta, worst)
-        peak = max(max(row) for row in self.grid) or 1
-        return volume_colour(value, peak)
+        peak = self.cap or max(max(row) for row in self.grid) or 1
+        return volume_colour(min(value, peak), peak)
 
     def _tooltip(self, day: int, hour: int) -> str:
         value = self.grid[day][hour]
@@ -382,7 +389,6 @@ def learning_curve_chart(points: list[tuple[int, float]], title: str,
 
     left, right, top, bottom = 62, 16, 34, 46
     plot_w, plot_h = width - left - right, height - top - bottom
-    xs = [n for n, _ in points]
     ys = [e for _, e in points]
 
     lo, hi = min(ys), max(ys)

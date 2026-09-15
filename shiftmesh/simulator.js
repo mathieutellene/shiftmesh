@@ -68,6 +68,26 @@
         if (s + d <= latestEnd) out.push([[s, d]]);
       }
     }
+    // Split shifts, for the presets that allow them. Leaving these out was not
+    // a simplification: under the contact centre agreement the catalogue is
+    // 1,604 patterns and 1,435 of them are splits, so a panel without this
+    // branch offered a reader 10% of the shapes under a label reading "what
+    // the roster is allowed to do" — while the rules table on the same page
+    // printed "yes" for the very rule it was silently dropping.
+    if (rules.allowSplitShifts) {
+      const lo = rules.splitGapMin, hi = rules.splitGapMax;
+      for (let d1 = rules.splitMinBlock; d1 < rules.maxShift; d1++) {
+        for (let d2 = rules.splitMinBlock; d2 <= rules.maxShift - d1; d2++) {
+          if (d1 + d2 < rules.minShift) continue;
+          for (let gap = lo; gap <= hi; gap++) {
+            for (let s = 0; s < HOURS; s++) {
+              if (s + d1 + gap + d2 > latestEnd) continue;
+              out.push([[s, d1], [s + d1 + gap, d2]]);
+            }
+          }
+        }
+      }
+    }
     return out;
   }
 
@@ -119,6 +139,29 @@
         week += h;
         if (h < rules.minShift || h > rules.maxShift) {
           out.push({ agent, rule: "shift length", detail: `${DAY_NAMES[d]}: ${h}h` });
+        }
+        // A split is legal only in the shapes the agreement names. The audit
+        // runs live and the page says it will catch anything illegal, so it
+        // has to know the same four things the Python audit knows.
+        if (shift.length > 1) {
+          const day = DAY_NAMES[d];
+          if (!rules.allowSplitShifts) {
+            out.push({ agent, rule: "split shift", detail: `${day}: split not allowed` });
+          } else if (shift.length > 2) {
+            out.push({ agent, rule: "split shift",
+                       detail: `${day}: ${shift.length} blocks, at most 2 allowed` });
+          } else {
+            const [[s1, d1], [s2, d2]] = shift;
+            const gap = s2 - (s1 + d1);
+            if (Math.min(d1, d2) < rules.splitMinBlock) {
+              out.push({ agent, rule: "split shift",
+                         detail: `${day}: block of ${Math.min(d1, d2)}h under the ${rules.splitMinBlock}h minimum` });
+            }
+            if (gap < rules.splitGapMin || gap > rules.splitGapMax) {
+              out.push({ agent, rule: "split shift",
+                         detail: `${day}: ${gap}h gap outside [${rules.splitGapMin}, ${rules.splitGapMax}]` });
+            }
+          }
         }
       });
       if (week > rules.maxWeekly + rules.maxOvertime) {
@@ -293,11 +336,50 @@
     };
   }
 
-  function requirementFrom(arrivals, service) {
-    return arrivals.map((day) =>
+  // ── deferred work ──────────────────────────────────────────────────────
+  // Service requests are not a queue. The quantity of work is known and the
+  // only question is whether enough agent-hours exist inside the promised
+  // cycle time to clear it, so there is no queueing formula here on purpose —
+  // it is conservation, and the backlog carries hour to hour. That is why this
+  // grid has to be walked in order rather than computed cell by cell, and it
+  // is the one place the browser cannot reuse the Erlang path.
+  function deferredAgents(arriving, backlog, aht, windowHours, occupancy, shrinkage) {
+    const productive = windowHours * 3600 * occupancy * (1 - shrinkage);
+    if (productive <= 0) return 0;
+    return Math.ceil(((backlog + arriving) * aht) / productive);
+  }
+
+  function deferredRequirement(week, spec, shrinkage) {
+    const grid = [];
+    let backlog = 0;
+    for (const day of week) {
+      const row = new Array(HOURS).fill(0);
+      for (let h = 0; h < HOURS; h++) {
+        const arriving = day[h];
+        const agents = deferredAgents(arriving, backlog, spec.aht,
+                                      spec.windowHours, spec.occupancy, shrinkage);
+        row[h] = agents;
+        const capacity =
+          (agents * 3600 * spec.occupancy * (1 - shrinkage)) / spec.aht;
+        backlog = Math.max(0, backlog + arriving - capacity);
+      }
+      grid.push(row);
+    }
+    return grid;
+  }
+
+  // `deferred` is optional so the voice-only grid stays exactly what the golden
+  // test pins. Pass it and you get the same total the Python run solves: the
+  // panel used to be handed calls alone, which quietly made it a different and
+  // easier problem than the roster printed above it on the same page.
+  function requirementFrom(arrivals, service, deferred) {
+    const voice = arrivals.map((day) =>
       day.map((calls) =>
         agentsRequired(calls, service.aht, service.targetSla,
                        service.targetSeconds, service.shrinkage)));
+    if (!deferred || !deferred.arrivals) return voice;
+    const other = deferredRequirement(deferred.arrivals, deferred, service.shrinkage);
+    return voice.map((day, d) => day.map((v, h) => v + other[d][h]));
   }
 
   window.Shiftmesh = {
@@ -305,6 +387,6 @@
     blocking, probabilityWait, serviceLevel, agentsRequired, achievedSla,
     enumerateShifts, shiftHours, shiftStart, shiftEnd, coveredHours,
     greedyRoster, coverage, violations, price, summarise, requirementFrom,
-    isNight,
+    deferredAgents, deferredRequirement, isNight,
   };
 })();

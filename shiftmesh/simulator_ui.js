@@ -23,6 +23,7 @@
   // step with viz.py greps for the hex, and an alias would hide a drift.
   const EXACT = "#2b3648", ACCENT = "#4da3ff";
   const SHORT = "#f4511e", SPARE = "#5ee0c0";
+  const MAGENTA = "#f0abfc";
   const volumeColour = (v, peak) =>
     peak <= 0 ? "#131a26" : lerp("#101826", ACCENT, Math.pow(v / peak, 0.65));
   const balanceColour = (delta, worst) =>
@@ -102,9 +103,26 @@
         if (i < 168 && cells[i]) { run++; continue; }
         if (run) {
           const from = i - run;
-          let night = false;
-          for (let k = 0; k < run; k++) if (S.isNight((from + k) % 24)) night = true;
-          out += `<rect x="${(left + from * cw).toFixed(1)}" y="${y + 1}" width="${(run * cw - 1.2).toFixed(1)}" height="${ch - 3}" rx="2.5" fill="${night ? "#ffb454" : ACCENT}" opacity="${night ? 0.9 : 0.8}"><title>A${a + 1}: ${run}h from ${DAY_NAMES[Math.floor(from / 24) % 7]} ${String(from % 24).padStart(2, "0")}:00</title></rect>`;
+          // Split the block at the night boundary, exactly as roster_gantt()
+          // does in scripts/report.py. Painting the whole run because any one
+          // of its hours touched 22:00-06:00 is the bug that put 45% of the
+          // static picture in night colour on a roster working 23% of its
+          // hours at night — and this panel sits on the same page as the
+          // README that says that bug was fixed.
+          let seg = 0;
+          for (let k = 0; k <= run; k++) {
+            const abs = from + k;
+            const cur = k < run ? S.isNight(abs) : null;
+            const prev = k ? S.isNight(abs - 1) : null;
+            if (k && cur !== prev) {
+              const x = left + (abs - seg) * cw;
+              const day = DAY_NAMES[Math.floor((abs - seg) / 24) % 7];
+              const hh = String((abs - seg) % 24).padStart(2, "0");
+              out += `<rect x="${x.toFixed(1)}" y="${y + 1}" width="${(seg * cw - 1.2).toFixed(1)}" height="${ch - 3}" rx="2.5" fill="${prev ? MAGENTA : ACCENT}" opacity="${prev ? 0.92 : 0.8}"><title>A${a + 1}: ${seg}h from ${day} ${hh}:00${prev ? " — night hours" : ""}</title></rect>`;
+              seg = 0;
+            }
+            seg++;
+          }
           run = 0;
         }
       }
@@ -185,7 +203,14 @@
 
   function run(v, agents) {
     const rules = DATA.rules[v.rulesKey];
-    const required = S.requirementFrom(DATA.arrivals, service(v));
+    // Both channels, the way the Python run solves them. Handed calls alone,
+    // this panel solved 2,034 agent-hours while the roster printed above it on
+    // the same page solved 2,270. The deferred channel needs at least one agent
+    // in every hour of the week, so the gap was not a few quiet cells: all 168
+    // were short, 100 of them by one and 68 by two. The matrix that came out
+    // then differed from the published one in 134 of its 168 cells, and no
+    // setting of the controls could have closed that — it was a smaller problem.
+    const required = S.requirementFrom(DATA.arrivals, service(v), DATA.deferred);
     const assignment = S.greedyRoster(required, agents, rules);
     const stats = S.summarise(assignment, required, DATA.arrivals, service(v));
     const money = S.price(assignment, rules, DATA.pay);
@@ -244,6 +269,8 @@
     $("sm-curve").innerHTML = curve(curvePoints, read().agents);
   }
 
+  let drawn = 0;
+
   function render() {
     const v = read();
     const started = performance.now();
@@ -253,7 +280,11 @@
     drawCurve();
 
     const needed = needFor(r);
-    const contacts = DATA.arrivals.flat().reduce((a, b) => a + b, 0);
+    // Handed over, not recomputed: no control on this panel changes arrival
+    // volume, so this is the same constant the money section above divided by.
+    // Recomputing it here divided by the forecast instead of by what actually
+    // arrived, and the same words quoted two different euros on one page.
+    const contacts = DATA.contacts;
 
     const tone = r.stats.coveragePct >= 99.5 ? "good"
       : r.stats.coveragePct >= 97 ? "warn" : "bad";
@@ -273,6 +304,12 @@
     $("sm-roster").innerHTML = gantt(r.assignment);
     $("sm-required").innerHTML = heatmap(r.required, { label: "agents needed" });
     $("sm-coverage").innerHTML = heatmap(r.stats.grid, { label: "coverage", reference: r.required });
+    // Stop the clock after the writing, not before it. The panel used to show
+    // the solve time alone and call it "rebuilt in N ms" — but the rebuild is
+    // also about eighteen hundred SVG elements torn down and re-created, which
+    // is the larger half. Quoting the flattering half as proof of speed is the
+    // kind of number a reader is right to distrust once they check it.
+    drawn = performance.now() - started;
     $("sm-verdict").innerHTML = verdict(r, v, floorFor(r), needed, elapsed);
   }
 
@@ -316,7 +353,7 @@
           `without losing a point of coverage.`);
       }
     }
-    bits.push(`<span style="color:var(--muted)">Rebuilt in ${elapsed.toFixed(0)} ms, ` +
+    bits.push(`<span style="color:var(--muted)">Solved in ${elapsed.toFixed(0)} ms, redrawn in ${Math.max(0, drawn - elapsed).toFixed(0)} ms, ` +
       `in your browser.</span>`);
     return bits.join(" ");
   }

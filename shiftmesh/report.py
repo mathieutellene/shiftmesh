@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 
-from dataclasses import dataclass
 from pathlib import Path
 
 from . import benchmarks as B
@@ -238,15 +237,89 @@ def _js(name: str) -> str:
     return (Path(__file__).with_name(name)).read_text(encoding="utf-8")
 
 
+REPLAY_CSS = """
+.rp{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:16px 18px 18px;margin:22px 0}
+.rp:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.rp-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.rp-bar button{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:6px 13px;font:inherit;font-size:13.5px;cursor:pointer}
+.rp-bar button:hover{border-color:var(--accent)}
+.rp-bar button.on{border-color:var(--accent);color:var(--accent)}
+.rp-sp{display:flex;gap:5px;margin-left:4px}
+.rp-sp button{padding:5px 9px;font-size:12.5px}
+.rp-bar .rp-gap{margin-left:auto}
+.rp-lane{display:grid;grid-template-columns:104px minmax(0,1fr) 78px;
+  align-items:center;gap:11px;margin:7px 0;font-size:12px;color:var(--muted)}
+.rp-track{position:relative;height:12px;border-radius:99px;overflow:hidden;
+  background:var(--panel2);border:1px solid var(--line);cursor:ew-resize;
+  touch-action:none}
+.rp-fill{position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.32}
+.rp-tick{position:absolute;top:2px;width:1px;height:8px;background:var(--muted);opacity:.34}
+.rp-tick.big{background:var(--accent2);opacity:.95;top:0;height:12px;width:2px}
+.rp-read{margin:14px 0 10px}
+.rp-read .h{font-size:19px;letter-spacing:-.01em}
+.rp-read .h b{color:var(--accent)}
+.rp-read .s,.rp-read .m,.rp-read .w{color:var(--muted);font-size:13px;margin-top:3px}
+.rp-read .w{color:var(--accent2)}
+/* 168 columns will not fit a phone, and squeezing them makes a smear rather
+   than a small picture. Scroll it sideways like every other grid here. */
+.rp-scroll{overflow-x:auto}
+#rp-grid{display:block;width:100%;min-width:720px;border-radius:8px;
+  background:var(--panel2)}
+.rp-lane.off{opacity:.45}
+.rp-lane.off .rp-track{cursor:default}
+@media (max-width:640px){.rp-lane{grid-template-columns:76px minmax(0,1fr) 62px;
+  font-size:11px;gap:8px}}
+"""
+
+
+def replay_panel(data: str) -> str:
+    """The player, and the frames it replays, as one self-contained block."""
+    return f"""
+<div class="rp" id="rp" tabindex="0" role="group" aria-label="Solver replay">
+  <div class="rp-bar">
+    <button type="button" id="rp-play">&#9654; Play</button>
+    <span class="rp-sp"><button type="button" data-speed="0.25">0.25&times;</button>
+      <button type="button" data-speed="1" class="on">1&times;</button>
+      <button type="button" data-speed="4">4&times;</button></span>
+    <button type="button" id="rp-seam" class="rp-gap">Jump to the handoff</button>
+  </div>
+
+  <div class="rp-lane"><span>Greedy</span><div class="rp-track" id="rp-a"></div>
+    <span>0.19 s</span></div>
+  <div class="rp-lane"><span>CP-SAT</span><div class="rp-track" id="rp-b"></div>
+    <span>600 s</span></div>
+
+  <div class="rp-read">
+    <div class="h" id="rp-head"></div>
+    <div class="s" id="rp-sub"></div>
+    <div class="m" id="rp-money"></div>
+    <div class="w" id="rp-where"></div>
+  </div>
+
+  <div class="rp-scroll"><canvas id="rp-grid"
+    aria-label="the roster as the search builds it"></canvas></div>
+  <div class="legend"><span><i style="--c:#4da3ff"></i>day</span>
+    <span><i style="--c:#f0abfc"></i>night hours</span>
+    <span><i style="--c:#22d3a6"></i>moved in this step</span>
+    <span class="hint">drag either bar to scrub &middot; arrow keys step one frame</span>
+  </div>
+</div>
+<script type="application/json" id="replay-data">{data}</script>
+"""
+
+
 def page(title: str, lede: str, body: str, footer: str,
          interactive: bool = False, source: str = "") -> str:
     """One file. The scripts are inlined so it still works from a USB stick."""
-    css = CSS + (SIMULATOR_CSS if interactive else "")
+    css = CSS + (SIMULATOR_CSS + REPLAY_CSS if interactive else "")
     scripts = ""
     if interactive:
         scripts = (
             "\n<script>" + _js("simulator.js") + "</script>"
             "\n<script>" + _js("simulator_ui.js") + "</script>"
+            "\n<script>" + _js("replay_ui.js") + "</script>"
         )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
@@ -375,17 +448,37 @@ SIMULATOR_CSS = """
 """
 
 
-def simulator(requirement_source, arrivals, rules, pay, target_seconds,
+def simulator(arrivals, deferred, contacts, rules, pay, target_seconds,
               default_agents: int, lo: int, hi: int) -> str:
     """The controls, and the panels that redraw when one moves.
 
     The data goes in as JSON and the solving happens in the browser, so the page
     stays a single file with nothing behind it.
+
+    ``deferred`` carries the second channel — the arrivals plus the three
+    numbers its model needs. It is not optional in practice: without it the
+    panel solves the voice week alone, which is a smaller and easier problem
+    than the one the page solved above it, and a reader who sets the controls
+    to match gets a matrix that cannot agree.
+
+    ``contacts`` is the denominator of the cost-per-contact figure, handed over
+    rather than recomputed. None of the controls change arrival volume, so it is
+    a constant — and it has to be the same constant the money section divided
+    by, or one page quotes two different euros for the same phrase. It was: the
+    panel divided by the forecast, the section above it by what actually
+    arrived, and the gap was a full 25%.
     """
     import json
 
     payload = {
+        "contacts": round(contacts),
         "arrivals": [[round(v, 2) for v in day] for day in arrivals],
+        "deferred": {
+            "arrivals": [[round(v, 2) for v in day] for day in deferred["arrivals"]],
+            "aht": deferred["aht"],
+            "windowHours": deferred["windowHours"],
+            "occupancy": deferred["occupancy"],
+        },
         "targetSeconds": target_seconds,
         "rules": rules,
         "pay": pay,
@@ -440,7 +533,7 @@ def simulator(requirement_source, arrivals, rules, pay, target_seconds,
     Monday 00:00 on the left — blue is daytime, magenta is the night window (22:00–06:00), hour by hour</span></figcaption>
     <div id="sm-roster"></div>
     <div class="legend"><span><i style="--c:#4da3ff"></i>day</span>
-      <span><i style="--c:#ffb454"></i>includes night hours</span></div>
+      <span><i style="--c:#f0abfc"></i>night hours</span></div>
   </figure>
 
   <div class="grid2">
@@ -641,7 +734,10 @@ def rule_prices_table(rows: list[dict], agents: int) -> str:
             body.append(f'<td class="r" style="{tone}">{shown}</td>')
             body.append(f'<td class="r">{r["spare_hours"]:,}h</td>')
             body.append(f'<td class="r">€{r["cost"]:,.0f}</td>')
-        body.append(f"<td>{escape(r['note'])}</td>")
+        # `meaning`, not the raw note. On a row the search could not settle the
+        # note reads as a finding about the rule, which is exactly what it is
+        # not — the caveat was being built three lines up and then thrown away.
+        body.append(f"<td>{meaning}</td>")
         body.append("</tr>")
     body.append("</tbody>")
 

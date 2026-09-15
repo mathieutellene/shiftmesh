@@ -40,9 +40,6 @@ from .erlang import (
     ServiceTarget,
     agents_required,
     apply_shrinkage,
-    probability_wait,
-    service_level,
-    traffic_intensity,
 )
 
 HOURS_PER_DAY = 24

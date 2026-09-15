@@ -15,8 +15,10 @@ somewhere a real payroll differs:
     + overtime uplift on hours above the contracted week
 
 Premiums go on the *ordinary* hour, not on the loaded rate — which is how the
-agreement writes them, and getting it the other way round quietly inflates every
-night shift by a third. Every figure is sourced in :mod:`shiftmesh.benchmarks`.
+agreement writes them, and the two orders are not the same number: adding the
+premium to an already-loaded rate never loads the premium itself, which
+understates it by the whole 32.15% of employer contributions — 1.96 an hour
+instead of 2.59. Every figure is sourced in :mod:`shiftmesh.benchmarks`.
 """
 
 from __future__ import annotations
@@ -194,3 +196,66 @@ def cost_per_contact(total_cost: float, contacts: float) -> float:
 def annualise(weekly_cost: float, weeks: float = 52.0) -> float:
     """A week is not a year, but it is what gets budgeted from."""
     return weekly_cost * weeks
+
+
+def spend_grid(roster: Roster, pay: PayRules | None = None) -> list[list[float]]:
+    """Where the week's money lands, hour by hour on the floor.
+
+    Every euro :func:`price_roster` charges is attributed to a slot, so this
+    grid sums to the same total. Two of the five lines are not hourly and need
+    a convention, which belongs here rather than buried in a caption:
+
+    * **Sunday and holiday premiums are flat per shift.** They are spread
+      evenly across the hours of the shift that earned them. That is why a
+      four-hour Sunday shift carries €3.83 an hour and a nine-hour one €1.70 —
+      the agreement pays an employer to make Sunday shifts long, and averaging
+      the premium away would hide exactly that.
+    * **Overtime is a property of an agent's week**, not of any particular
+      hour: nothing distinguishes their forty-first hour from their fifth. It
+      is spread across every hour that agent worked.
+
+    Neither convention changes the total. Both change where the total appears,
+    and a reader holding this grid against the table above it should be told
+    which — an unstated allocation rule is the difference between a cost model
+    and a decorated one.
+    """
+    pay = pay or PayRules()
+    grid = [[0.0] * HOURS for _ in range(len(DAYS))]
+    contracted = roster.rules.max_weekly_hours
+
+    for agent in range(roster.n_agents):
+        worked: list[tuple[int, int]] = []          # (day, hour of week)
+        flat_extra = 0.0                            # per-shift premiums, in euros
+
+        for day in range(len(DAYS)):
+            shift = roster.assignment[(agent, day)]
+            if not shift:
+                continue
+            hours = covered_hours(shift)
+            for h in hours:
+                grid[(day + h // HOURS) % len(DAYS)][h % HOURS] += (
+                    pay.night_hour if is_night(h) else pay.loaded_hour
+                )
+                worked.append((day, h))
+
+            per_shift = 0.0
+            if day == 6:
+                per_shift += pay.sunday_premium_shift
+            if day in pay.holidays:
+                per_shift += pay.holiday_premium_shift
+            if per_shift and hours:
+                share = per_shift / len(hours)
+                for h in hours:
+                    grid[(day + h // HOURS) % len(DAYS)][h % HOURS] += share
+            flat_extra += per_shift
+
+        extra = max(0, len(worked) - contracted)
+        if extra and worked:
+            uplift = extra * pay.ordinary_hour * pay.overtime_uplift * (
+                1.0 + pay.employer_social_security
+            )
+            share = uplift / len(worked)
+            for day, h in worked:
+                grid[(day + h // HOURS) % len(DAYS)][h % HOURS] += share
+
+    return grid
